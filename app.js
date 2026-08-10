@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function getWesternEmoji(signKey) {
         const emojis = {
             aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋',
-            leo: '<ctrl42>', virgo: '♍', libra: '♎', scorpio: '♏',
+            leo: '♌', virgo: '♍', libra: '♎', scorpio: '♏',
             sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓'
         };
         return emojis[signKey] || '✨';
@@ -850,8 +850,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${item.label}</span>
                     <span class="font-extrabold text-pink-600 dark:text-pink-400">${item.score}%</span>
                 </div>
-                <div class="w-full bg-pink-100/80 dark:bg-slate-900 rounded-full h-2 overflow-hidden p-0.5 border border-pink-200/60 dark:border-pink-500/40 shadow-inner">
-                    <div class="bg-gradient-to-r ${item.color} h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(236,72,153,0.5)]" style="width: ${item.score}%"></div>
+                <div class="w-full bg-pink-100/80 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden p-0.5 border border-pink-200/60 dark:border-slate-700">
+                    <div class="bg-gradient-to-r ${item.color} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${item.score}%"></div>
                 </div>
             </div>
         `).join('');

@@ -3,7 +3,7 @@
  * Secretly calculates 5 metrics: Western Zodiac, Mahabote 7-House Planetary Position, True Chinese Animal, Chinese 5 Elements, & Numerology Destiny Number.
  * Features a deterministic compatibility engine for wildly diverse scores (62% - 98%).
  * Gemini responds as "Tomo" (တိုမို) in rich, detailed, massive, diverse, and casual/friendly Burmese!
- * Production UI handlers: Toast notifications, password toggle, segment tabs, navbar sync, and preset chips.
+ * Production UI handlers: Toast notifications, password toggle, segment tabs, navbar sync, preset chips, Cosmic Dark Mode, Real-Time Live Badges, and Results Tabbed View.
  */
 
 // 1. Western Zodiac
@@ -221,6 +221,46 @@ function calculateAlgorithmicScore(p1Secret, p2Secret, relType) {
     return Math.min(98, Math.max(62, score));
 }
 
+// 5-Metric Breakdown Sub-score Calculation
+function calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType) {
+    let zodiacScore = 75;
+    const z1 = (p1Secret.western || '').toLowerCase();
+    const z2 = (p2Secret.western || '').toLowerCase();
+    if (z1 === z2) zodiacScore = 92;
+    else zodiacScore = Math.min(98, 70 + ((calculateDestinyNumber(p1Secret.western + p2Secret.western) * 3) % 25));
+
+    let mahaboteScore = 70;
+    if (p1Secret.mahaboteHouse === p2Secret.mahaboteHouse) mahaboteScore = 94;
+    else if (p1Secret.mahaboteDay === p2Secret.mahaboteDay) mahaboteScore = 88;
+    else mahaboteScore = Math.min(98, 68 + ((p1Secret.destinyNumber + p2Secret.destinyNumber) * 4) % 28);
+
+    let animalScore = 72;
+    const a1 = p1Secret.animal;
+    const a2 = p2Secret.animal;
+    const trines = [['Rat','Dragon','Monkey'], ['Ox','Snake','Rooster'], ['Tiger','Horse','Dog'], ['Rabbit','Goat','Pig']];
+    const isTrine = trines.some(t => t.includes(a1) && t.includes(a2));
+    if (isTrine) animalScore = 96;
+    else animalScore = Math.min(98, 65 + ((a1.length + a2.length) * 3) % 26);
+
+    let elementScore = 78;
+    if (p1Secret.element === p2Secret.element) elementScore = 88;
+    else elementScore = Math.min(98, 72 + ((p1Secret.destinyNumber * 5) % 24));
+
+    let numScore = 80;
+    const dDiff = Math.abs(p1Secret.destinyNumber - p2Secret.destinyNumber);
+    if (dDiff === 0) numScore = 98;
+    else if (dDiff === 2 || dDiff === 4) numScore = 92;
+    else numScore = Math.min(95, 68 + (9 - dDiff) * 3);
+
+    return [
+        { label: '✨ Western Zodiac Synergy', score: zodiacScore, color: 'from-pink-400 to-rose-500' },
+        { label: '☀️ Mahabote Planetary Synergy', score: mahaboteScore, color: 'from-amber-400 to-orange-500' },
+        { label: '🐉 Chinese Zodiac Trine (San He)', score: animalScore, color: 'from-purple-400 to-indigo-500' },
+        { label: '🪵 5 Elements Cycle Balance', score: elementScore, color: 'from-emerald-400 to-teal-500' },
+        { label: '🔢 Numerology Destiny Resonance', score: numScore, color: 'from-cyan-400 to-blue-500' }
+    ];
+}
+
 // Standard Demo Result
 const DEMO_RESULT = {
     tomo_deep_reading_p1: "Tomo ရဲ့ အသေးစိတ် ဇာတာနှင့် စိတ်ဓာတ်ပိုင်းဆိုင်ရာ သုံးသပ်ချက်အရ မင်းမင်း ဟာ ပြင်ပ ကမ္ဘာမှာ ပေါင်းသင်းဆက်ဆံရေး အလွန်ပြေပြစ်ပြီး တက်ကြွလှုပ်ရှားသော စွမ်းအင် (Dynamic Energy) ကို ပိုင်ဆိုင်ထားသူ ဖြစ်ပါတယ်နော်။ လူအများကြားမှာ ထင်ရှားပေါ်လွင်ပြီး၊ မည်သည့် အခြေအနေမဆို အဆင်ပြေအောင် ချက်ချင်း လိုက်လျောညီထွေ စကားပြောဆိုနိုင်စွမ်း ရှိတာကို Tomo အံ့ဩစွာ တွေ့ရှိရပါတယ် 🌸။ \n\nသို့သော်လည်း စိတ်၏ နက်ရှိုင်းသော အတွင်းပိုင်းမှာတော့ မင်းမင်း ဟာ အလွန် စနစ်တကျ စဉ်းစားတတ်သူ ဖြစ်ပြီး၊ မိမိ အားကိုးရသူများ သို့မဟုတ် ချစ်ခင်ရသူများ ရှေ့မှာသာ မိမိ၏ ရင်တွင်းဖြစ် ခံစားချက်အမှန်များနှင့် စိုးရိမ်မှုများကို ဖွင့်ဟပြသတတ်သူ ဖြစ်ပါတယ်။ မဟာဘုတ် ဓာတ်စက်နှင့် နာမည်ဂဏန်း တွဲဖက်မှုအရ ပရောဂျက်အသစ်များ၊ စိတ်ကူးဆန်းများကို စတင်ဖန်တီးရာမှာ ရဲရင့်သော ဦးဆောင်သူ ဖြစ်သလို၊ အမှန်တရားနှင့် သစ္စာတရားကို အလွန် တန်ဖိုးထားသူ ဖြစ်ပါတယ်။ \n\nချစ်ခြင်းမေတ္တာ သို့မဟုတ် သူငယ်ချင်း သံယောဇဉ်မှာ မင်းမင်း ဟာ မိမိထက် အခြားသူ၏ လိုအပ်ချက်ကို ဦးစားပေး ကူညီတတ်သူ ဖြစ်ပြီး၊ တစ်ခါတစ်ရံ စိတ်ဖိစီးမှုများကို မိမိတစ်ယောက်တည်း ကြိတ်မှိတ် ကြံ့ကြံ့ခံတတ်သော ကြင်နာတတ်သည့် နှလုံးသားပိုင်ရှင် ဖြစ်ပါတယ်နော် ✨...",
@@ -304,16 +344,135 @@ document.addEventListener('DOMContentLoaded', () => {
     p1DobInput.value = "1996-06-15";
     p2DobInput.value = "1996-10-08";
 
+    // 1. Cosmic Dark Mode Switcher
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const themeToggleIcon = document.getElementById('themeToggleIcon');
+    const themeToggleText = document.getElementById('themeToggleText');
 
+    function initTheme() {
+        const savedTheme = localStorage.getItem('tomo_theme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark');
+            if (themeToggleIcon) themeToggleIcon.textContent = '☀️';
+            if (themeToggleText) themeToggleText.textContent = 'Light Mode';
+        } else {
+            document.body.classList.remove('dark');
+            if (themeToggleIcon) themeToggleIcon.textContent = '🌌';
+            if (themeToggleText) themeToggleText.textContent = 'Cosmic Mode';
+        }
+    }
+
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            const isDark = document.body.classList.contains('dark');
+            localStorage.setItem('tomo_theme', isDark ? 'dark' : 'light');
+            if (themeToggleIcon) themeToggleIcon.textContent = isDark ? '☀️' : '🌌';
+            if (themeToggleText) themeToggleText.textContent = isDark ? 'Light Mode' : 'Cosmic Mode';
+            showToast(isDark ? '🌌 Switched to Cosmic Dark Mode' : '🌸 Switched to Soft Light Mode', 'info');
+        });
+    }
+    initTheme();
+
+    // 2. Real-Time Astrological Live Badges System
+    function getWesternEmoji(signKey) {
+        const emojis = {
+            aries: '♈', taurus: '♉', gemini: '♊', cancer: '♋',
+            leo: '♌', virgo: '♍', libra: '♎', scorpio: '♏',
+            sagittarius: '♐', capricorn: '♑', aquarius: '♒', pisces: '♓'
+        };
+        return emojis[signKey] || '✨';
+    }
+
+    function getAnimalEmoji(animal) {
+        const emojis = {
+            Rat: '🐀', Ox: '🐂', Tiger: '🐅', Rabbit: '🐇',
+            Dragon: '🐉', Snake: '🐍', Horse: '🐎', Goat: '🐐',
+            Monkey: '🐒', Rooster: '🐓', Dog: '🐕', Pig: '🐖'
+        };
+        return emojis[animal] || '🐾';
+    }
+
+    function getElementEmoji(element) {
+        if (element.includes('Wood')) return '🪵';
+        if (element.includes('Fire')) return '🔥';
+        if (element.includes('Earth')) return '⛰️';
+        if (element.includes('Metal')) return '🪙';
+        return '💧';
+    }
+
+    function updateLiveBadges() {
+        const p1Name = p1NameInput.value.trim() || 'Person 1';
+        const p1Dob = p1DobInput.value || '1996-06-15';
+        const p2Name = p2NameInput.value.trim() || 'Person 2';
+        const p2Dob = p2DobInput.value || '1996-10-08';
+
+        const p1Secret = calculateSecretMetrics(p1Name, p1Dob);
+        const p2Secret = calculateSecretMetrics(p2Name, p2Dob);
+
+        renderBadges('p1LiveBadges', p1Secret);
+        renderBadges('p2LiveBadges', p2Secret);
+    }
+
+    function renderBadges(containerId, secret) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const wSignKey = (secret.western || '').toLowerCase();
+        const wEmoji = getWesternEmoji(wSignKey);
+        const aEmoji = getAnimalEmoji(secret.animal);
+        const eEmoji = getElementEmoji(secret.element);
+        const houseShort = (secret.mahaboteHouse || '').split(' ')[0] || secret.mahaboteHouse;
+
+        container.innerHTML = `
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-pink-100/90 dark:bg-slate-800 text-pink-700 dark:text-pink-300 border border-pink-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs">
+                ${wEmoji} ${secret.western}
+            </span>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100/90 dark:bg-slate-800 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs">
+                ☀️ ${secret.mahaboteDay} (${houseShort})
+            </span>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100/90 dark:bg-slate-800 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs">
+                ${aEmoji} ${secret.animal} · ${eEmoji} ${secret.element.replace(' Element', '')}
+            </span>
+            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100/90 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-slate-700 flex items-center gap-1 shadow-2xs">
+                🔢 Destiny #${secret.destinyNumber}
+            </span>
+        `;
+    }
+
+    // Attach listeners for live badges
+    [p1NameInput, p1DobInput, p2NameInput, p2DobInput].forEach(elem => {
+        if (elem) {
+            elem.addEventListener('input', updateLiveBadges);
+            elem.addEventListener('change', updateLiveBadges);
+        }
+    });
+    updateLiveBadges();
+
+    // 3. Dynamic Tomo Avatar Switching
+    function updateTomoAvatar(mood, score) {
+        const tomoHeroImg = document.getElementById('tomoHeroImg');
+        if (!tomoHeroImg) return;
+
+        if (mood === 'Playful') {
+            tomoHeroImg.src = 'tomo_3d_wave.jpg';
+        } else if (mood === 'Mystic') {
+            tomoHeroImg.src = 'tomo_3d_reading.jpg';
+        } else if (score && score > 90) {
+            tomoHeroImg.src = 'tomo_3d_avatar.jpg';
+        } else {
+            tomoHeroImg.src = 'tomo-girl.webp';
+        }
+    }
 
     // Setup Segmented Pill Tabs for Relationship Mode
     const modeTabs = document.querySelectorAll('.mode-tab-btn');
     modeTabs.forEach(btn => {
         btn.addEventListener('click', () => {
             modeTabs.forEach(t => {
-                t.className = "mode-tab-btn py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:text-pink-600 transition-all cursor-pointer";
+                t.className = "mode-tab-btn py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-pink-600 transition-all cursor-pointer";
             });
-            btn.className = "mode-tab-btn tomo-chip-3d py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold text-pink-700 transition-all cursor-pointer";
+            btn.className = "mode-tab-btn tomo-chip-3d py-2.5 px-4 rounded-xl text-xs sm:text-sm font-extrabold text-pink-700 dark:text-pink-300 transition-all cursor-pointer";
             relTypeSelect.value = btn.dataset.value;
         });
     });
@@ -323,10 +482,11 @@ document.addEventListener('DOMContentLoaded', () => {
     moodTabs.forEach(btn => {
         btn.addEventListener('click', () => {
             moodTabs.forEach(t => {
-                t.className = "mood-tab-btn py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 hover:text-purple-700 transition-all cursor-pointer";
+                t.className = "mood-tab-btn py-2 px-2 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-purple-700 transition-all cursor-pointer";
             });
-            btn.className = "mood-tab-btn tomo-chip-3d py-2 px-2 rounded-xl text-[11px] sm:text-xs font-extrabold text-purple-700 transition-all cursor-pointer";
+            btn.className = "mood-tab-btn tomo-chip-3d py-2 px-2 rounded-xl text-[11px] sm:text-xs font-extrabold text-purple-700 dark:text-purple-300 transition-all cursor-pointer";
             tomoMoodSelect.value = btn.dataset.value;
+            updateTomoAvatar(btn.dataset.value);
         });
     });
 
@@ -393,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             p2NameInput.value = "အောင်အောင် 🌸";
             p1DobInput.value = "1996-06-15";
             p2DobInput.value = "1996-10-08";
+            updateLiveBadges();
             showToast("🌸 Preset Filled: မင်းမင်း & အောင်အောင်", "info");
         });
     }
@@ -401,15 +562,60 @@ document.addEventListener('DOMContentLoaded', () => {
         presetResetBtn.addEventListener('click', () => {
             p1NameInput.value = "";
             p2NameInput.value = "";
+            updateLiveBadges();
             resultsSection.classList.add('hidden');
             showToast("↺ Form reset to empty", "info");
         });
     }
 
+    // 4. Results Segmented Tab Buttons Handler
+    const resultTabBtns = document.querySelectorAll('.result-tab-btn');
+    resultTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.resultTab;
+
+            resultTabBtns.forEach(t => {
+                t.className = "result-tab-btn py-1.5 px-3 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-pink-600 transition-all cursor-pointer";
+            });
+            btn.className = "result-tab-btn tomo-chip-3d px-3.5 py-1.5 rounded-xl text-xs font-bold text-pink-700 dark:text-pink-300 transition-all cursor-pointer";
+
+            const profilesCard = document.getElementById('profilesResultCard');
+            const p1Block = document.getElementById('p1ResultBlock');
+            const p2Block = document.getElementById('p2ResultBlock');
+            const synergyBlock = document.getElementById('synergyResultBlock');
+            const strengthsBlock = document.getElementById('strengthsChallengesResultBlock');
+            const adviceBlock = document.getElementById('finalAdviceResultBlock');
+
+            if (tab === 'all') {
+                if (profilesCard) profilesCard.classList.remove('hidden');
+                [p1Block, p2Block, synergyBlock, strengthsBlock, adviceBlock].forEach(b => b && b.classList.remove('hidden'));
+            } else if (tab === 'p1') {
+                if (profilesCard) profilesCard.classList.remove('hidden');
+                if (p1Block) p1Block.classList.remove('hidden');
+                if (p2Block) p2Block.classList.add('hidden');
+                [synergyBlock, strengthsBlock, adviceBlock].forEach(b => b && b.classList.add('hidden'));
+            } else if (tab === 'p2') {
+                if (profilesCard) profilesCard.classList.remove('hidden');
+                if (p2Block) p2Block.classList.remove('hidden');
+                if (p1Block) p1Block.classList.add('hidden');
+                [synergyBlock, strengthsBlock, adviceBlock].forEach(b => b && b.classList.add('hidden'));
+            } else if (tab === 'synergy') {
+                if (profilesCard) profilesCard.classList.add('hidden');
+                if (synergyBlock) synergyBlock.classList.remove('hidden');
+                [strengthsBlock, adviceBlock].forEach(b => b && b.classList.add('hidden'));
+            } else if (tab === 'advice') {
+                if (profilesCard) profilesCard.classList.add('hidden');
+                if (synergyBlock) synergyBlock.classList.add('hidden');
+                [strengthsBlock, adviceBlock].forEach(b => b && b.classList.remove('hidden'));
+            }
+        });
+    });
+
     // Demo Button
     demoBtn.addEventListener('click', () => {
         p1NameInput.value = p1NameInput.value.trim() || "မင်းမင်း 🎀";
         p2NameInput.value = p2NameInput.value.trim() || "အောင်အောင် 🌸";
+        updateLiveBadges();
 
         const p1Secret = calculateSecretMetrics(p1NameInput.value, p1DobInput.value || "1996-06-15");
         const p2Secret = calculateSecretMetrics(p2NameInput.value, p2DobInput.value || "1996-10-08");
@@ -420,7 +626,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const demoData = { ...baseDemo, chemistry_score: demoScore };
 
         triggerTomoLoading(() => {
-            renderResults(demoData, p1NameInput.value, p2NameInput.value, relTypeSelect.value);
+            renderResults(demoData, p1NameInput.value, p2NameInput.value, relTypeSelect.value, p1Secret, p2Secret);
+            updateTomoAvatar(selectedMood, demoScore);
             showToast("✨ Tomo Demo Reading generated!", "success");
         });
     });
@@ -446,14 +653,16 @@ document.addEventListener('DOMContentLoaded', () => {
         triggerTomoLoading(async () => {
             try {
                 const data = await fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore, apiKey);
-                renderResults(data, p1Name, p2Name, relType);
+                renderResults(data, p1Name, p2Name, relType, p1Secret, p2Secret);
+                updateTomoAvatar(mood, data.chemistry_score || algorithmicScore);
                 showToast("🌸 Tomo's destiny reading complete!", "success");
             } catch (err) {
                 console.error(err);
                 showToast(`API Error: ${err.message}. Showing Demo Reading!`, "warning");
                 const baseDemo = mood === 'Playful' ? PLAYFUL_DEMO_RESULT : DEMO_RESULT;
                 const fallbackData = { ...baseDemo, chemistry_score: algorithmicScore };
-                renderResults(fallbackData, p1Name, p2Name, relType);
+                renderResults(fallbackData, p1Name, p2Name, relType, p1Secret, p2Secret);
+                updateTomoAvatar(mood, algorithmicScore);
             }
         });
     });
@@ -598,7 +807,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Render results in DOM
-    function renderResults(data, p1Name, p2Name, relType) {
+    function renderResults(data, p1Name, p2Name, relType, p1Secret, p2Secret) {
         resultsSection.classList.remove('hidden');
 
         // Score Gauge & Animation
@@ -621,6 +830,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const offset = circumference - (score / 100) * circumference;
         circle.style.strokeDashoffset = offset;
 
+        // Render 5-Metric Breakdown Progress Bars
+        if (p1Secret && p2Secret) {
+            const breakdown = calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType);
+            renderMetricBreakdown(breakdown);
+        }
+
         // Tomo's Deep Readings
         document.getElementById('p1ResName').textContent = p1Name;
         document.getElementById('p1ReadingText').innerHTML = (data.tomo_deep_reading_p1 || "").replace(/\n/g, '<br><br>');
@@ -636,7 +851,7 @@ document.addEventListener('DOMContentLoaded', () => {
         strengthsList.innerHTML = '';
         (data.tomo_strengths || []).forEach(item => {
             const li = document.createElement('li');
-            li.className = "flex items-start gap-2.5 text-pink-950 text-sm leading-relaxed bg-pink-50/90 p-3.5 rounded-2xl border border-pink-200 shadow-sm";
+            li.className = "flex items-start gap-2.5 text-pink-950 dark:text-pink-200 text-sm leading-relaxed bg-pink-50/90 dark:bg-slate-800/90 p-3.5 rounded-2xl border border-pink-200 dark:border-slate-700 shadow-sm";
             li.innerHTML = `<img src="icon_3d_p2.jpg" class="w-5 h-5 rounded-full object-cover mt-0.5 shadow-2xs"> <span>${item}</span>`;
             strengthsList.appendChild(li);
         });
@@ -646,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
         challengesList.innerHTML = '';
         (data.tomo_challenges || []).forEach(item => {
             const li = document.createElement('li');
-            li.className = "flex items-start gap-2.5 text-amber-950 text-sm leading-relaxed bg-amber-50/90 p-3.5 rounded-2xl border border-amber-200 shadow-sm";
+            li.className = "flex items-start gap-2.5 text-amber-950 dark:text-amber-200 text-sm leading-relaxed bg-amber-50/90 dark:bg-slate-800/90 p-3.5 rounded-2xl border border-amber-200 dark:border-slate-700 shadow-sm";
             li.innerHTML = `<img src="icon_3d_p1.jpg" class="w-5 h-5 rounded-full object-cover mt-0.5 shadow-2xs"> <span>${item}</span>`;
             challengesList.appendChild(li);
         });
@@ -656,6 +871,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Scroll to results
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Render 5-Metric Breakdown Bars in DOM
+    function renderMetricBreakdown(breakdownItems) {
+        const container = document.getElementById('metricBreakdownContainer');
+        if (!container) return;
+
+        container.innerHTML = `
+            <h4 class="text-xs font-extrabold text-amber-700 dark:text-amber-300 uppercase tracking-wider mb-1 flex items-center justify-between">
+                <span>5-Metric Astrological Breakdown</span>
+                <span>(အသေးစိတ် ၅ မျိုး ပေါင်းစပ်မှု)</span>
+            </h4>
+        ` + breakdownItems.map(item => `
+            <div class="space-y-1">
+                <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-200">
+                    <span>${item.label}</span>
+                    <span class="font-extrabold text-pink-600 dark:text-pink-400">${item.score}%</span>
+                </div>
+                <div class="w-full bg-pink-100/80 dark:bg-slate-800 rounded-full h-2 overflow-hidden p-0.5 border border-pink-200/60 dark:border-slate-700">
+                    <div class="bg-gradient-to-r ${item.color} h-full rounded-full transition-all duration-1000 ease-out" style="width: ${item.score}%"></div>
+                </div>
+            </div>
+        `).join('');
     }
 
     // Animated Count-Up Score Counter
@@ -675,39 +913,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }, stepTime);
     }
 
-    // Generate and Download Canvas Destiny Card PNG
+    // Generate and Download Canvas Destiny Card PNG (with Dark Mode Support & 2x High-DPI Resolution)
     function downloadDestinyCard() {
+        const isDark = document.body.classList.contains('dark');
+        const scale = 2; // 2x High-DPI scaling
         const canvas = document.createElement('canvas');
-        canvas.width = 800;
-        canvas.height = 1150;
+        canvas.width = 800 * scale;
+        canvas.height = 1150 * scale;
         const ctx = canvas.getContext('2d');
+        ctx.scale(scale, scale);
 
         // Background Gradient
         const bgGrad = ctx.createLinearGradient(0, 0, 800, 1150);
-        bgGrad.addColorStop(0, '#fff0f5');
-        bgGrad.addColorStop(0.5, '#fff7ed');
-        bgGrad.addColorStop(1, '#f3e8ff');
+        if (isDark) {
+            bgGrad.addColorStop(0, '#0f172a');
+            bgGrad.addColorStop(0.5, '#1e1b4b');
+            bgGrad.addColorStop(1, '#311042');
+        } else {
+            bgGrad.addColorStop(0, '#fff0f5');
+            bgGrad.addColorStop(0.5, '#fff7ed');
+            bgGrad.addColorStop(1, '#f3e8ff');
+        }
         ctx.fillStyle = bgGrad;
         ctx.fillRect(0, 0, 800, 1150);
 
         // Border
-        ctx.strokeStyle = '#f472b6';
+        ctx.strokeStyle = isDark ? '#ec4899' : '#f472b6';
         ctx.lineWidth = 12;
         ctx.strokeRect(20, 20, 760, 1110);
 
         // Header Title
-        ctx.fillStyle = '#ec4899';
+        ctx.fillStyle = isDark ? '#f472b6' : '#ec4899';
         ctx.font = 'bold 36px Fredoka, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText("🌸 Tomo's Destiny Matcher 💖", 400, 80);
 
         // Subtitle
-        ctx.fillStyle = '#9333ea';
+        ctx.fillStyle = isDark ? '#c084fc' : '#9333ea';
         ctx.font = '20px Quicksand, sans-serif';
         ctx.fillText(document.getElementById('relBadge').textContent || "Destiny Reading", 400, 120);
 
         // Chemistry Score Badge Box
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillStyle = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.9)';
         ctx.beginPath();
         ctx.roundRect(220, 150, 360, 160, 24);
         ctx.fill();
@@ -715,47 +962,47 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = 4;
         ctx.stroke();
 
-        ctx.fillStyle = '#d97706';
+        ctx.fillStyle = isDark ? '#fbbf24' : '#d97706';
         ctx.font = 'bold 64px Fredoka, sans-serif';
         ctx.fillText(document.getElementById('scoreText').textContent, 400, 230);
         ctx.font = 'bold 16px Quicksand, sans-serif';
-        ctx.fillStyle = '#ec4899';
+        ctx.fillStyle = isDark ? '#f472b6' : '#ec4899';
         ctx.fillText("DESTINY CHEMISTRY SCORE", 400, 270);
 
         // Title Box
-        ctx.fillStyle = '#be185d';
+        ctx.fillStyle = isDark ? '#f472b6' : '#be185d';
         ctx.font = 'bold 22px Fredoka, Padauk, sans-serif';
         ctx.fillText(document.getElementById('tomoTitle').textContent, 400, 350);
 
         // Person 1 Box
         const p1Name = document.getElementById('p1ResName').textContent;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillStyle = isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.85)';
         ctx.beginPath();
         ctx.roundRect(50, 390, 330, 250, 20);
         ctx.fill();
-        ctx.fillStyle = '#db2777';
+        ctx.fillStyle = isDark ? '#f472b6' : '#db2777';
         ctx.font = 'bold 20px Fredoka, Padauk, sans-serif';
         ctx.textAlign = 'left';
         ctx.fillText(`👧🏻 ${p1Name}`, 70, 425);
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = isDark ? '#cbd5e1' : '#334155';
         ctx.font = '14px Padauk, sans-serif';
         wrapText(ctx, document.getElementById('p1ReadingText').textContent.slice(0, 220) + '...', 70, 460, 290, 22);
 
         // Person 2 Box
         const p2Name = document.getElementById('p2ResName').textContent;
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.fillStyle = isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.85)';
         ctx.beginPath();
         ctx.roundRect(420, 390, 330, 250, 20);
         ctx.fill();
-        ctx.fillStyle = '#d97706';
+        ctx.fillStyle = isDark ? '#fbbf24' : '#d97706';
         ctx.font = 'bold 20px Fredoka, Padauk, sans-serif';
         ctx.fillText(`🌸 ${p2Name}`, 440, 425);
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = isDark ? '#cbd5e1' : '#334155';
         ctx.font = '14px Padauk, sans-serif';
         wrapText(ctx, document.getElementById('p2ReadingText').textContent.slice(0, 220) + '...', 440, 460, 290, 22);
 
         // Dynamic Insight Box
-        ctx.fillStyle = 'rgba(243, 232, 255, 0.9)';
+        ctx.fillStyle = isDark ? 'rgba(35, 25, 55, 0.9)' : 'rgba(243, 232, 255, 0.9)';
         ctx.beginPath();
         ctx.roundRect(50, 670, 700, 200, 20);
         ctx.fill();
@@ -763,15 +1010,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = '#7e22ce';
+        ctx.fillStyle = isDark ? '#e9d5ff' : '#7e22ce';
         ctx.font = 'bold 18px Fredoka, Padauk, sans-serif';
         ctx.fillText("✨ Dynamic Synergy Insight", 70, 705);
-        ctx.fillStyle = '#334155';
+        ctx.fillStyle = isDark ? '#cbd5e1' : '#334155';
         ctx.font = '14px Padauk, sans-serif';
         wrapText(ctx, document.getElementById('dynamicInsightText').textContent.slice(0, 320) + '...', 70, 740, 660, 24);
 
         // Final Advice Box
-        ctx.fillStyle = 'rgba(254, 243, 199, 0.95)';
+        ctx.fillStyle = isDark ? 'rgba(45, 35, 20, 0.95)' : 'rgba(254, 243, 199, 0.95)';
         ctx.beginPath();
         ctx.roundRect(50, 890, 700, 160, 20);
         ctx.fill();
@@ -779,15 +1026,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        ctx.fillStyle = '#b45309';
+        ctx.fillStyle = isDark ? '#fef3c7' : '#b45309';
         ctx.font = 'bold 18px Fredoka, Padauk, sans-serif';
         ctx.fillText("👑 Tomo's Final Advice", 70, 925);
-        ctx.fillStyle = '#1e293b';
+        ctx.fillStyle = isDark ? '#fde68a' : '#1e293b';
         ctx.font = 'bold 14px Padauk, sans-serif';
         wrapText(ctx, document.getElementById('finalAdviceText').textContent.slice(0, 250) + '...', 70, 960, 660, 24);
 
         // Footer
-        ctx.fillStyle = '#ec4899';
+        ctx.fillStyle = isDark ? '#f472b6' : '#ec4899';
         ctx.font = '12px Quicksand, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText("Generated by Tomo's Destiny Matcher · Powered by Gemini 3.1 Flash Lite 🌸", 400, 1105);
@@ -829,10 +1076,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const toast = document.createElement('div');
         toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 backdrop-blur-md transition-all duration-300 border transform translate-y-2 opacity-0 ${
             type === 'success' 
-                ? 'bg-emerald-50/95 border-emerald-300 text-emerald-800' 
+                ? 'bg-emerald-50/95 dark:bg-slate-800/95 border-emerald-300 dark:border-emerald-600 text-emerald-800 dark:text-emerald-200' 
                 : type === 'warning' 
-                ? 'bg-amber-50/95 border-amber-300 text-amber-800' 
-                : 'bg-pink-50/95 border-pink-300 text-pink-800'
+                ? 'bg-amber-50/95 dark:bg-slate-800/95 border-amber-300 dark:border-amber-600 text-amber-800 dark:text-amber-200' 
+                : 'bg-pink-50/95 dark:bg-slate-800/95 border-pink-300 dark:border-pink-600 text-pink-800 dark:text-pink-200'
         }`;
         
         const icon = type === 'success' ? '✓' : type === 'warning' ? '⚠️' : '🌸';
@@ -847,13 +1094,5 @@ document.addEventListener('DOMContentLoaded', () => {
             toast.classList.add('opacity-0', 'translate-y-2');
             setTimeout(() => toast.remove(), 300);
         }, 3500);
-    }
-
-    function showError(msg) {
-        showToast(msg, 'warning');
-    }
-
-    function hideError() {
-        // Handled by toast
     }
 });

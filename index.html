@@ -54,14 +54,14 @@
         .scroll-container {
             scroll-snap-type: y mandatory;
             overflow-y: auto;
-            height: 100vh;
+            height: 100%;
             scroll-behavior: smooth;
         }
 
         .page-section {
             scroll-snap-align: start;
             scroll-snap-stop: always;
-            min-height: 100vh;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -185,6 +185,10 @@
         body.dark input:focus {
             border-color: #f472b6 !important;
             box-shadow: 0 0 18px rgba(244, 114, 182, 0.45), inset 0 2px 4px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        body.dark input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
         }
 
         /* Holographic 3D Neon Buttons */
@@ -403,8 +407,8 @@
                 <div class="relative inline-block">
                     <!-- Glowing animated aura ring -->
                     <div class="absolute -inset-2 rounded-full bg-gradient-to-r from-pink-400 via-purple-400 to-amber-300 opacity-75 blur-md animate-pulse"></div>
-                    <img id="tomoHeroImg" src="tomo-girl.webp" alt="Tomo Animated Character" class="relative mx-auto w-32 h-32 md:w-36 md:h-36 rounded-full object-cover shadow-2xl border-4 border-white tomo-bounce cursor-pointer hover:scale-110 transition-all duration-300 ring-4 ring-pink-400/50">
-                    <span class="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-emerald-400 border-2 border-white flex items-center justify-center text-xs text-white font-extrabold shadow-lg animate-bounce" title="Tomo is Animated & Online">
+                    <img id="tomoHeroImg" src="tomo-girl.webp" alt="Tomo Animated Character" class="relative mx-auto w-32 h-32 md:w-36 md:h-36 rounded-full object-cover shadow-2xl border-4 border-white dark:border-slate-800 tomo-bounce cursor-pointer hover:scale-110 transition-all duration-300 ring-4 ring-pink-400/50">
+                    <span class="absolute bottom-1 right-1 w-8 h-8 rounded-full bg-emerald-400 border-2 border-white dark:border-slate-800 flex items-center justify-center text-xs text-white font-extrabold shadow-lg animate-bounce" title="Tomo is Animated & Online">
                         ✓
                     </span>
                 </div>
@@ -429,7 +433,7 @@
                             Select Relationship Mode (ဆက်ဆံရေး ပုံစံလေး ရွေးပါ)
                         </label>
                         <div class="grid grid-cols-2 p-1.5 bg-pink-100/60 dark:bg-slate-800/80 rounded-2xl border border-pink-200/80 dark:border-slate-700 gap-1.5">
-                            <button type="button" data-value="Friends" class="mode-tab-btn py-2 px-4 rounded-xl text-xs sm:text-sm font-bold text-pink-600 transition-all cursor-pointer bg-white dark:bg-slate-700 shadow-sm border border-pink-200 dark:border-slate-600">
+                            <button type="button" data-value="Friends" class="mode-tab-btn tomo-chip-3d py-2 px-4 rounded-xl text-xs sm:text-sm font-extrabold text-pink-700 dark:text-pink-300 transition-all cursor-pointer">
                                 👯‍♂️ Friends Mode
                             </button>
                             <button type="button" data-value="Couple" class="mode-tab-btn py-2 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-pink-600 transition-all cursor-pointer">
@@ -448,7 +452,7 @@
                             Select Tomo's Mood Tone (တိုမို ရဲ့ စရိုက်ပုံစံ ရွေးပါ)
                         </label>
                         <div class="grid grid-cols-3 p-1 bg-purple-100/60 dark:bg-slate-800/80 rounded-2xl border border-purple-200/80 dark:border-slate-700 gap-1 text-center">
-                            <button type="button" data-value="Sweet" class="mood-tab-btn py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold text-purple-700 dark:text-purple-300 transition-all cursor-pointer bg-white dark:bg-slate-700 shadow-sm border border-purple-200 dark:border-slate-600">
+                            <button type="button" data-value="Sweet" class="mood-tab-btn tomo-chip-3d py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-extrabold text-purple-700 dark:text-purple-300 transition-all cursor-pointer">
                                 🌸 Sweet & Cute
                             </button>
                             <button type="button" data-value="Playful" class="mood-tab-btn py-1.5 px-2 rounded-xl text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-purple-700 transition-all cursor-pointer">

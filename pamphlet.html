@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tomo & Nomo — ပရောဂျက် မိတ်ဆက် လက်ကမ်းစာစောင်</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700;800&family=Padauk:wght@400;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Quicksand:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Padauk', 'Quicksand', 'Plus Jakarta Sans', sans-serif;
+      background-color: #0f172a;
+      color: #1e293b;
+      margin: 0;
+      padding: 20px 0;
+    }
+    .fun-title {
+      font-family: 'Fredoka', 'Padauk', sans-serif;
+    }
+    @page {
+      size: A4 landscape;
+      margin: 0;
+    }
+    .page-container {
+      width: 297mm;
+      height: 210mm;
+      padding: 8mm 12mm;
+      background: #ffffff;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+      margin: 0 auto 25px auto;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border-radius: 12px;
+    }
+    @media print {
+      body {
+        background: none;
+        padding: 0;
+      }
+      .page-container {
+        margin: 0;
+        box-shadow: none;
+        width: 297mm;
+        height: 210mm;
+        border-radius: 0;
+        page-break-after: always;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+    .fun-card {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 16px;
+      background: #ffffff;
+      padding: 9px 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .badge-pill {
+      font-weight: 700;
+      border-radius: 9999px;
+      padding: 2px 10px;
+      display: inline-flex;
+      align-items: center;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Action Bar (Screen Only) -->
+  <div class="max-w-[297mm] mx-auto mb-4 px-4 flex justify-between items-center no-print">
+    <div class="text-white text-sm font-semibold">
+      <span><strong>Tomo & Nomo</strong> — Project Expo Pamphlet (A4 Landscape, 2 Pages)</span>
+    </div>
+    <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-5 py-2 rounded-xl border border-slate-600 shadow transition-all text-xs cursor-pointer">
+      Print / Save as PDF
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 1: TOMO & NOMO ဆိုတာ ဘာလဲ? (အလွယ်ဆုံး မိတ်ဆက်နှင့် ထူးခြားချက်များ) -->
+  <!-- ========================================================================= -->
+  <div class="page-container">
+    
+    <!-- Top Header Banner -->
+    <div class="rounded-2xl p-2.5 bg-slate-900 text-white flex justify-between items-center border border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-sky-500 text-white font-black text-sm flex items-center justify-center shadow">
+          TN
+        </div>
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight fun-title flex items-center gap-2">
+            <span>TOMO & NOMO ECOSYSTEM</span>
+            <span class="text-xs bg-rose-500 text-white px-2.5 py-0.5 rounded-full font-bold">တိုမို & နိုမို</span>
+          </h1>
+          <p class="text-xs text-slate-300">
+            ချစ်သူ/သူငယ်ချင်း ရေစက်ဆန်းစစ်ပေးမည့် AI နှင့် Laptop ၂ လုံးဖြင့် အပြိုင်ဆော့ရမည့် Quiz ဂိမ်း
+          </p>
+        </div>
+      </div>
+
+      <div class="text-right hidden sm:block">
+        <span class="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">Project Expo Showcase</span>
+        <span class="text-xs font-semibold text-rose-300">Department of CE & IT</span>
+      </div>
+    </div>
+
+    <!-- 2 Big Highlight Columns (Tomo vs Nomo) -->
+    <div class="grid grid-cols-12 gap-3 flex-1 my-1.5">
+
+      <!-- LEFT SIDE (6 cols): TOMO DESTINY MATCHER -->
+      <div class="col-span-6 fun-card border-rose-200 bg-gradient-to-b from-rose-50/50 via-white to-pink-50/30 flex flex-col justify-between p-3 space-y-2">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-rose-100 pb-1.5">
+          <div>
+            <h2 class="text-base font-extrabold text-rose-600 fun-title">၁။ တိုမို (Tomo) ဆိုတာ ဘာလဲ?</h2>
+            <span class="text-[10px] font-semibold text-slate-500">AI Virtual Companion • ရေစက်ဆန်းစစ်စနစ်</span>
+          </div>
+          <span class="badge-pill bg-rose-100 text-rose-700 border border-rose-200">
+            စက္ကန့်ပိုင်းအတွင်း သုံးသပ်မည်
+          </span>
+        </div>
+
+        <!-- Description Box -->
+        <div class="bg-white p-2 rounded-xl border border-rose-100 shadow-sm text-[11px] text-slate-700 leading-relaxed">
+          <p>
+            နာမည်နှင့် မွေးနေ့ ၂ ခု ထည့်သွင်းလိုက်ရုံဖြင့် <strong>တိုမို (Tomo)</strong> အမည်ရှိ AI စနစ်က နှစ်ဦးကြားရှိ <strong>စိတ်နေစိတ်ထား၊ ဓာတ်ကျမှု (Chemistry) နှင့် ဆက်ဆံရေး အားသာချက်/အားနည်းချက်များ</strong> ကို မြန်မာဘာသာဖြင့် အသေးစိတ် သုံးသပ်ဖတ်ရှုပေးမည့် စနစ်ဖြစ်ပါသည်။
+          </p>
+        </div>
+
+        <!-- 3 Main Features of Tomo -->
+        <div class="space-y-1.5 text-[10.5px]">
+          
+          <div class="p-2 rounded-xl bg-white border border-rose-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center shrink-0">A</span>
+            <div>
+              <strong class="text-rose-700 font-bold">သူငယ်ချင်း သို့မဟုတ် ချစ်သူစုံတွဲ ရွေးချယ်နိုင်ခြင်း:</strong>
+              <p class="text-[10px] text-slate-600">Friends Mode (ခင်မင်သစ္စာရှိမှု) သို့မဟုတ် Couple Mode (အချစ်ရေး ဓာတ်ကျမှု) အလိုက် သီးသန့် တွက်ချက်ပေးပါသည်။</p>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white border border-rose-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0">B</span>
+            <div>
+              <strong class="text-purple-700 font-bold">တိုမို ၏ စရိုက်ပုံစံ (Tone) ၃ မျိုး ရွေးချယ်နိုင်ခြင်း:</strong>
+              <p class="text-[10px] text-slate-600">ချိုသာဂရုစိုက် (Sweet)၊ စနောက်သွက်လက် (Playful) သို့မဟုတ် လေးနက်ဆန်းကြယ် (Mystic) ပုံစံများ ရွေးချယ်နိုင်ပါသည်။</p>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white border border-rose-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-amber-100 text-amber-800 font-bold text-xs flex items-center justify-center shrink-0">C</span>
+            <div>
+              <strong class="text-amber-800 font-bold">စိတ်ဝင်စားဖွယ် Match Score Gauge & ကတ်ပြား:</strong>
+              <p class="text-[10px] text-slate-600">နှစ်ဦးကြား လိုက်ဖက်မှု ရာခိုင်နှုန်း (Gauge) နှင့် အကြံပြုချက်များကို အလှပုံရိပ်ဖြင့် ကြည့်ရှုသိမ်းဆည်းနိုင်ပါသည်။</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Callout -->
+        <div class="bg-rose-100/70 p-1.5 rounded-lg text-center text-[10px] font-bold text-rose-800">
+          App သွင်းစရာမလိုဘဲ Browser တွင် တိုက်ရိုက် စမ်းသပ်ကြည့်ရှုနိုင်ပါသည်။
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDE (6 cols): NOMO FRIENDSHIP QUIZ -->
+      <div class="col-span-6 fun-card border-sky-200 bg-gradient-to-b from-sky-50/50 via-white to-cyan-50/30 flex flex-col justify-between p-3 space-y-2">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-sky-100 pb-1.5">
+          <div>
+            <h2 class="text-base font-extrabold text-sky-600 fun-title">၂။ နိုမို (Nomo) ဆိုတာ ဘာလဲ?</h2>
+            <span class="text-[10px] font-semibold text-slate-500">Real-Time Multiplayer Quiz • သူငယ်ချင်းဂိမ်း</span>
+          </div>
+          <span class="badge-pill bg-sky-100 text-sky-700 border border-sky-200">
+            Laptop ၂ လုံးဖြင့် အတူဆော့ကစားမည်
+          </span>
+        </div>
+
+        <!-- Description Box -->
+        <div class="bg-white p-2 rounded-xl border border-sky-100 shadow-sm text-[11px] text-slate-700 leading-relaxed">
+          <p>
+            သူငယ်ချင်းနှစ်ဦး အချင်းချင်း <strong>မည်မျှအထိ သိနားလည်သလဲ</strong> ဆိုသည်ကို Laptop ၂ လုံးဖြင့် အချိန်နှင့်တပြေးညီ ချိတ်ဆက်ပြီး တစ်ဦး၏ အကြိုက်ကို အခြားတစ်ဦးက လိုက်လံခန့်မှန်းရသည့် <strong>အပြန်အလှန် Quiz ဂိမ်း</strong> ဖြစ်ပါသည်။
+          </p>
+        </div>
+
+        <!-- 3 Easy Game Steps -->
+        <div class="space-y-1.5 text-[10.5px]">
+          
+          <div class="p-2 rounded-xl bg-white border border-sky-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-sky-100 text-sky-700 font-bold text-xs flex items-center justify-center shrink-0">1</span>
+            <div>
+              <strong class="text-sky-800 font-bold">Room Code ဖြင့် အလွယ်တကူ ချိတ်ဆက်ခြင်း:</strong>
+              <p class="text-[10px] text-slate-600">တစ်ဖက် Laptop မှ Room Code ဖန်တီးပြီး အခြား Laptop ထံ Link ပေးပို့ကာ ဂိမ်းခန်းထဲသို့ ဝင်ရောက်နိုင်ပါသည်။</p>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white border border-sky-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-cyan-100 text-cyan-800 font-bold text-xs flex items-center justify-center shrink-0">2</span>
+            <div>
+              <strong class="text-cyan-800 font-bold">မေးခွန်း ၁၀ ခုရွေးပြီး မိမိအဖြေမှန် သတ်မှတ်ခြင်း:</strong>
+              <p class="text-[10px] text-slate-600">စားသောက်၊ Crush၊ အလွဲများထဲမှ မိမိကြိုက်နှစ်သက်ရာ မေးခွန်း ၁၀ ခုကို ရွေးချယ်ဖြေဆိုပေးရမည် ဖြစ်ပါသည်။</p>
+            </div>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white border border-sky-100 flex items-start gap-2 shadow-xs">
+            <span class="w-5 h-5 rounded-lg bg-blue-100 text-blue-800 font-bold text-xs flex items-center justify-center shrink-0">3</span>
+            <div>
+              <strong class="text-blue-800 font-bold">သူငယ်ချင်း ရွေးချယ်ထားမှုကို ခန့်မှန်းရမှတ်ယှဉ်ခြင်း:</strong>
+              <p class="text-[10px] text-slate-600">သူငယ်ချင်း ရွေးထားသည်များကို မိမိက လိုက်လံဖြေဆိုပြီး မည်သူ ရမှတ်ပိုရသလဲ ယှဉ်ပြိုင်ကြည့်ရှုရမည် ဖြစ်ပါသည်။</p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Callout -->
+        <div class="bg-sky-100/70 p-1.5 rounded-lg text-center text-[10px] font-bold text-sky-800">
+          Booth တွင် Laptop ၂ လုံးဖြင့် အပြိုင်စမ်းသပ် ကစားနိုင်ပါသည်။
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Footer -->
+    <div class="border-t border-slate-200 pt-1.5 flex justify-between items-center text-[10px] text-slate-500 font-semibold">
+      <span>တိုမို & နိုမို — အပန်းဖြေ & ရေစက်ဆန်းစစ် Web Application</span>
+      <span class="text-slate-700 font-bold">Department of CE & IT Project Expo</span>
+      <span>Page 1 of 2</span>
+    </div>
+
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- PAGE 2: အဓိက အင်္ဂါရပ်များ၊ TECH STACK နှင့် စမ်းသပ်ကစားနည်း လမ်းညွှန်       -->
+  <!-- ========================================================================= -->
+  <div class="page-container">
+    
+    <!-- Top Sub Header -->
+    <div class="flex justify-between items-center border-b-2 border-slate-100 pb-1.5 mb-1.5">
+      <div>
+        <h1 class="text-lg font-extrabold text-slate-900 fun-title">
+          အဓိက အင်္ဂါရပ်များနှင့် စမ်းသပ်ကစားနည်း လမ်းညွှန်
+        </h1>
+        <p class="text-[10px] text-slate-500 font-medium">
+          Key Features, Technology Highlights & Live Demo Guide
+        </p>
+      </div>
+
+      <span class="px-3 py-0.5 rounded-full bg-slate-100 text-slate-800 border border-slate-200 text-xs font-bold">
+        Interactive Web Project
+      </span>
+    </div>
+
+    <!-- 3 Fun Columns -->
+    <div class="grid grid-cols-12 gap-3 flex-1 my-1">
+
+      <!-- Column 1 (4 cols): 180 Viral Questions -->
+      <div class="col-span-4 fun-card border-purple-200 bg-white flex flex-col justify-between p-2.5 space-y-1.5">
+        
+        <div class="border-b border-purple-100 pb-1">
+          <h3 class="text-xs font-extrabold text-purple-900 fun-title">မေးခွန်းပေါင်း ၁၈၀ ကျော် (Category ၄ မျိုး)</h3>
+          <p class="text-[9px] text-slate-500">လူငယ်များအကြိုက် ခေတ်မီအကြောင်းအရာများ</p>
+        </div>
+
+        <div class="space-y-1 text-[9.5px] flex-1 flex flex-col justify-center">
+          
+          <div class="p-1.5 rounded-xl bg-purple-50/50 border border-purple-100">
+            <strong class="text-purple-900 font-bold block">1. Food & Hangouts (စားသောက်/ဘဝ):</strong>
+            <span class="text-slate-600 text-[9px]">မာလာရှမ်းကော Level၊ မနက်စာ ဘာစားမလဲ၊ လက်ဖက်ရည်ဆိုင် အလွဲများ</span>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-rose-50/50 border border-rose-100">
+            <strong class="text-rose-900 font-bold block">2. Crush & Dating (အချစ်ရေး/Crush):</strong>
+            <span class="text-slate-600 text-[9px]">Crush ရှေ့မှ အလွဲများ၊ Date လုပ်ချိန် အလေ့အကျင့်၊ စိတ်ကူးယဉ်ပုံစံ</span>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-sky-50/50 border border-sky-100">
+            <strong class="text-sky-900 font-bold block">3. Memes & Trends (ခေတ်ပေါ်အလေ့အထများ):</strong>
+            <span class="text-slate-600 text-[9px]">ဖုန်းအား ၁% မှ သွင်းသည့်စရိုက်၊ TikTok အလေ့အထများ</span>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-amber-50/50 border border-amber-100">
+            <strong class="text-amber-900 font-bold block">4. Friendship Roasts (စနောက်မေးခွန်းများ):</strong>
+            <span class="text-slate-600 text-[9px]">မုန့်ဝယ်ကျွေးမည်ပြောပြီး ပိုက်ဆံအိတ်မေ့သည့် သူငယ်ချင်းအလွဲများ</span>
+          </div>
+
+        </div>
+
+        <div class="text-[9px] text-purple-800 bg-purple-50 p-1 rounded-lg text-center font-semibold">
+          လူငယ်များ လက်တွေ့ကြုံတွေ့ရသော အလွဲများကို ပျော်ရွှင်စွာ မေးမြန်းနိုင်ပါသည်။
+        </div>
+
+      </div>
+
+      <!-- Column 2 (4 cols): User Experience & High-Level Tech Stack -->
+      <div class="col-span-4 fun-card border-slate-200 bg-white flex flex-col justify-between p-2.5 space-y-1.5">
+        
+        <div class="border-b border-slate-100 pb-1">
+          <h3 class="text-xs font-extrabold text-slate-800 fun-title">အသုံးပြုထားသော နည်းပညာများ (Tech Stack)</h3>
+          <p class="text-[9px] text-slate-500">Core Technologies Overview</p>
+        </div>
+
+        <div class="space-y-1 text-[9.5px] flex-1 flex flex-col justify-center">
+          
+          <div class="p-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2">
+            <span class="w-4 h-4 rounded bg-rose-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">UI</span>
+            <div>
+              <strong class="text-slate-900 font-bold">Frontend (မျက်နှာပြင်):</strong>
+              <p class="text-[9px] text-slate-600">React 18 + Vite 5 + Tailwind CSS (မြန်ဆန်သွက်လက်သော User Interface)</p>
+            </div>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2">
+            <span class="w-4 h-4 rounded bg-sky-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">WS</span>
+            <div>
+              <strong class="text-slate-900 font-bold">Real-Time Server (ချိတ်ဆက်မှု):</strong>
+              <p class="text-[9px] text-slate-600">Node.js + Express + Socket.io (Laptop ၂ လုံး တိုက်ရိုက် ဂိမ်းကစားနိုင်ရန်)</p>
+            </div>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2">
+            <span class="w-4 h-4 rounded bg-purple-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">AI</span>
+            <div>
+              <strong class="text-slate-900 font-bold">AI Reading (ဉာဏ်ရည်တု အကြံပြုချက်):</strong>
+              <p class="text-[9px] text-slate-600">Google Gemini 3.1 Flash Lite API (မြန်မာဘာသာ သုံးသပ်ချက်များ ထုတ်ပေးရန်)</p>
+            </div>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2">
+            <span class="w-4 h-4 rounded bg-emerald-500 text-white font-bold text-[9px] flex items-center justify-center shrink-0">AU</span>
+            <div>
+              <strong class="text-slate-900 font-bold">Audio Engine (သီချင်းသံစဉ်):</strong>
+              <p class="text-[9px] text-slate-600">Web Audio API (သီချင်းဖိုင်မလိုဘဲ တိုက်ရိုက်တီးခတ်သော Procedural Synth)</p>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="text-[9px] text-slate-700 bg-slate-100 p-1 rounded-lg text-center font-semibold">
+          ခေတ်မီ Web နည်းပညာများကို ပေါင်းစပ်၍ တည်ဆောက်ထားပါသည်။
+        </div>
+
+      </div>
+
+      <!-- Column 3 (4 cols): Booth Live Demo Guide -->
+      <div class="col-span-4 fun-card border-rose-200 bg-gradient-to-b from-white via-rose-50/20 to-slate-50 flex flex-col justify-between p-2.5 space-y-1.5">
+        
+        <div class="border-b border-rose-100 pb-1">
+          <h3 class="text-xs font-extrabold text-rose-900 fun-title">Booth တွင် ကိုယ်တိုင် စမ်းသပ်နည်း</h3>
+          <p class="text-[9px] text-slate-500">Live Demonstration ၃ ဆင့်</p>
+        </div>
+
+        <div class="space-y-1.5 text-[9.5px] flex-1 flex flex-col justify-center">
+          
+          <div class="p-1.5 rounded-xl bg-white border border-rose-200 shadow-xs">
+            <span class="font-bold text-rose-700 block text-[10px]">အဆင့် ၁။ Tomo ကို အရင် စမ်းသပ်ခြင်း:</span>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              အမည်နှင့် မွေးနေ့ကို ထည့်သွင်းပြီး <strong>"Tomo ရဲ့ ဖတ်ရှုချက် ရယူမည်"</strong> ကို နှိပ်၍ သုံးသပ်ချက် ဖတ်ရှုပါ။
+            </p>
+          </div>
+
+          <div class="p-2 rounded-xl bg-white border border-sky-200 shadow-xs">
+            <span class="font-bold text-sky-700 block text-[10px]">အဆင့် ၂။ Nomo ဂိမ်းကို Laptop ၂ လုံးဖြင့် ဆော့ခြင်း:</span>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              Booth ရှိ Laptop ၂ လုံးတွင် Room Code တစ်ခုထဲ ဝင်ကာ မေးခွန်း ၁၀ ခုကို အပြန်အလှန် ခန့်မှန်းဖြေဆိုပါ။
+            </p>
+          </div>
+
+          <div class="p-1.5 rounded-xl bg-white border border-emerald-200 shadow-xs">
+            <span class="font-bold text-emerald-700 block text-[10px]">အဆင့် ၃။ ရလဒ်များ နှိုင်းယှဉ်ကြည့်ရှုခြင်း:</span>
+            <p class="text-[9px] text-slate-600 mt-0.5">
+              မည်သူက အချင်းချင်း ပိုမိုသိရှိသလဲဆိုသည်ကို Match Score ရမှတ်များနှင့်အတူ ကြည့်ရှုပါ။
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Call to action badge -->
+        <div class="bg-slate-900 text-white p-1.5 rounded-xl text-center shadow-sm">
+          <span class="text-[11px] font-bold block">Welcome to Our Booth</span>
+          <span class="text-[8.5px] text-slate-300">မေးမြန်းလိုသည်များကို အချိန်မရွေး လွတ်လပ်စွာ မေးမြန်းနိုင်ပါသည်</span>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Bottom Footer -->
+    <div class="border-t border-slate-200 pt-1 flex justify-between items-center text-[10px] text-slate-500 font-semibold">
+      <span>တိုမို (Destiny Matcher) & နိုမို (Friendship Quiz)</span>
+      <span class="text-slate-700 font-bold">Technological University (Mandalay) — Department of CE & IT</span>
+      <span>Page 2 of 2</span>
+    </div>
+
+  </div>
+
+</body>
+</html>

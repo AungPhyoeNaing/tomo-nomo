@@ -20,20 +20,20 @@ body.dark .nomo-scroll-wrapper {
   color: #f0f9ff;
 }
 
-/* Desktop Volumetric 3D Frost Cursor Activation */
-@media (pointer: fine) {
-  .nomo-scroll-wrapper,
-  .nomo-scroll-wrapper button,
-  .nomo-scroll-wrapper a,
-  .nomo-scroll-wrapper input,
-  .nomo-scroll-wrapper select,
-  .nomo-scroll-wrapper textarea,
-  .nomo-scroll-wrapper .cursor-pointer,
-  .nomo-scroll-wrapper .nomo-chip-3d,
-  .nomo-scroll-wrapper .nomo-button-3d-primary,
-  .nomo-scroll-wrapper .nomo-button-3d-secondary {
-    cursor: none !important;
-  }
+/* Desktop Volumetric 3D Frost Cursor Activation (Active only when custom cursor initializes) */
+html.custom-cursor-active .nomo-scroll-wrapper,
+html.custom-cursor-active .nomo-scroll-wrapper button,
+html.custom-cursor-active .nomo-scroll-wrapper a,
+html.custom-cursor-active .nomo-scroll-wrapper select,
+html.custom-cursor-active .nomo-scroll-wrapper .cursor-pointer,
+html.custom-cursor-active .nomo-scroll-wrapper .nomo-chip-3d,
+html.custom-cursor-active .nomo-scroll-wrapper .nomo-button-3d-primary,
+html.custom-cursor-active .nomo-scroll-wrapper .nomo-button-3d-secondary {
+  cursor: none !important;
+}
+html.custom-cursor-active .nomo-scroll-wrapper input,
+html.custom-cursor-active .nomo-scroll-wrapper textarea {
+  cursor: text !important;
 }
 
 /* Custom Scrollbar for Nomo Ice Blue */

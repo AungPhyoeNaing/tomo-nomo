@@ -8,13 +8,15 @@ const Quiz = ({ roomId, data, onFinish }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
-  const { opponentName, questionsToAnswer } = data;
 
-  const totalQuestions = questionsToAnswer?.length || 10;
-  const currentQ = questionsToAnswer[currentIndex];
+  const { opponentName = 'your friend', questionsToAnswer = [] } = data || {};
+
+  const safeQuestions = Array.isArray(questionsToAnswer) ? questionsToAnswer : [];
+  const totalQuestions = safeQuestions.length || 10;
+  const currentQ = safeQuestions[currentIndex];
 
   const handleSelectOption = (option) => {
-    if (selectedOption !== null) return; // Prevent double clicking
+    if (selectedOption !== null || !currentQ) return; // Prevent double clicking
     setSelectedOption(option);
 
     const newAnswers = [...answers, { questionId: currentQ.id, selectedOption: option }];
@@ -29,14 +31,23 @@ const Quiz = ({ roomId, data, onFinish }) => {
           roomId,
           answers: newAnswers
         });
-        onFinish();
+        if (typeof onFinish === 'function') {
+          onFinish();
+        }
       }
     }, 280);
   };
 
   if (!currentQ) {
-    return <div className="text-center font-bold text-slate-500 py-12">Loading questions...</div>;
+    return (
+      <div className="nomo-card rounded-[32px] p-8 text-center space-y-4 max-w-md mx-auto shadow-xl">
+        <div className="w-8 h-8 border-3 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <div className="font-extrabold text-slate-600 dark:text-slate-300">Loading questions...</div>
+      </div>
+    );
   }
+
+  const options = Array.isArray(currentQ.options) ? currentQ.options : [];
 
   return (
     <div className="w-full max-w-xl mx-auto space-y-6">
@@ -97,13 +108,13 @@ const Quiz = ({ roomId, data, onFinish }) => {
             </div>
             
             <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-800 dark:text-slate-100 font-['Fredoka'] leading-snug">
-              {currentQ.text}
+              {currentQ.text || 'မေးခွန်း'}
             </h2>
           </div>
 
           {/* Options List */}
           <div className="space-y-3">
-            {currentQ.options.map((opt, optIdx) => {
+            {options.map((opt, optIdx) => {
               const letter = OPTION_LETTERS[optIdx] || '•';
               const isSelected = selectedOption === opt;
 

@@ -168,9 +168,9 @@ ${p1Name} ရဲ့ တက်ကြွလန်းဆန်းသော စိ�
 
 // Fallback demo references
 export const DEMO_RESULT = generateDeepProceduralReading(
-  'မင်းမင်း',
+  'သူရိန်',
   {},
-  'အောင်အောင်',
+  'သီရိ',
   {},
   'Friends',
   'Sweet',
@@ -178,9 +178,9 @@ export const DEMO_RESULT = generateDeepProceduralReading(
 );
 
 export const PLAYFUL_DEMO_RESULT = generateDeepProceduralReading(
-  'မင်းမင်း',
+  'သူရိန်',
   {},
-  'အောင်အောင်',
+  'သီရိ',
   {},
   'Friends',
   'Playful',

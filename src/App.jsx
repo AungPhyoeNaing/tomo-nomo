@@ -26,11 +26,11 @@ function TomoApp() {
   const [loading, setLoading] = useState(false);
 
   // Person 1 State
-  const [p1Name, setP1Name] = useState('မင်းမင်း');
+  const [p1Name, setP1Name] = useState('သူရိန်');
   const [p1Dob, setP1Dob] = useState('1996-06-15');
   
   // Person 2 State
-  const [p2Name, setP2Name] = useState('အောင်အောင်');
+  const [p2Name, setP2Name] = useState('သီရိ');
   const [p2Dob, setP2Dob] = useState('1996-10-08');
 
   // Results State
@@ -202,10 +202,10 @@ function TomoApp() {
             <video src="/tomo-calculating.mp4" autoPlay loop muted playsInline className="w-32 h-32 rounded-full object-cover shadow-inner border-2 border-red-400/40" />
           </div>
           <h3 className="text-xl md:text-2xl font-bold text-white font-['Fredoka'] drop-shadow-md mb-2">
-            Tomo က အသေးစိတ် ကြည့်ပေးနေပါတယ်နော်...
+            ခေတ္တလေးစောင့်ပေးပါနော်
           </h3>
           <p className="text-sm text-red-100 font-semibold max-w-md drop-shadow">
-            မွေးနေ့လေးတွေနဲ့ နာမည်လေးတွေကနေ တိုမို က နှစ်ယောက်လုံးရဲ့ စိတ်ဓာတ်လေးတွေကို နားလည်အောင် တွက်ချက်နေပါတယ်နော်...
+           တိုမို က နှစ်ယောက်လုံးရဲ့ အကြောင်းကို သေချာ တွက်ပေးနေပြီနော်.
           </p>
         </div>
       )}
@@ -247,7 +247,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TomoApp />} />
-        <Route path="/nomo" element={<NomoApp />} />
+        <Route path="/nomo/*" element={<NomoApp />} />
       </Routes>
     </BrowserRouter>
   );

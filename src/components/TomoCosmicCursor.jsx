@@ -45,9 +45,13 @@ function TomoCosmicCursor() {
   );
 
   useEffect(() => {
-    // Only enable on desktop pointer devices
-    const isTouch = window.matchMedia('(pointer: coarse)').matches;
-    if (isTouch) return;
+    // Only disable on pure touch-only devices with NO mouse/trackpad pointer
+    const hasFinePointer = window.matchMedia('(pointer: fine)').matches || window.matchMedia('(any-pointer: fine)').matches;
+    const isPureTouchOnly = window.matchMedia('(pointer: coarse)').matches && !hasFinePointer;
+    if (isPureTouchOnly) return;
+
+    // Dynamically activate cursor: none on the document root
+    document.documentElement.classList.add('custom-cursor-active');
 
     let animId;
     const pointer = pointerRef.current;
@@ -77,7 +81,7 @@ function TomoCosmicCursor() {
       nextParticleIdx = (nextParticleIdx + 1) % TRAIL_COUNT;
     };
 
-    const handleMouseMove = (e) => {
+    const handlePointerMove = (e) => {
       const p = posRef.current;
       const prevX = p.x;
       const prevY = p.y;
@@ -121,7 +125,7 @@ function TomoCosmicCursor() {
       p.isHovering = !!isInteractive;
     };
 
-    const handleMouseDown = () => {
+    const handlePointerDown = () => {
       posRef.current.isClicking = true;
       // Massive supernova burst on click (8 stars)
       const p = posRef.current;
@@ -132,19 +136,30 @@ function TomoCosmicCursor() {
       }
     };
 
-    const handleMouseUp = () => {
+    const handlePointerUp = () => {
       posRef.current.isClicking = false;
     };
 
-    const handleMouseLeave = () => {
+    const handlePointerEnter = (e) => {
+      posRef.current.isVisible = true;
+      posRef.current.x = e.clientX;
+      posRef.current.y = e.clientY;
+      if (pointer) pointer.style.opacity = '1';
+    };
+
+    const handlePointerLeave = () => {
       posRef.current.isVisible = false;
       if (pointer) pointer.style.opacity = '0';
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('mousedown', handleMouseDown, { passive: true });
-    window.addEventListener('mouseup', handleMouseUp, { passive: true });
-    document.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('mousemove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerdown', handlePointerDown, { passive: true });
+    window.addEventListener('mousedown', handlePointerDown, { passive: true });
+    window.addEventListener('pointerup', handlePointerUp, { passive: true });
+    window.addEventListener('mouseup', handlePointerUp, { passive: true });
+    document.addEventListener('mouseenter', handlePointerEnter, { passive: true });
+    document.addEventListener('mouseleave', handlePointerLeave, { passive: true });
 
     const render = () => {
       const p = posRef.current;
@@ -200,16 +215,21 @@ function TomoCosmicCursor() {
     animId = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('mouseleave', handleMouseLeave);
+      document.documentElement.classList.remove('custom-cursor-active');
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('mousemove', handlePointerMove);
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('mouseup', handlePointerUp);
+      document.removeEventListener('mouseenter', handlePointerEnter);
+      document.removeEventListener('mouseleave', handlePointerLeave);
       cancelAnimationFrame(animId);
     };
   }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden select-none hidden md:block" aria-hidden="true">
+    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden select-none" aria-hidden="true">
       {/* 🌟 Massive Sparkling Star Trail Particles */}
       {Array.from({ length: TRAIL_COUNT }).map((_, i) => (
         <div

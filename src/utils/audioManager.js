@@ -348,7 +348,7 @@ class AudioManager {
   }
 
   // =========================================================================
-  // TOMO: 128-STEP EXTENDED MULTI-SECTION FESTIVAL SOUNDSCAPE (~124 BPM)
+  // TOMO: 128-STEP EXTENDED MULTI-SECTION FESTIVAL SOUNDSCAPE (~92 BPM)
   // Movement 1 (0-31): Playful Verse
   // Movement 2 (32-63): Joyful High-Energy Chorus
   // Movement 3 (64-95): Dreamy Bridge Breakdown (Half-time glow)
@@ -356,8 +356,8 @@ class AudioManager {
   // =========================================================================
   startTomoExtendedProcedural() {
     this.stepCount = 0;
-    const bpm = 124;
-    const stepTimeMs = (60 / bpm / 4) * 1000; // 16th notes (~121ms)
+    const bpm = 92;
+    const stepTimeMs = (60 / bpm / 4) * 1000; // 16th notes (~163ms)
 
     const N = {
       C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
@@ -467,33 +467,33 @@ class AudioManager {
         if (localBar === 1) chord = CHORDS.G7;
         else if (localBar === 2) chord = CHORDS.Em7;
         else if (localBar === 3) chord = CHORDS.Am7;
-        this.playChordStab(chord, 0.22, section === 1 ? 1.2 : 0.9);
+        this.playChordStab(chord, 0.3, section === 1 ? 1.2 : 0.9);
       } else if (section === 2 && step % 16 === 0) {
         // Sustained gentle chord on bridge
         const bChords = [CHORDS.Dm7, CHORDS.G7, CHORDS.Cmaj7, CHORDS.Am7];
-        this.playChordStab(bChords[Math.floor((step % 32) / 8)], 0.6, 0.7);
+        this.playChordStab(bChords[Math.floor((step % 32) / 8)], 0.8, 0.7);
       }
 
       // --- BASSLINE ---
       const bFreq = bass128[step];
       if (bFreq) {
-        this.playBass(bFreq, section === 2 ? 0.4 : 0.2, section === 1 ? 1.2 : 1.0);
+        this.playBass(bFreq, section === 2 ? 0.5 : 0.28, section === 1 ? 1.2 : 1.0);
       }
 
       // --- MELODY ---
       const mFreq = melody128[step];
       if (mFreq) {
-        this.playPluck(mFreq, section === 1 ? 0.38 : 0.3, section === 1, section === 1 ? 1.2 : 1.0);
+        this.playPluck(mFreq, section === 1 ? 0.48 : 0.38, section === 1, section === 1 ? 1.2 : 1.0);
 
         // Add sparkling harmony chime on section 1 (chorus)
         if (section === 1 && step % 4 === 0) {
-          this.playChime(mFreq * 1.5, 0.4);
+          this.playChime(mFreq * 1.5, 0.55);
         }
       }
 
       // Generative Passing Tone Fill (Every 16 steps with 25% organic improvisation)
       if (step % 16 === 14 && Math.random() < 0.35) {
-        this.playPluck(N.G5, 0.15, true, 0.8);
+        this.playPluck(N.G5, 0.2, true, 0.8);
       }
 
       this.stepCount++;
@@ -501,7 +501,7 @@ class AudioManager {
   }
 
   // =========================================================================
-  // NOMO: 128-STEP EXTENDED PLAYFUL PARTY & GLACIAL QUEST (~132 BPM)
+  // NOMO: 128-STEP EXTENDED PLAYFUL PARTY & GLACIAL QUEST (~96 BPM)
   // Movement 1 (0-31): Playful Bouncy Verse
   // Movement 2 (32-63): Joyful Island-Pop Chorus
   // Movement 3 (64-95): Sparkling Crystal Breakdown (Descending bells)
@@ -509,8 +509,8 @@ class AudioManager {
   // =========================================================================
   startNomoExtendedProcedural() {
     this.stepCount = 0;
-    const bpm = 132;
-    const stepTimeMs = (60 / bpm / 4) * 1000; // 16th notes (~113ms)
+    const bpm = 96;
+    const stepTimeMs = (60 / bpm / 4) * 1000; // 16th notes (~156ms)
 
     const N = {
       Eb3: 155.56, F3: 174.61, G3: 196.00, Ab3: 207.65, Bb3: 233.08, C4: 261.63, D4: 293.66,
@@ -613,32 +613,32 @@ class AudioManager {
       if (section !== 2 && (step % 8 === 2 || step % 8 === 6)) {
         const localBar = Math.floor((step % 32) / 8);
         const cKey = localBar === 0 ? 'Eb' : localBar === 1 ? 'Bb' : localBar === 2 ? 'Cm' : 'Ab';
-        this.playChordStab(NOMO_CHORDS[cKey], 0.18, section === 1 ? 1.2 : 0.9);
+        this.playChordStab(NOMO_CHORDS[cKey], 0.25, section === 1 ? 1.2 : 0.9);
       } else if (section === 2 && step % 8 === 0) {
         const bKeys = ['AbM7', 'Gm7', 'Fm7', 'Bb'];
-        this.playChordStab(NOMO_CHORDS[bKeys[Math.floor((step % 32) / 8)]], 0.4, 0.7);
+        this.playChordStab(NOMO_CHORDS[bKeys[Math.floor((step % 32) / 8)]], 0.55, 0.7);
       }
 
       // --- BASSLINE ---
       const bNote = nomoBass128[step];
       if (bNote) {
-        this.playBass(bNote, section === 2 ? 0.35 : 0.18, section === 1 ? 1.2 : 1.0);
+        this.playBass(bNote, section === 2 ? 0.45 : 0.25, section === 1 ? 1.2 : 1.0);
       }
 
       // --- MARIMBA & BELL MELODY ---
       const mNote = nomoMelody128[step];
       if (mNote) {
-        this.playPluck(mNote, section === 1 ? 0.28 : 0.22, true, section === 1 ? 1.2 : 1.0);
+        this.playPluck(mNote, section === 1 ? 0.38 : 0.3, true, section === 1 ? 1.2 : 1.0);
 
         // High shimmer bell on chorus and breakdown
         if ((section === 1 || section === 2) && step % 4 === 0) {
-          this.playChime(mNote * 1.5, 0.35);
+          this.playChime(mNote * 1.5, 0.45);
         }
       }
 
       // Generative High Bell Fill (15% chance on upbeat steps)
       if (step % 8 === 7 && Math.random() < 0.3) {
-        this.playChime(N.C6, 0.25);
+        this.playChime(N.C6, 0.3);
       }
 
       this.stepCount++;

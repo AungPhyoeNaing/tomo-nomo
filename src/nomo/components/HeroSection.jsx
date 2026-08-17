@@ -37,7 +37,7 @@ function NomoHeroSection({ onScrollToForm }) {
           </h1>
           
           <p className="text-base md:text-lg text-slate-700 dark:text-slate-200 font-medium max-w-xl mx-auto leading-relaxed">
-            နိုမို (Nomo) က မင်းတို့ သူငယ်ချင်းနှစ်ယောက်ရဲ့ ဓာတ်ကျပုံနဲ့ အလွဲတွေကို မေးခွန်းတွေနဲ့ တိုက်ရိုက် စစ်ဆေးပေးမယ်
+            နိုမို (Nomo) က မင်းတို့ သူငယ်ချင်းနှစ်ယောက်ရဲ့ connection ဘယ်လောက်ကောင်းလဲဆိုတာကို မေးခွန်းတွေနဲ့ တိုက်ရိုက် စစ်ဆေးပေးမယ်
           </p>
         </div>
 

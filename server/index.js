@@ -218,7 +218,7 @@ io.on('connection', (socket) => {
 
     if (Array.isArray(answers)) {
       answers.forEach(ans => {
-          const truth = opponentTruths.find(q => q && q.id === ans.questionId);
+          const truth = opponentTruths.find(q => q && (String(q.id) === String(ans.questionId) || q.id === ans.questionId));
           if (truth && truth.answer === ans.selectedOption) {
               score++;
           }

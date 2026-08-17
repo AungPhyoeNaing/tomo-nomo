@@ -96,6 +96,7 @@ function NomoApp() {
         <Routes>
           <Route path="/" element={<JoinGame />} />
           <Route path="/game/:roomId" element={<GameRoom />} />
+          <Route path="*" element={<JoinGame />} />
         </Routes>
       </main>
     </div>

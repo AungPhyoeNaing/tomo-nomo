@@ -29,7 +29,7 @@ const GameRoom = () => {
 
   useEffect(() => {
     if (!username) {
-      navigate('/nomo');
+      navigate(roomId ? `/nomo?room=${roomId}` : '/nomo');
       return;
     }
 
@@ -40,19 +40,19 @@ const GameRoom = () => {
     
     socket.on('error', (msg) => {
       alert(msg);
-      navigate('/nomo');
+      navigate(roomId ? `/nomo?room=${roomId}` : '/nomo');
     });
 
     socket.on('room_data', (data) => {
-      setPlayers(data.players || []);
-      setGameState(data.gameState || 'waiting');
+      setPlayers(data?.players || []);
+      setGameState(data?.gameState || 'waiting');
     });
 
     socket.on('game_start_selection', (data) => {
-      const rawQuestions = data.questions && data.questions.length ? data.questions : BURMESE_QUESTIONS.slice(0, 60);
+      const rawQuestions = data?.questions && data.questions.length ? data.questions : BURMESE_QUESTIONS.slice(0, 60);
       const burmeseQuestions = rawQuestions.map(q => {
-        const bq = BURMESE_QUESTIONS.find(b => b.id === q.id);
-        return bq || q;
+        const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
+        return bq ? { ...bq, ...q } : q;
       });
       setQuestionsPool(burmeseQuestions);
       setGameState('selecting');
@@ -63,11 +63,12 @@ const GameRoom = () => {
     });
 
     socket.on('start_quiz', (data) => {
+      if (!data) return;
       const updatedQuizData = {
         ...data,
         questionsToAnswer: (data.questionsToAnswer || []).map(q => {
-          const bq = BURMESE_QUESTIONS.find(b => b.id === q.id);
-          return bq ? { ...bq, answer: q.answer } : q;
+          const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
+          return bq ? { ...bq, options: bq.options || q.options, answer: q.answer } : q;
         })
       };
       setQuizData(updatedQuizData);
@@ -79,12 +80,13 @@ const GameRoom = () => {
     });
 
     socket.on('game_over', (data) => {
+      if (!data) return;
       const updatedSelections = {};
       if (data.selections) {
         Object.keys(data.selections).forEach(userKey => {
           updatedSelections[userKey] = (data.selections[userKey] || []).map(q => {
-            const bq = BURMESE_QUESTIONS.find(b => b.id === q.id);
-            return bq ? { ...q, text: bq.text } : q;
+            const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
+            return bq ? { ...q, text: bq.text || q.text, options: bq.options || q.options } : q;
           });
         });
       }

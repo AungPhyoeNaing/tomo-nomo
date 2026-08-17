@@ -105,7 +105,7 @@ const JoinGame = () => {
                 : 'text-slate-600 dark:text-slate-400 hover:text-sky-600'
             }`}
           >
-            Create Room (အခန်းသစ်ဖွင့်)
+            Create Room 
           </motion.button>
           
           <motion.button 
@@ -119,7 +119,7 @@ const JoinGame = () => {
                 : 'text-slate-600 dark:text-slate-400 hover:text-sky-600'
             }`}
           >
-            Join Room (အခန်းထဲဝင်)
+            Join Room 
           </motion.button>
         </div>
 
@@ -150,7 +150,7 @@ const JoinGame = () => {
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-extrabold text-sky-900 dark:text-sky-200 uppercase tracking-wider">
-                {mode === 'create' ? 'Generated Room ID (အခန်းနံပါတ်)' : 'Enter Room ID (အခန်းနံပါတ် ရိုက်ထည့်ပါ)'}
+                {mode === 'create' ? 'Generated Room ID' : 'Enter Room ID'}
               </label>
               {mode === 'create' && (
                 <button 
@@ -182,7 +182,7 @@ const JoinGame = () => {
             </div>
             {mode === 'create' && (
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">
-                အခန်းဖွင့်ပြီးပါက သူငယ်ချင်းထံသို့ Invite Link ပေးပို့နိုင်ပါသည်
+                room ကိုဖွင့်ပြီးရင် သူငယ်ချင်းကို Room Code ပေးလိုက်ပါ
               </p>
             )}
           </div>

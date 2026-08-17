@@ -33,7 +33,7 @@ function HeroSection({ jumpToPage }) {
             Tomo's Destiny Matcher
           </h1>
           <p className="text-base md:text-lg text-red-700 dark:text-red-300 font-semibold max-w-xl mx-auto">
-            တိုမို (Tomo) က နှစ်ယောက်လုံးရဲ့ စိတ်ဓာတ်နဲ့ ရေစက်လေးကို အသေးစိတ် ကြည့်ပေးမယ်နော်
+            တိုမို (Tomo) က နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားနဲ့ အချင်းချင်း ဆက်နွယ်နေမှုကို အသေးစိတ် ကြည့်ပေးမယ်နော်
           </p>
         </div>
 

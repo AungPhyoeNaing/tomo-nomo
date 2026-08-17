@@ -123,12 +123,12 @@ const Results = ({ players, selections, myUsername }) => {
 
   // Build Answer Comparison Lists
   const buildBreakdown = (guesser, truthOwner) => {
-    const truthList = (selections && selections[truthOwner.username]) || [];
-    const guessList = guesser.answers || [];
+    const truthList = (selections && truthOwner && selections[truthOwner.username]) || [];
+    const guessList = (guesser && Array.isArray(guesser.answers)) ? guesser.answers : [];
 
     return truthList.map((truthQ) => {
-      const matchedGuess = guessList.find(g => g.questionId === truthQ.id);
-      const isCorrect = matchedGuess && matchedGuess.selectedOption === truthQ.answer;
+      const matchedGuess = guessList.find(g => g && (String(g.questionId) === String(truthQ.id) || g.questionId === truthQ.id));
+      const isCorrect = !!(matchedGuess && matchedGuess.selectedOption === truthQ.answer);
 
       return {
         id: truthQ.id,

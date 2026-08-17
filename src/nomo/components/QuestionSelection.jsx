@@ -15,10 +15,10 @@ const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
   const safeQuestions = useMemo(() => {
-    const rawList = questions && questions.length ? questions : BURMESE_QUESTIONS.slice(0, 60);
+    const rawList = Array.isArray(questions) && questions.length ? questions : BURMESE_QUESTIONS.slice(0, 60);
     return rawList.map(q => {
-      const bq = BURMESE_QUESTIONS.find(b => b.id === q.id);
-      return bq || q;
+      const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
+      return bq ? { ...bq, ...q, options: bq.options || q.options } : q;
     });
   }, [questions]);
 

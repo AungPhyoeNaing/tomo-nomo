@@ -1,6 +1,5 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { calculateSecretMetrics } from '../utils/astrology';
 
 function InputSection({ 
   p1Name, setP1Name, p1Dob, setP1Dob, 
@@ -10,9 +9,9 @@ function InputSection({
 }) {
   
   const handlePreset = () => {
-    setP1Name('မင်းမင်း');
+    setP1Name('သူရိန်');
     setP1Dob('1996-06-15');
-    setP2Name('အောင်အောင်');
+    setP2Name('သီရိ');
     setP2Dob('1996-10-08');
   };
 
@@ -21,38 +20,6 @@ function InputSection({
     setP1Dob('');
     setP2Name('');
     setP2Dob('');
-  };
-
-  const LiveBadges = ({ name, dob, color }) => {
-    if (!name && !dob) return null;
-    const metrics = calculateSecretMetrics(name, dob);
-    const badgeColors = {
-      red: 'bg-red-50 dark:bg-slate-800 text-red-700 dark:text-red-300 border-red-200 dark:border-slate-700',
-      orange: 'bg-orange-50 dark:bg-slate-800 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-slate-700'
-    }[color] || 'bg-red-50 dark:bg-slate-800 text-red-700 dark:text-red-300 border-red-200 dark:border-slate-700';
-
-    const dotColor = color === 'orange' ? 'bg-orange-400' : 'bg-red-400';
-    
-    return (
-      <div className="flex flex-wrap gap-1.5 pt-1">
-        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-extrabold shadow-sm flex items-center gap-1.5 ${badgeColors}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-          <span>{metrics.western} ({metrics.westernElement})</span>
-        </span>
-        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-extrabold shadow-sm flex items-center gap-1.5 ${badgeColors}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-          <span>{metrics.mahaboteDayMm} ({metrics.mahaboteHouse.split(' ')[0]})</span>
-        </span>
-        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-extrabold shadow-sm flex items-center gap-1.5 ${badgeColors}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-          <span>{metrics.animalMm} ({metrics.elementMm.split(' ')[0]})</span>
-        </span>
-        <span className={`px-2 py-0.5 rounded-md border text-[10px] font-extrabold shadow-sm flex items-center gap-1.5 ${badgeColors}`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
-          <span>Destiny #{metrics.destinyNumber}</span>
-        </span>
-      </div>
-    );
   };
 
   const todayISO = new Date().toISOString().split('T')[0];
@@ -71,14 +38,14 @@ function InputSection({
             Person 1 & Person 2 Soul Details
           </h2>
           <p className="text-xs sm:text-sm text-red-500 dark:text-red-300 font-bold">
-            နာမည်နှင့် မွေးနေ့ ရိုက်ထည့်သည်နှင့် ချက်ချင်း တိကျသော Astrological Profile တွက်ပေးပါမည်
+            နာမည်နှင့် မွေးနေ့လေး ဖြည့်သွင်းပြီး Tomo ၏ စစ်ဆေးချက်ကို ရယူပါ
           </p>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-2">
           <span className="text-xs text-red-500 font-bold">Quick Presets:</span>
           <button type="button" onClick={handlePreset} className="tomo-chip-3d px-3.5 py-1 rounded-full text-red-700 dark:text-red-300 text-xs font-bold transition-all cursor-pointer">
-            မင်းမင်း & အောင်အောင်
+            သူရိန် & သီရိ
           </button>
           <button type="button" onClick={handleReset} className="tomo-chip-3d px-3.5 py-1 rounded-full text-slate-600 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer">
             ↺ Reset Form
@@ -103,7 +70,7 @@ function InputSection({
                   type="text" 
                   value={p1Name} 
                   onChange={e => setP1Name(e.target.value)} 
-                  placeholder="e.g. Min Min / မင်းမင်း" 
+                  placeholder="e.g. သူရိန်" 
                   className="w-full bg-white/95 dark:bg-slate-800 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
@@ -118,14 +85,6 @@ function InputSection({
                   className="w-full bg-white/95 dark:bg-slate-800 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
-            </div>
-
-            <div className="border-t border-red-100 dark:border-slate-700 pt-2.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                <span className="text-[10px] font-extrabold uppercase text-red-500 tracking-wider">Live Astrological Matrix</span>
-              </div>
-              <LiveBadges name={p1Name} dob={p1Dob} color="red" />
             </div>
           </div>
 
@@ -146,7 +105,7 @@ function InputSection({
                   type="text" 
                   value={p2Name} 
                   onChange={e => setP2Name(e.target.value)} 
-                  placeholder="e.g. Aung Aung / အောင်အောင်" 
+                  placeholder="e.g. သီရိ" 
                   className="w-full bg-white/95 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
@@ -161,14 +120,6 @@ function InputSection({
                   className="w-full bg-white/95 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
-            </div>
-
-            <div className="border-t border-orange-100 dark:border-slate-700 pt-2.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span>
-                <span className="text-[10px] font-extrabold uppercase text-orange-500 tracking-wider">Live Astrological Matrix</span>
-              </div>
-              <LiveBadges name={p2Name} dob={p2Dob} color="orange" />
             </div>
           </div>
         </div>

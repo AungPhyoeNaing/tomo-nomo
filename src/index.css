@@ -11,11 +11,21 @@
         transition: background 0.4s ease, color 0.4s ease;
     }
 
-    /* Desktop Volumetric 3D Cursor Activation */
-    @media (pointer: fine) {
-        html, body, button, a, input, select, textarea, .cursor-pointer, .tomo-chip-3d, .tomo-button-3d-primary, .tomo-button-3d-secondary {
-            cursor: none !important;
-        }
+    /* Desktop Volumetric 3D Cursor Activation (Active only when custom cursor initializes) */
+    html.custom-cursor-active,
+    html.custom-cursor-active body,
+    html.custom-cursor-active button,
+    html.custom-cursor-active a,
+    html.custom-cursor-active select,
+    html.custom-cursor-active .cursor-pointer,
+    html.custom-cursor-active .tomo-chip-3d,
+    html.custom-cursor-active .tomo-button-3d-primary,
+    html.custom-cursor-active .tomo-button-3d-secondary {
+        cursor: none !important;
+    }
+    html.custom-cursor-active input,
+    html.custom-cursor-active textarea {
+        cursor: text !important;
     }
 
     body.dark {

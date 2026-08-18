@@ -56,7 +56,7 @@ const Quiz = ({ roomId, data, onFinish }) => {
         <motion.div 
           initial={{ y: -10, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/95 dark:bg-slate-800 border-2 border-sky-200 dark:border-slate-700 shadow-md"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border-2 border-sky-200/80 dark:border-slate-700/80 shadow-md"
         >
           <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
           <span className="text-xs sm:text-sm font-extrabold text-slate-700 dark:text-slate-200">
@@ -68,7 +68,7 @@ const Quiz = ({ roomId, data, onFinish }) => {
         <div className="flex items-center gap-1.5 pt-1">
           {Array.from({ length: totalQuestions }).map((_, idx) => (
             <motion.div 
-              key={idx}
+              key={idx} 
               initial={false}
               animate={{
                 scale: idx === currentIndex ? [1, 1.25, 1] : 1,
@@ -103,7 +103,7 @@ const Quiz = ({ roomId, data, onFinish }) => {
         >
           {/* Question Header */}
           <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sky-100 dark:bg-sky-950/70 text-sky-700 dark:text-sky-300 text-[11px] font-black tracking-wider uppercase border border-sky-200 dark:border-sky-800 shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sky-100/90 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 text-[11px] font-black tracking-wider uppercase border border-sky-200 dark:border-sky-800 shadow-sm">
               <span>Question #{currentIndex + 1}</span>
             </div>
             
@@ -121,29 +121,31 @@ const Quiz = ({ roomId, data, onFinish }) => {
               return (
                 <motion.button 
                   key={opt} 
-                  whileHover={{ scale: 1.02, y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.015, y: -1 }}
+                  whileTap={{ scale: 0.985 }}
                   type="button"
                   onClick={() => handleSelectOption(opt)}
-                  className={`w-full p-4 rounded-2xl font-extrabold text-sm sm:text-base text-left flex items-center justify-between gap-3 transition-all cursor-pointer shadow-sm ${
+                  className={`w-full p-4 rounded-2xl font-extrabold text-sm sm:text-base text-left flex items-start justify-between gap-3.5 transition-all cursor-pointer shadow-sm ${
                     isSelected 
                       ? 'bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-lg border-t border-white/50 scale-[1.02]' 
-                      : 'bg-white/95 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-2 border-slate-200/90 dark:border-slate-700 hover:border-sky-300 hover:bg-sky-50/50 dark:hover:bg-slate-700/80 active:scale-[0.99]'
+                      : 'bg-white/70 dark:bg-slate-800/70 backdrop-blur-md text-slate-700 dark:text-slate-200 border-2 border-slate-200/80 dark:border-slate-700 hover:border-sky-300 hover:bg-sky-50/50 dark:hover:bg-slate-700/80 active:scale-[0.99]'
                   }`}
                 >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-all ${
+                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 shadow-sm transition-all mt-0.5 ${
                       isSelected 
                         ? 'bg-white text-sky-600' 
                         : 'bg-sky-50 dark:bg-slate-700 text-sky-600 dark:text-sky-300'
                     }`}>
                       {letter}
                     </span>
-                    <span className="truncate">{opt}</span>
+                    <span className="whitespace-normal break-words leading-relaxed flex-1 text-left pt-0.5">
+                      {opt}
+                    </span>
                   </div>
 
                   {isSelected && (
-                    <span className="text-white text-base font-black shrink-0 animate-bounce">
+                    <span className="text-white text-base font-black shrink-0 mt-0.5 animate-bounce">
                       ✓
                     </span>
                   )}

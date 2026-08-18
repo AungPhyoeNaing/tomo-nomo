@@ -71,7 +71,7 @@ function InputSection({
                   value={p1Name} 
                   onChange={e => setP1Name(e.target.value)} 
                   placeholder="e.g. သူရိန်" 
-                  className="w-full bg-white/95 dark:bg-slate-800 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
+                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-red-200/80 dark:border-slate-700/80 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
 
@@ -82,7 +82,7 @@ function InputSection({
                   value={p1Dob} 
                   max={todayISO} 
                   onChange={e => setP1Dob(e.target.value)} 
-                  className="w-full bg-white/95 dark:bg-slate-800 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
+                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-red-200/80 dark:border-slate-700/80 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
             </div>
@@ -106,7 +106,7 @@ function InputSection({
                   value={p2Name} 
                   onChange={e => setP2Name(e.target.value)} 
                   placeholder="e.g. သီရိ" 
-                  className="w-full bg-white/95 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
+                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-orange-200/80 dark:border-slate-700/80 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
 
@@ -117,7 +117,7 @@ function InputSection({
                   value={p2Dob} 
                   max={todayISO} 
                   onChange={e => setP2Dob(e.target.value)} 
-                  className="w-full bg-white/95 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
+                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-orange-200/80 dark:border-slate-700/80 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-2xl px-4 py-2.5 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all" 
                 />
               </div>
             </div>
@@ -131,7 +131,7 @@ function InputSection({
               <label className="block text-[11px] font-black text-red-700 dark:text-red-300 uppercase tracking-wider mb-1">
                 Relationship Mode
               </label>
-              <div className="grid grid-cols-2 p-1 bg-red-50 dark:bg-slate-800 rounded-xl border border-red-200 dark:border-slate-700 gap-1 text-center">
+              <div className="grid grid-cols-2 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl border border-red-200/80 dark:border-slate-700/80 gap-1 text-center">
                 <button 
                   type="button" 
                   onClick={() => setRelType && setRelType('Friends')}
@@ -153,7 +153,7 @@ function InputSection({
               <label className="block text-[11px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-wider mb-1">
                 Tomo's Mood Tone
               </label>
-              <div className="grid grid-cols-3 p-1 bg-rose-50 dark:bg-slate-800 rounded-xl border border-rose-200 dark:border-slate-700 gap-1 text-center">
+              <div className="grid grid-cols-3 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl border border-rose-200/80 dark:border-slate-700/80 gap-1 text-center">
                 {[
                   { val: 'Sweet', text: 'Sweet', dot: 'bg-rose-400' },
                   { val: 'Playful', text: 'Playful', dot: 'bg-amber-400' },

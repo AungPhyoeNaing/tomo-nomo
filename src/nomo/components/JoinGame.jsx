@@ -143,7 +143,7 @@ const JoinGame = () => {
               value={username} 
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. Alex / ဇင်မင်း"
-              className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-sky-200 dark:border-slate-700 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-inner transition-all"
+              className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-sky-200/80 dark:border-slate-700/80 focus:border-sky-400 focus:ring-4 focus:ring-sky-100 rounded-2xl px-4 py-3 text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all"
             />
           </div>
 
@@ -173,10 +173,10 @@ const JoinGame = () => {
                 onChange={(e) => setRoomId(e.target.value.toUpperCase())}
                 readOnly={mode === 'create'}
                 placeholder="e.g. BOND-101"
-                className={`w-full border-2 focus:ring-4 focus:ring-sky-100 rounded-2xl px-4 py-3 text-sm font-black tracking-widest uppercase focus:outline-none shadow-inner transition-all ${
+                className={`w-full border-2 focus:ring-4 focus:ring-sky-100 rounded-2xl px-4 py-3 text-sm font-black tracking-widest uppercase focus:outline-none shadow-sm transition-all backdrop-blur-md ${
                   mode === 'create' 
-                    ? 'bg-sky-100/50 dark:bg-slate-800/50 border-sky-300/80 dark:border-slate-600 text-sky-800 dark:text-sky-300 cursor-not-allowed'
-                    : 'bg-slate-50 dark:bg-slate-800/90 border-sky-200 dark:border-slate-700 text-slate-800 dark:text-white focus:border-sky-400'
+                    ? 'bg-sky-100/60 dark:bg-slate-800/60 border-sky-300/80 dark:border-slate-600 text-sky-800 dark:text-sky-300 cursor-not-allowed'
+                    : 'bg-white/70 dark:bg-slate-800/70 border-sky-200/80 dark:border-slate-700/80 text-slate-800 dark:text-white focus:border-sky-400'
                 }`}
               />
             </div>

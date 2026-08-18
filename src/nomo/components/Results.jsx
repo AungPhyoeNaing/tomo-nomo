@@ -297,10 +297,10 @@ const Results = ({ players, selections, myUsername }) => {
               initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.03 }}
-              className={`p-4 rounded-2xl border-2 transition-all text-xs sm:text-sm shadow-sm ${
+              className={`p-4 rounded-2xl border-2 transition-all text-xs sm:text-sm shadow-sm backdrop-blur-md ${
                 item.isCorrect 
-                  ? 'bg-gradient-to-r from-cyan-50/90 to-sky-50/70 dark:bg-cyan-950/20 border-cyan-300 dark:border-cyan-800' 
-                  : 'bg-gradient-to-r from-rose-50/90 to-orange-50/70 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60'
+                  ? 'bg-cyan-50/70 dark:bg-cyan-950/30 border-cyan-300/80 dark:border-cyan-800' 
+                  : 'bg-rose-50/70 dark:bg-rose-950/30 border-rose-200/80 dark:border-rose-900/60'
               }`}
             >
               <div className="flex items-start justify-between gap-3">

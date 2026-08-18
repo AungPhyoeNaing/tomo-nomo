@@ -85,70 +85,91 @@
         border-bottom-color: rgba(248, 113, 113, 0.35);
     }
 
-    /* Tomo Cards */
+    /* Tomo Cards (Rich Frosted Glassmorphism with Specular Sheen & Depth) */
     .tomo-card {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 245, 248, 0.94) 100%);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 2px solid rgba(248, 113, 113, 0.3);
-        border-top: 2px solid rgba(255, 255, 255, 0.9);
-        border-bottom: 6px solid rgba(248, 113, 113, 0.45);
-        box-shadow: 0 16px 36px -8px rgba(248, 113, 113, 0.22), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 241, 242, 0.62) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.85);
+        border-bottom: 3.5px solid rgba(248, 113, 113, 0.35);
+        box-shadow: 0 20px 45px -10px rgba(239, 68, 68, 0.15), inset 0 1.5px 2px rgba(255, 255, 255, 0.95), inset 0 -1px 2px rgba(248, 113, 113, 0.1);
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
     }
 
     body.dark .tomo-card {
-        background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.94) 100%);
-        border-color: rgba(248, 113, 113, 0.35);
-        border-top-color: rgba(255, 255, 255, 0.15);
-        border-bottom-color: rgba(239, 68, 68, 0.55);
-        box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.08);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.72) 0%, rgba(15, 23, 42, 0.65) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.12);
+        border-bottom: 3.5px solid rgba(248, 113, 113, 0.45);
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.12);
         color: #f1f5f9;
     }
 
     .tomo-card:hover {
-        box-shadow: 0 22px 48px -6px rgba(248, 113, 113, 0.32), inset 0 2px 4px rgba(255, 255, 255, 1);
-        transform: translateY(-4px);
-        border-bottom-width: 7px;
+        box-shadow: 0 26px 54px -8px rgba(248, 113, 113, 0.26), inset 0 1.5px 2px rgba(255, 255, 255, 1);
+        transform: translateY(-3px);
+        border-bottom-width: 4.5px;
     }
 
     .tomo-card-gold {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(254, 243, 199, 0.95) 100%);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 2px solid rgba(245, 158, 11, 0.4);
-        border-top: 2px solid rgba(255, 255, 255, 0.9);
-        border-bottom: 6px solid rgba(245, 158, 11, 0.55);
-        box-shadow: 0 16px 36px -8px rgba(245, 158, 11, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.82) 0%, rgba(254, 243, 199, 0.65) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        border-bottom: 3.5px solid rgba(245, 158, 11, 0.45);
+        box-shadow: 0 20px 45px -10px rgba(245, 158, 11, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.95);
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body.dark .tomo-card-gold {
-        background: linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%);
-        border: 2px solid rgba(245, 158, 11, 0.4);
-        border-top: 2px solid rgba(255, 255, 255, 0.15);
-        border-bottom: 6px solid rgba(245, 158, 11, 0.65);
-        box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.08);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.7) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.14);
+        border-bottom: 3.5px solid rgba(245, 158, 11, 0.55);
+        box-shadow: 0 22px 48px -10px rgba(0, 0, 0, 0.7), 0 0 25px rgba(245, 158, 11, 0.12), inset 0 1.5px 2px rgba(255, 255, 255, 0.12);
+        color: #f8fafc;
+    }
+
+    .tomo-card-rose {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 228, 230, 0.65) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        border-bottom: 3.5px solid rgba(244, 63, 94, 0.4);
+        box-shadow: 0 20px 45px -10px rgba(244, 63, 94, 0.16), inset 0 1.5px 2px rgba(255, 255, 255, 0.95);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.dark .tomo-card-rose {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.75) 0%, rgba(15, 23, 42, 0.7) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.14);
+        border-bottom: 3.5px solid rgba(244, 63, 94, 0.5);
+        box-shadow: 0 22px 48px -10px rgba(0, 0, 0, 0.65), inset 0 1.5px 2px rgba(255, 255, 255, 0.12);
         color: #f8fafc;
     }
 
     .tomo-card-purple {
-        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(243, 232, 255, 0.95) 100%);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 2px solid rgba(192, 132, 252, 0.4);
-        border-top: 2px solid rgba(255, 255, 255, 0.9);
-        border-bottom: 6px solid rgba(192, 132, 252, 0.55);
-        box-shadow: 0 16px 36px -8px rgba(192, 132, 252, 0.25), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(243, 232, 255, 0.65) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
+        border: 1.5px solid rgba(255, 255, 255, 0.9);
+        border-bottom: 3.5px solid rgba(192, 132, 252, 0.45);
+        box-shadow: 0 20px 45px -10px rgba(192, 132, 252, 0.18), inset 0 1.5px 2px rgba(255, 255, 255, 0.95);
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     body.dark .tomo-card-purple {
-        background: linear-gradient(180deg, rgba(35, 25, 55, 0.96) 0%, rgba(18, 10, 32, 0.94) 100%);
+        background: linear-gradient(135deg, rgba(35, 25, 55, 0.75) 0%, rgba(18, 10, 32, 0.7) 100%);
+        backdrop-filter: blur(28px) saturate(190%);
+        -webkit-backdrop-filter: blur(28px) saturate(190%);
         border-color: rgba(192, 132, 252, 0.45);
         border-top-color: rgba(255, 255, 255, 0.15);
-        border-bottom-color: rgba(192, 132, 252, 0.65);
-        box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.08);
+        box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.6), inset 0 1.5px 2px rgba(255, 255, 255, 0.12);
         color: #f3e8ff;
     }
 

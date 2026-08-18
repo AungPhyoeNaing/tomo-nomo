@@ -135,10 +135,10 @@ const GameRoom = () => {
       <motion.div 
         initial={{ y: -10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className="flex flex-wrap items-center justify-between gap-3 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md p-3.5 sm:p-4 rounded-3xl border-2 border-sky-200/80 dark:border-slate-700 shadow-md"
+        className="flex flex-wrap items-center justify-between gap-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-3.5 sm:p-4 rounded-3xl border-2 border-sky-200/80 dark:border-slate-700/80 shadow-lg"
       >
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="px-3.5 py-1.5 bg-gradient-to-r from-sky-100 to-cyan-100 dark:from-slate-700 dark:to-sky-950/60 rounded-2xl border border-sky-300 dark:border-sky-700 font-mono font-black text-sky-800 dark:text-sky-300 text-xs sm:text-sm tracking-wider shadow-sm">
+          <div className="px-3.5 py-1.5 bg-gradient-to-r from-sky-100 to-cyan-100 dark:from-slate-800 dark:to-sky-950/60 rounded-2xl border border-sky-300 dark:border-sky-700 font-mono font-black text-sky-800 dark:text-sky-300 text-xs sm:text-sm tracking-wider shadow-sm">
             ROOM: {roomId}
           </div>
           
@@ -147,7 +147,7 @@ const GameRoom = () => {
             whileTap={{ scale: 0.96 }}
             type="button" 
             onClick={handleCopyLink}
-            className="text-xs font-black px-3.5 py-1.5 rounded-2xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 hover:border-sky-300 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+            className="text-xs font-black px-3.5 py-1.5 rounded-2xl bg-white/70 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-600 hover:border-sky-300 text-slate-700 dark:text-slate-200 transition-all flex items-center gap-1.5 shadow-sm cursor-pointer backdrop-blur-md"
           >
             {copied ? (
               <span className="text-emerald-500 font-bold">✓ Copied</span>
@@ -169,7 +169,7 @@ const GameRoom = () => {
                   isActive 
                     ? 'bg-gradient-to-r from-sky-500 to-cyan-500 text-white shadow-sm' 
                     : isDone 
-                    ? 'bg-sky-100 text-sky-700 dark:bg-slate-700/60 dark:text-sky-300' 
+                    ? 'bg-sky-100/80 text-sky-700 dark:bg-slate-800/80 dark:text-sky-300' 
                     : 'text-slate-400 dark:text-slate-500'
                 }`}
               >
@@ -197,7 +197,7 @@ const GameRoom = () => {
             className="nomo-card rounded-[36px] p-6 sm:p-10 text-center space-y-8 max-w-xl mx-auto shadow-2xl"
           >
             <div className="space-y-2">
-              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100 dark:bg-slate-800 text-sky-800 dark:text-sky-300 text-xs font-black border border-sky-200 dark:border-sky-800 shadow-sm">
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-sky-100/90 dark:bg-slate-800/90 text-sky-800 dark:text-sky-300 text-xs font-black border border-sky-200 dark:border-sky-800 shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
                 Waiting for Player 2 to join
               </span>
@@ -214,7 +214,7 @@ const GameRoom = () => {
               {/* Player 1 (You) */}
               <motion.div 
                 whileHover={{ scale: 1.03 }}
-                className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-slate-800 border-2 border-sky-300 dark:border-sky-700 shadow-md text-center space-y-2.5"
+                className="p-5 sm:p-6 rounded-3xl bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-sky-300/80 dark:border-sky-700/80 shadow-md text-center space-y-2.5"
               >
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-200 via-cyan-100 to-sky-300 dark:from-slate-700 dark:to-sky-900 text-sky-700 dark:text-sky-300 font-black text-2xl flex items-center justify-center mx-auto shadow-inner uppercase border border-white/60">
                   {username.charAt(0) || 'P1'}
@@ -222,13 +222,13 @@ const GameRoom = () => {
                 <div className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100 truncate">
                   {username}
                 </div>
-                <span className="inline-block px-3 py-1 rounded-full bg-cyan-100 dark:bg-cyan-950 text-cyan-800 dark:text-cyan-300 text-[10px] font-black tracking-wider uppercase shadow-sm">
+                <span className="inline-block px-3 py-1 rounded-full bg-cyan-100/90 dark:bg-cyan-950/90 text-cyan-800 dark:text-cyan-300 text-[10px] font-black tracking-wider uppercase shadow-sm">
                   Host (Ready)
                 </span>
               </motion.div>
 
               {/* Player 2 (Empty) */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-slate-50/80 dark:bg-slate-800/40 border-2 border-dashed border-sky-300 dark:border-slate-700 text-center space-y-2.5 flex flex-col justify-center items-center">
+              <div className="p-5 sm:p-6 rounded-3xl bg-white/40 dark:bg-slate-800/40 backdrop-blur-md border-2 border-dashed border-sky-300/80 dark:border-slate-700 text-center space-y-2.5 flex flex-col justify-center items-center">
                 <div className="w-16 h-16 rounded-2xl bg-sky-50 dark:bg-slate-700/50 flex items-center justify-center shadow-inner">
                   <div className="w-6 h-6 border-3 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
                 </div>

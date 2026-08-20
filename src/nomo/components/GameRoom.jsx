@@ -26,6 +26,7 @@ const GameRoom = () => {
   const [quizData, setQuizData] = useState(null);
   const [gameOverData, setGameOverData] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
   useEffect(() => {
     if (!username) {
@@ -33,15 +34,22 @@ const GameRoom = () => {
       return;
     }
 
-    if (!socket.connected) {
-      socket.connect();
-      socket.emit('join_room', { username, roomId });
-    }
-    
-    socket.on('error', (msg) => {
+    const handleSocketError = (msg) => {
       alert(msg);
       navigate(roomId ? `/nomo?room=${roomId}` : '/nomo');
-    });
+    };
+
+    const handleConnect = () => {
+      setConnectionError('');
+      socket.emit('join_room', { username, roomId });
+    };
+
+    const handleConnectError = () => {
+      setConnectionError('Unable to connect to the local game server. Check that the Nomo server is running on port 3080.');
+    };
+
+    socket.on('error', handleSocketError);
+    socket.on('connect_error', handleConnectError);
 
     socket.on('room_data', (data) => {
       setPlayers(data?.players || []);
@@ -95,8 +103,19 @@ const GameRoom = () => {
       setGameState('results');
     });
 
+    // Join exactly once after the socket is ready. This also handles returning
+    // to a new room while the singleton socket is already connected.
+    if (socket.connected) {
+      handleConnect();
+    } else {
+      socket.once('connect', handleConnect);
+      socket.connect();
+    }
+
     return () => {
-      socket.off('error');
+      socket.off('error', handleSocketError);
+      socket.off('connect_error', handleConnectError);
+      socket.off('connect', handleConnect);
       socket.off('room_data');
       socket.off('game_start_selection');
       socket.off('waiting_for_opponent');
@@ -131,6 +150,12 @@ const GameRoom = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
+      {connectionError && (
+        <div role="alert" className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800 shadow-sm">
+          {connectionError}
+        </div>
+      )}
+
       {/* Top Game Header Bar */}
       <motion.div 
         initial={{ y: -10, opacity: 0 }}

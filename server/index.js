@@ -8,8 +8,8 @@ const path = require('path');
 const app = express();
 app.use(cors());
 
-// Serve static files from the client build directory
-const clientBuildPath = path.join(__dirname, '../client/dist');
+// Serve the Vite build from the repository root.
+const clientBuildPath = path.join(__dirname, '../dist');
 app.use(express.static(clientBuildPath));
 
 const server = http.createServer(app);
@@ -34,6 +34,21 @@ io.on('connection', (socket) => {
           if (playerIndex !== -1) {
               room.players.splice(playerIndex, 1);
               socket.leave(roomId);
+
+              // An explicit leave abandons the current match. Reset the room so
+              // the remaining player can start a fresh game with a new opponent.
+              room.gameState = 'waiting';
+              room.playerSelections = {};
+              room.players.forEach(player => {
+                player.score = 0;
+                delete player.finished;
+                delete player.answers;
+              });
+
+              if (room.players.length === 0) {
+                delete rooms[roomId];
+                return;
+              }
               
               io.to(roomId).emit('room_data', {
                   players: room.players,
@@ -253,7 +268,7 @@ io.on('connection', (socket) => {
 
 // Handle React Routing, return all requests to React app
 app.get(/^(.*)$/, (req, res) => {
-  res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  res.sendFile(path.join(clientBuildPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3080;

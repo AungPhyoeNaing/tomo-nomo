@@ -35,10 +35,12 @@ export function useInteractiveParticles(containerRef) {
       };
     });
 
+    let frameId = 0;
+
     const startLoop = () => {
       if (!isRunningRef.current) {
         isRunningRef.current = true;
-        requestAnimationFrame(tick);
+        frameId = requestAnimationFrame(tick);
       }
     };
 
@@ -66,9 +68,8 @@ export function useInteractiveParticles(containerRef) {
       pointerRef.current.vy = 0;
     };
 
-    window.addEventListener('mousemove', handlePointerMove, { passive: true });
-    window.addEventListener('touchmove', handlePointerMove, { passive: true });
-    window.addEventListener('mouseleave', handlePointerLeave, { passive: true });
+    window.addEventListener('pointermove', handlePointerMove, { passive: true });
+    window.addEventListener('pointerleave', handlePointerLeave, { passive: true });
 
     const tick = () => {
       let hasActiveMotion = false;
@@ -133,17 +134,18 @@ export function useInteractiveParticles(containerRef) {
       }
 
       if (hasActiveMotion) {
-        requestAnimationFrame(tick);
+        frameId = requestAnimationFrame(tick);
       } else {
         isRunningRef.current = false;
+        frameId = 0;
       }
     };
 
     return () => {
-      window.removeEventListener('mousemove', handlePointerMove);
-      window.removeEventListener('touchmove', handlePointerMove);
-      window.removeEventListener('mouseleave', handlePointerLeave);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerleave', handlePointerLeave);
       isRunningRef.current = false;
+      cancelAnimationFrame(frameId);
     };
   }, [containerRef]);
 }

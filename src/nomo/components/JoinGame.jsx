@@ -57,8 +57,6 @@ const JoinGame = () => {
       return;
     }
 
-    socket.connect();
-    socket.emit('join_room', { username: cleanName, roomId: cleanRoom });
     navigate(`/nomo/game/${cleanRoom}`, { state: { username: cleanName } });
   };
 

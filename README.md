@@ -64,7 +64,75 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
 
 ---
 
-## 🚀 Quick Setup
+## Project installation and running - serving guide for OpenCode AI agents
 
-1. Configure `GEMINI_API_KEY` in `.env` or in the API Key input box.
-2. Open `index.html` in your browser!
+This project has a Vite React client and a separate Socket.IO server for the Nomo multiplayer mode. Use Node.js 18 or newer.
+
+### Installation
+
+```bash
+git clone https://github.com/AungPhyoeNaing/tomo-nomo.git
+cd tomo-nomo
+npm install
+cd server
+npm install
+cd ..
+```
+
+The root install provides the Vite client. The second install provides the Express and Socket.IO server dependencies.
+
+### Development serving
+
+Run the client and multiplayer server in separate terminals:
+
+```bash
+# Terminal 1 - client
+npm run dev
+
+# Terminal 2 - Nomo Socket.IO server
+cd server
+npm start
+```
+
+Open `http://localhost:5180/`. The Nomo client connects to the server on port `3080` during development.
+
+For a local-Wi-Fi game, serve the client on the LAN interface:
+
+```bash
+# Terminal 1
+npm run dev -- --host 0.0.0.0
+
+# Terminal 2
+cd server
+npm start
+```
+
+On each device, open `http://<HOST-LAN-IP>:5180/nomo`. Create a room on one device and join it from the other with the room code. Allow ports `5180` and `3080` through the host firewall on a trusted private network. Internet access is not required after dependencies have been installed; Nomo questions and game state are local.
+
+### Production serving
+
+Build the client, then let the Node server serve the generated `dist` directory and Socket.IO endpoint from the same origin:
+
+```bash
+npm run build
+cd server
+npm start
+```
+
+Open `http://localhost:3080/` (or `http://<HOST-LAN-IP>:3080/` on a private LAN). Do not open the source `index.html` directly; the Vite client and Socket.IO server must be running.
+
+### OpenCode agent checks
+
+After changing code, run:
+
+```bash
+npm run build
+npm run lint
+node --check server/index.js
+```
+
+Keep long-running client/server processes in separate terminals or managed background sessions. Stop them before starting another process on the same port.
+
+### Configuration and offline behavior
+
+Tomo's AI reading can use a Gemini API key entered in the UI or configured through environment-specific deployment settings. The local demo/procedural reading does not require Gemini or Internet access. Nomo multiplayer does not use Gemini; it requires only the local Socket.IO server.

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-const TRAIL_COUNT = 32;
+const TRAIL_COUNT = 24;
 
 /**
  * Volumetric 3D Glacial Dart with Massive Arctic Frost Trail for Nomo.
@@ -53,11 +53,19 @@ function NomoFrostCursor() {
     // Dynamically activate cursor: none on the document root
     document.documentElement.classList.add('custom-cursor-active');
 
-    let animId;
+    let animId = 0;
+    let isAnimating = false;
     const pointer = pointerRef.current;
     if (!pointer) return;
 
     let nextParticleIdx = 0;
+
+    const scheduleRender = () => {
+      if (!isAnimating) {
+        isAnimating = true;
+        animId = requestAnimationFrame(render);
+      }
+    };
 
     const spawnFrost = (x, y, speedMult = 1, isBurst = false) => {
       const p = particlesRef.current[nextParticleIdx];
@@ -123,6 +131,7 @@ function NomoFrostCursor() {
         target.getAttribute('role') === 'button'
       );
       p.isHovering = !!isInteractive;
+      scheduleRender();
     };
 
     const handlePointerDown = () => {
@@ -130,14 +139,16 @@ function NomoFrostCursor() {
       // Massive Arctic Frost Burst on click (8 ice crystals radiating)
       const p = posRef.current;
       if (p.isVisible) {
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 6; i++) {
           spawnFrost(p.x, p.y, 2, true);
         }
       }
+      scheduleRender();
     };
 
     const handlePointerUp = () => {
       posRef.current.isClicking = false;
+      scheduleRender();
     };
 
     const handlePointerEnter = (e) => {
@@ -145,24 +156,28 @@ function NomoFrostCursor() {
       posRef.current.x = e.clientX;
       posRef.current.y = e.clientY;
       if (pointer) pointer.style.opacity = '1';
+      scheduleRender();
     };
 
     const handlePointerLeave = () => {
       posRef.current.isVisible = false;
       if (pointer) pointer.style.opacity = '0';
+      particlesRef.current.forEach((particle, index) => {
+        particle.alive = false;
+        const el = trailRefs.current[index];
+        if (el) el.style.opacity = '0';
+      });
     };
 
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
-    window.addEventListener('mousemove', handlePointerMove, { passive: true });
     window.addEventListener('pointerdown', handlePointerDown, { passive: true });
-    window.addEventListener('mousedown', handlePointerDown, { passive: true });
     window.addEventListener('pointerup', handlePointerUp, { passive: true });
-    window.addEventListener('mouseup', handlePointerUp, { passive: true });
     document.addEventListener('mouseenter', handlePointerEnter, { passive: true });
     document.addEventListener('mouseleave', handlePointerLeave, { passive: true });
 
     const render = () => {
       const p = posRef.current;
+      let hasActiveParticles = false;
       if (p.isVisible) {
         // Calculate dynamic 3D tilt & banking angles based on movement
         const targetTiltX = Math.max(-28, Math.min(28, -p.vy * 1.2));
@@ -200,6 +215,7 @@ function NomoFrostCursor() {
               pt.alive = false;
               el.style.opacity = '0';
             } else {
+              hasActiveParticles = true;
               const opacity = (1 - progress) * 0.95;
               const scale = (1 - progress * 0.45);
               el.style.transform = `translate3d(${pt.x}px, ${pt.y}px, 0) translate(-50%, -50%) rotate(${pt.rotation.toFixed(1)}deg) scale(${scale.toFixed(2)})`;
@@ -209,19 +225,20 @@ function NomoFrostCursor() {
         }
       }
 
-      animId = requestAnimationFrame(render);
+      const pointerIsSettling = Math.abs(p.vx) > 0.01 || Math.abs(p.vy) > 0.01 || Math.abs(p.tiltX) > 0.01 || Math.abs(p.tiltY) > 0.01 || Math.abs(p.bankZ) > 0.01;
+      if (p.isVisible && (hasActiveParticles || pointerIsSettling)) {
+        animId = requestAnimationFrame(render);
+      } else {
+        isAnimating = false;
+        animId = 0;
+      }
     };
-
-    animId = requestAnimationFrame(render);
 
     return () => {
       document.documentElement.classList.remove('custom-cursor-active');
       window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('mousemove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('mousedown', handlePointerDown);
       window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('mouseup', handlePointerUp);
       document.removeEventListener('mouseenter', handlePointerEnter);
       document.removeEventListener('mouseleave', handlePointerLeave);
       cancelAnimationFrame(animId);

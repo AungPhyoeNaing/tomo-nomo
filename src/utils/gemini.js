@@ -199,7 +199,10 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
     toneDirectives = `
 CRITICAL TONE: HIGHLY PLAYFUL, WITTY, MYANMAR GEN-Z SLANG, SASSY, SARCASTIC & HILARIOUS!
 - Use phrases like "ဟဲဟဲ 😜!", "တိုမို အလွဲတွေ ဖော်ထုတ်လိုက်ပြီ 🤭", "အာဘွား 💖", "အူတက်အောင် ရယ်ရမယ့်အတွဲ", "မာလာရှမ်းကော သွားစားရင် ဘယ်သူရှင်းမလဲ အပြိုင်လုမယ့် ရေစက် 🍜".
-- Tease their real-life habits, food cravings, snacking, bossy leadership, or fake coolness.
+- Tease their real-life communication quirks, playful leadership, harmless indecision, or fake coolness.
+- Treat the examples above as style references only: never copy any of their wording into the response.
+- Use fresh, natural Burmese slang selected for this particular pair. Do not repeat a catchphrase, joke, or sentence pattern across output fields.
+- Do not make food-based jokes or mention named dishes. Focus teasing on communication quirks, decision-making, affection, and everyday habits instead.
 `;
   } else if (mood === 'Mystic') {
     toneDirectives = `

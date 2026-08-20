@@ -6,7 +6,7 @@ const isProduction = import.meta.env.PROD;
 // In development, we connect to the backend port (3001).
 const URL = isProduction 
   ? undefined 
-  : `${window.location.protocol}//${window.location.hostname}:3005`;
+  : `${window.location.protocol}//${window.location.hostname}:3080`;
 
 const socket = io(URL, { 
     autoConnect: false,

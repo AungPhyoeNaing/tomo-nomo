@@ -18,6 +18,7 @@ class AudioManager {
     
     // HTML5 Audio element for custom file fallback
     this.audioElement = null;
+    this.playRequestId = 0;
 
     // Load saved preferences
     try {
@@ -119,6 +120,7 @@ class AudioManager {
   }
 
   play(trackName = 'tomo') {
+    const playRequestId = ++this.playRequestId;
     this.initContext();
     this.currentTrack = trackName;
     this.isPlaying = true;
@@ -137,10 +139,15 @@ class AudioManager {
     testAudio.volume = this.isMuted ? 0 : this.volume;
 
     testAudio.play().then(() => {
+      if (playRequestId !== this.playRequestId || !this.isPlaying || this.currentTrack !== trackName) {
+        testAudio.pause();
+        return;
+      }
       // File exists and is playing!
       this.audioElement = testAudio;
       this.stopProcedural();
     }).catch(() => {
+      if (playRequestId !== this.playRequestId || !this.isPlaying || this.currentTrack !== trackName) return;
       // Procedural Web Audio Engine
       this.audioElement = null;
       this.startProcedural(trackName);
@@ -148,6 +155,7 @@ class AudioManager {
   }
 
   stop() {
+    this.playRequestId += 1;
     this.isPlaying = false;
     if (this.audioElement) {
       this.audioElement.pause();

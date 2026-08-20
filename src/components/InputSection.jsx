@@ -5,7 +5,7 @@ function InputSection({
   p1Name, setP1Name, p1Dob, setP1Dob, 
   p2Name, setP2Name, p2Dob, setP2Dob, 
   relType, setRelType, mood, setMood,
-  apiKey, setApiKey, onCalculate, onDemo 
+  apiKey, setApiKey, loading, inputError, onCalculate, onDemo
 }) {
   
   const handlePreset = () => {
@@ -175,12 +175,15 @@ function InputSection({
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-1">
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onCalculate} className="tomo-button-3d-primary w-full sm:w-auto px-8 py-4 text-white font-extrabold rounded-2xl text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer font-['Fredoka'] shadow-lg">
+          {inputError && (
+            <p role="alert" className="basis-full text-center text-xs font-bold text-red-600 dark:text-red-300">{inputError}</p>
+          )}
+          <motion.button type="button" disabled={loading} whileHover={{ scale: loading ? 1 : 1.03 }} whileTap={{ scale: loading ? 1 : 0.97 }} onClick={onCalculate} className="tomo-button-3d-primary w-full sm:w-auto px-8 py-4 text-white font-extrabold rounded-2xl text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer font-['Fredoka'] shadow-lg disabled:cursor-wait disabled:opacity-60">
             <img src="/icon_3d_heart.jpg" alt="Heart" className="w-5 h-5 rounded-full object-cover shadow-sm" />
             <span>Tomo ရဲ့ ဖတ်ရှုချက် ရယူမည် ➔</span>
           </motion.button>
 
-          <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={onDemo} className="tomo-button-3d-secondary w-full sm:w-auto px-6 py-4 text-red-600 font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+          <motion.button type="button" disabled={loading} whileHover={{ scale: loading ? 1 : 1.03 }} whileTap={{ scale: loading ? 1 : 0.97 }} onClick={onDemo} className="tomo-button-3d-secondary w-full sm:w-auto px-6 py-4 text-red-600 font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:cursor-wait disabled:opacity-60">
             <img src="/icon_3d_p1.jpg" alt="Demo" className="w-4 h-4 rounded-full object-cover" />
             <span>Tomo တွက်ချက်မှု နမူနာ</span>
           </motion.button>

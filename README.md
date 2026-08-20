@@ -135,4 +135,4 @@ Keep long-running client/server processes in separate terminals or managed backg
 
 ### Configuration and offline behavior
 
-Tomo's AI reading can use a Gemini API key entered in the UI or configured through environment-specific deployment settings. The local demo/procedural reading does not require Gemini or Internet access. Nomo multiplayer does not use Gemini; it requires only the local Socket.IO server.
+Tomo includes two selectable client-side Gemini key slots in the top navigation. Select a slot, open the API Key dialog, and enter the key you want to store in that slot. Values are kept in the browser's local storage. The local demo/procedural reading does not require Gemini or Internet access. Nomo multiplayer does not use Gemini; it requires only the local Socket.IO server.

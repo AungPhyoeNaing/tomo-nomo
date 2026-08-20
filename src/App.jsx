@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import HeroSection from './components/HeroSection';
 import InputSection from './components/InputSection';
@@ -8,6 +8,7 @@ import TomoBackgroundParticles from './components/TomoBackgroundParticles';
 import TomoCosmicCursor from './components/TomoCosmicCursor';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from './utils/astrology';
 import { fetchTomoDestinyReading, generateDeepProceduralReading } from './utils/gemini';
+import { TOMO_GEMINI_KEYS } from './config/geminiKeys';
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import NomoApp from './nomo/App';
@@ -21,9 +22,30 @@ function TomoApp() {
   // App State
   const [relType, setRelType] = useState('Friends');
   const [mood, setMood] = useState('Sweet');
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('tomo_api_key') || '');
+  const [slotKeys, setSlotKeys] = useState(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem('tomo_gemini_keys') || '{}');
+      const legacyKey = localStorage.getItem('tomo_api_key') || '';
+      return {
+        'key-1': stored['key-1'] || legacyKey,
+        'key-2': stored['key-2'] || ''
+      };
+    } catch {
+      return {
+        'key-1': localStorage.getItem('tomo_api_key') || '',
+        'key-2': ''
+      };
+    }
+  });
+  const [activeApiKeyId, setActiveApiKeyId] = useState(() => {
+    const savedId = localStorage.getItem('tomo_active_gemini_key');
+    return TOMO_GEMINI_KEYS.some(key => key.id === savedId) ? savedId : TOMO_GEMINI_KEYS[0].id;
+  });
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inputError, setInputError] = useState('');
+  const requestIdRef = useRef(0);
+  const demoTimerRef = useRef(null);
 
   // Person 1 State
   const [p1Name, setP1Name] = useState('သူရိန်');
@@ -36,6 +58,8 @@ function TomoApp() {
   // Results State
   const [result, setResult] = useState(null);
 
+  const apiKey = slotKeys[activeApiKeyId] || import.meta.env.VITE_GEMINI_API_KEY || '';
+
   // Theme Init
   useEffect(() => {
     const savedTheme = localStorage.getItem('tomo_theme');
@@ -43,6 +67,11 @@ function TomoApp() {
       setTheme('dark');
       document.body.classList.add('dark');
     }
+  }, []);
+
+  useEffect(() => () => {
+    requestIdRef.current += 1;
+    if (demoTimerRef.current) clearTimeout(demoTimerRef.current);
   }, []);
 
   const toggleTheme = () => {
@@ -57,12 +86,16 @@ function TomoApp() {
   };
 
   const handleSaveApiKey = (newKey) => {
-    setApiKey(newKey);
-    if (newKey) {
-      localStorage.setItem('tomo_api_key', newKey);
-    } else {
-      localStorage.removeItem('tomo_api_key');
-    }
+    const value = newKey.trim();
+    const nextSlotKeys = { ...slotKeys, [activeApiKeyId]: value };
+    setSlotKeys(nextSlotKeys);
+    localStorage.setItem('tomo_gemini_keys', JSON.stringify(nextSlotKeys));
+  };
+
+  const handleSelectApiKey = (event) => {
+    const keyId = event.target.value;
+    setActiveApiKeyId(keyId);
+    localStorage.setItem('tomo_active_gemini_key', keyId);
   };
 
   const jumpToPage = (pageId) => {
@@ -75,28 +108,49 @@ function TomoApp() {
 
   const handleScroll = (e) => {
     const target = e.target;
-    const progress = (target.scrollTop / (target.scrollHeight - target.clientHeight)) * 100;
+    const maxScroll = target.scrollHeight - target.clientHeight;
+    const progress = maxScroll > 0 ? (target.scrollTop / maxScroll) * 100 : 0;
     setScrollProgress(progress);
     
-    // Simple active page intersection logic based on scroll top
     const pages = ['page-hero', 'page-inputs', 'page-gauge', 'page-readings', 'page-synergy'];
-    const index = Math.round(target.scrollTop / window.innerHeight);
+    const index = pages.reduce((closestIndex, pageId, pageIndex) => {
+      const element = document.getElementById(pageId);
+      if (!element) return closestIndex;
+      const closest = document.getElementById(pages[closestIndex]);
+      if (!closest) return pageIndex;
+      return Math.abs(element.offsetTop - target.scrollTop) < Math.abs(closest.offsetTop - target.scrollTop)
+        ? pageIndex
+        : closestIndex;
+    }, 0);
     if (pages[index]) setActivePage(pages[index]);
   };
 
   const onCalculate = async (useDemo = false) => {
+    if (loading) return;
+
+    const todayISO = new Date().toISOString().split('T')[0];
+    const hasValidInputs = p1Name.trim() && p2Name.trim() && p1Dob && p2Dob && p1Dob <= todayISO && p2Dob <= todayISO;
+    if (!hasValidInputs) {
+      setInputError('Please enter both names and valid birthdates before calculating.');
+      jumpToPage('page-inputs');
+      return;
+    }
+    setInputError('');
+
     if (!useDemo && !apiKey) {
       setIsApiModalOpen(true);
       return;
     }
 
+    const requestId = ++requestIdRef.current;
     setLoading(true);
     const p1Secret = calculateSecretMetrics(p1Name, p1Dob);
     const p2Secret = calculateSecretMetrics(p2Name, p2Dob);
     const algorithmicScore = calculateAlgorithmicScore(p1Secret, p2Secret, relType);
 
     if (useDemo) {
-      setTimeout(() => {
+      demoTimerRef.current = setTimeout(() => {
+        if (requestId !== requestIdRef.current) return;
         const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
         setResult({ ...tailoredReading, p1Secret, p2Secret });
         setLoading(false);
@@ -107,10 +161,12 @@ function TomoApp() {
 
     try {
       const data = await fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore, apiKey);
+      if (requestId !== requestIdRef.current) return;
       setResult({ ...data, p1Secret, p2Secret });
       setLoading(false);
       jumpToPage('page-gauge');
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
       alert(`API Error: ${err.message}. Showing Deep Procedural Reading!`);
       const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
@@ -137,6 +193,14 @@ function TomoApp() {
         </div>
         <div className="flex items-center gap-2 sm:gap-2.5">
           <AudioController track="tomo" />
+          <select
+            value={activeApiKeyId}
+            onChange={handleSelectApiKey}
+            aria-label="Select Tomo Gemini API key"
+            className="max-w-[118px] rounded-full border border-red-200 bg-white/70 px-2.5 py-1.5 text-[10px] font-extrabold text-red-700 shadow-sm outline-none dark:border-slate-700 dark:bg-slate-900/80 dark:text-red-300"
+          >
+            {TOMO_GEMINI_KEYS.map(key => <option key={key.id} value={key.id}>{key.label}</option>)}
+          </select>
           <button 
             type="button" 
             onClick={toggleTheme} 
@@ -225,6 +289,7 @@ function TomoApp() {
           p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob}
           relType={relType} setRelType={setRelType}
           mood={mood} setMood={setMood}
+          loading={loading} inputError={inputError}
           onCalculate={() => onCalculate(false)}
           onDemo={() => onCalculate(true)}
         />

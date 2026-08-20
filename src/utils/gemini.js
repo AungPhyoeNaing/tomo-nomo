@@ -286,20 +286,33 @@ Return JSON only.
     }
   };
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
-  if (!response.ok) {
-    const errorJson = await response.json().catch(() => ({}));
-    throw new Error(errorJson.error?.message || `HTTP ${response.status}`);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const errorJson = await response.json().catch(() => ({}));
+      throw new Error(errorJson.error?.message || `HTTP ${response.status}`);
+    }
+
+    const resData = await response.json();
+    const jsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!jsonText) throw new Error("No response received from Gemini API.");
+    return JSON.parse(jsonText);
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Gemini request timed out after 30 seconds.');
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const resData = await response.json();
-  const jsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!jsonText) throw new Error("No response received from Gemini API.");
-  return JSON.parse(jsonText);
 }

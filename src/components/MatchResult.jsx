@@ -9,7 +9,8 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
 
   useEffect(() => {
     let currentScore = 0;
-    const targetScore = Math.min(100, Math.max(0, Math.round(result.chemistry_score || 85)));
+    const numericScore = Number(result.chemistry_score);
+    const targetScore = Math.min(100, Math.max(0, Number.isFinite(numericScore) ? Math.round(numericScore) : 85));
     
     const interval = setInterval(() => {
       currentScore += 1;

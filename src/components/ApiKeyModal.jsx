@@ -58,21 +58,21 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", bounce: 0.25, duration: 0.4 }}
-            className="relative w-full max-w-md tomo-card rounded-[32px] p-6 sm:p-7 shadow-2xl border-2 border-red-200/80 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 text-left space-y-5 z-10"
+            className="relative w-[94vw] max-w-md tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-7 shadow-2xl border-2 border-red-200/80 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 text-left space-y-4 sm:space-y-5 z-10 max-h-[90vh] overflow-y-auto overscroll-contain"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-red-100 dark:border-slate-800 pb-3.5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-md">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="flex items-center justify-between border-b border-red-100 dark:border-slate-800 pb-2.5 sm:pb-3.5">
+              <div className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center text-white shadow-md shrink-0">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-red-600 dark:text-red-400 font-['Fredoka']">
+                  <h3 className="text-base sm:text-lg font-black text-red-600 dark:text-red-400 font-['Fredoka']">
                     Tomo Gemini API Key
                   </h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-bold">
                     Configure Google Gemini 3.1 Flash Lite
                   </p>
                 </div>
@@ -81,25 +81,25 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
               <button 
                 type="button" 
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-slate-700 text-slate-500 hover:text-red-600 flex items-center justify-center font-bold text-sm transition-all cursor-pointer"
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-red-100 dark:hover:bg-slate-700 text-slate-500 hover:text-red-600 flex items-center justify-center font-bold text-xs sm:text-sm transition-all cursor-pointer shrink-0"
               >
                 ✕
               </button>
             </div>
 
             {/* Input Field */}
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="modalApiKeyInput" className="text-xs font-black text-red-700 dark:text-red-300 uppercase tracking-wider">
+                <label htmlFor="modalApiKeyInput" className="text-[11px] sm:text-xs font-black text-red-700 dark:text-red-300 uppercase tracking-wider">
                   API Key
                 </label>
                 <div className="flex items-center gap-2">
                   <button 
                     type="button" 
                     onClick={handlePaste}
-                    className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer flex items-center gap-1.5"
+                    className="text-[10px] sm:text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer flex items-center gap-1"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
                     <span>Paste</span>
@@ -108,7 +108,7 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
                     <button 
                       type="button" 
                       onClick={handleClear}
-                      className="text-[11px] font-bold text-slate-400 hover:text-red-500 cursor-pointer"
+                      className="text-[10px] sm:text-[11px] font-bold text-slate-400 hover:text-red-500 cursor-pointer"
                     >
                       Clear
                     </button>
@@ -124,12 +124,12 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
                   onChange={(e) => setTempKey(e.target.value)}
                   placeholder="AIzaSy..."
                   autoFocus
-                  className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-2xl pl-4 pr-11 py-3 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-inner transition-all font-mono"
+                  className="w-full bg-slate-50 dark:bg-slate-800/90 border-2 border-red-200 dark:border-slate-700 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-xl sm:rounded-2xl pl-3 sm:pl-4 pr-10 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-inner transition-all font-mono min-h-[42px]"
                 />
                 <button 
                   type="button" 
                   onClick={() => setShowKey(!showKey)}
-                  className="absolute right-3.5 text-slate-400 hover:text-red-600 text-sm cursor-pointer p-1"
+                  className="absolute right-3 text-slate-400 hover:text-red-600 text-sm cursor-pointer p-1"
                   title={showKey ? "Hide API Key" : "Show API Key"}
                 >
                   {showKey ? (
@@ -147,10 +147,10 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
             </div>
 
             {/* Status & Helper Info */}
-            <div className="bg-red-50/70 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-red-100 dark:border-slate-700/80 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold">
+            <div className="bg-red-50/70 dark:bg-slate-800/60 rounded-xl sm:rounded-2xl p-3 sm:p-3.5 border border-red-100 dark:border-slate-700/80 space-y-1.5 sm:space-y-2">
+              <div className="flex items-center justify-between text-[11px] sm:text-xs font-bold">
                 <span className="text-slate-600 dark:text-slate-300">API Key Status:</span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 ${
+                <span className={`px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold flex items-center gap-1.5 ${
                   tempKey 
                     ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
                     : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
@@ -159,35 +159,35 @@ function ApiKeyModal({ isOpen, onClose, apiKey, onSaveKey }) {
                   <span>{tempKey ? 'Active & Ready' : 'Procedural Mode'}</span>
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
                 API Key ထည့်သွင်းပါက Google Gemini AI ဖြင့် ပိုမိုနက်ရှိုင်းဆန်းကြယ်စွာ တွက်ချက်ပေးမည် ဖြစ်ပါသည်။ Key မရှိပါကလည်း Deep Procedural Engine ဖြင့် အပြည့်အဝ အသုံးပြုနိုင်ပါသည်။
               </p>
-              <div className="pt-1">
+              <div className="pt-0.5">
                 <a 
                   href="https://aistudio.google.com/app/apikey" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-[11px] font-bold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
+                  className="text-[10px] sm:text-[11px] font-bold text-red-600 dark:text-red-400 hover:underline flex items-center gap-1"
                 >
                   <span>Get a free Gemini API Key from Google AI Studio</span>
-                  <span className="text-[10px]">↗</span>
+                  <span className="text-[9px] sm:text-[10px]">↗</span>
                 </a>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 pt-1">
+            <div className="flex flex-col-reverse xs:flex-row items-center justify-end gap-2 sm:gap-2.5 pt-1 w-full">
               <button 
                 type="button" 
                 onClick={onClose}
-                className="px-4 py-2.5 rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                className="w-full xs:w-auto px-4 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer text-center"
               >
                 Cancel
               </button>
               <button 
                 type="button" 
                 onClick={handleSave}
-                className="tomo-button-3d-primary px-6 py-2.5 rounded-2xl text-white text-xs font-black shadow-md cursor-pointer hover:scale-105 transition-all"
+                className="tomo-button-3d-primary w-full xs:w-auto px-5 sm:px-6 py-2.5 sm:py-2.5 rounded-xl sm:rounded-2xl text-white text-xs font-black shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all text-center min-h-[40px] flex items-center justify-center"
               >
                 Save & Apply Key
               </button>

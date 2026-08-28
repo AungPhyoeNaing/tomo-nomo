@@ -28,16 +28,23 @@ const Results = ({ players, selections, myUsername }) => {
 
   // Animate compatibility score
   useEffect(() => {
-    let current = 0;
-    const interval = setInterval(() => {
-      current += 1;
-      setAnimatedScore(current);
-      if (current >= resonanceScore) {
-        clearInterval(interval);
-      }
-    }, 15);
+    const startTime = performance.now();
+    const duration = 900;
+    let animId = 0;
 
-    return () => clearInterval(interval);
+    const animate = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1, elapsed / duration);
+      const easeProgress = 1 - Math.pow(1 - progress, 3);
+      setAnimatedScore(Math.round(easeProgress * resonanceScore));
+
+      if (progress < 1) {
+        animId = requestAnimationFrame(animate);
+      }
+    };
+
+    animId = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animId);
   }, [resonanceScore]);
 
   // Confetti effect with cool ice blue tones
@@ -48,10 +55,13 @@ const Results = ({ players, selections, myUsername }) => {
       origin: { y: 0.6 }
     });
 
+    let frameId = 0;
+    let isCancelled = false;
     const end = Date.now() + 2500;
     const colors = ['#38bdf8', '#0ea5e9', '#06b6d4', '#60a5fa', '#bae6fd'];
 
-    (function frame() {
+    function frame() {
+      if (isCancelled) return;
       confetti({
         particleCount: 2,
         angle: 60,
@@ -68,9 +78,15 @@ const Results = ({ players, selections, myUsername }) => {
       });
 
       if (Date.now() < end) {
-        requestAnimationFrame(frame);
+        frameId = requestAnimationFrame(frame);
       }
-    }());
+    }
+
+    frame();
+    return () => {
+      isCancelled = true;
+      if (frameId) cancelAnimationFrame(frameId);
+    };
   }, []);
 
   const getChemistryData = () => {

@@ -126,8 +126,10 @@ class AudioManager {
     this.isPlaying = true;
     this.notify();
 
-    // Check if custom audio file exists (e.g. /tomo-bgm.mp3 or /nomo-bgm.mp3)
-    const customSrc = trackName === 'nomo' ? '/nomo-bgm.mp3' : '/tomo-bgm.mp3';
+    // Check if custom audio file exists (e.g. /pixeltown-color-parade-main-version-41716-01-53.mp3 or /nomo-bgm.mp3)
+    const customSrc = trackName === 'nomo' 
+      ? '/nomo-bgm.mp3' 
+      : '/pixeltown-color-parade-main-version-41716-01-53.mp3';
     
     if (this.audioElement) {
       this.audioElement.pause();

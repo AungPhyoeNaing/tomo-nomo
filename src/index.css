@@ -5,8 +5,9 @@
 @layer base {
     html, body {
         height: 100%;
+        height: 100dvh;
         overflow: hidden;
-        font-family: 'Quicksand', 'Padauk', sans-serif;
+        font-family: 'Quicksand', 'Fredoka', 'Padauk', 'Pyidaungsu', 'Myanmar3', 'Myanmar Text', 'Tharlon', sans-serif;
         background: radial-gradient(circle at 10% 20%, #fef2f2 0%, #fff7ed 45%, #f3e8ff 90%);
         transition: background 0.4s ease, color 0.4s ease;
     }
@@ -50,38 +51,55 @@
 }
 
 @layer components {
-    /* Full-Page Scroll & Section Snap System */
+    /* Full-Page Scroll & Section Snap System with Mobile Fluid Support */
     .scroll-container {
-        scroll-snap-type: y mandatory;
         overflow-y: auto;
         height: 100vh;
+        height: 100dvh;
         scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+    }
+
+    @media (min-width: 768px) {
+        .scroll-container {
+            scroll-snap-type: y mandatory;
+        }
     }
 
     .page-section {
-        scroll-snap-align: start;
-        scroll-snap-stop: always;
-        min-height: 100vh;
+        min-height: auto;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         position: relative;
-        padding: 4.5rem 1rem 3rem 1rem;
+        padding: calc(4.25rem + env(safe-area-inset-top, 0px)) 0.875rem calc(2.25rem + env(safe-area-inset-bottom, 0px)) 0.875rem;
         width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        .page-section {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 4.5rem 1rem 3rem 1rem;
+        }
     }
 
     /* Glass Nav */
     .glass-nav {
-        background: rgba(255, 255, 255, 0.85);
+        background: rgba(255, 255, 255, 0.88);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border-bottom: 1px solid rgba(248, 113, 113, 0.2);
         transition: all 0.4s ease;
+        padding-top: max(0.5rem, env(safe-area-inset-top));
     }
 
     body.dark .glass-nav {
-        background: rgba(15, 23, 42, 0.88);
+        background: rgba(15, 23, 42, 0.9);
         border-bottom-color: rgba(248, 113, 113, 0.35);
     }
 

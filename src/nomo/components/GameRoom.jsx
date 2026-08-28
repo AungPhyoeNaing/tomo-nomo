@@ -19,6 +19,7 @@ const GameRoom = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const normalizedRoomId = String(roomId || '').toUpperCase().trim();
   const [username, setUsername] = useState(location.state?.username || '');
   const [players, setPlayers] = useState([]);
   const [gameState, setGameState] = useState('waiting'); 
@@ -30,18 +31,18 @@ const GameRoom = () => {
 
   useEffect(() => {
     if (!username) {
-      navigate(roomId ? `/nomo?room=${roomId}` : '/nomo');
+      navigate(normalizedRoomId ? `/nomo?room=${normalizedRoomId}` : '/nomo');
       return;
     }
 
     const handleSocketError = (msg) => {
       alert(msg);
-      navigate(roomId ? `/nomo?room=${roomId}` : '/nomo');
+      navigate(normalizedRoomId ? `/nomo?room=${normalizedRoomId}` : '/nomo');
     };
 
     const handleConnect = () => {
       setConnectionError('');
-      socket.emit('join_room', { username, roomId });
+      socket.emit('join_room', { username, roomId: normalizedRoomId });
     };
 
     const handleConnectError = () => {
@@ -126,14 +127,14 @@ const GameRoom = () => {
   }, [username, roomId, navigate]);
 
   const handleCopyLink = () => {
-    const inviteUrl = `${window.location.origin}/nomo?room=${roomId}`;
+    const inviteUrl = `${window.location.origin}/nomo?room=${normalizedRoomId}`;
     navigator.clipboard.writeText(inviteUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   const handleLeave = () => {
-    socket.emit('leave_room', { roomId });
+    socket.emit('leave_room', { roomId: normalizedRoomId });
     navigate('/nomo');
   };
 
@@ -164,7 +165,7 @@ const GameRoom = () => {
       >
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="px-3.5 py-1.5 bg-gradient-to-r from-sky-100 to-cyan-100 dark:from-slate-800 dark:to-sky-950/60 rounded-2xl border border-sky-300 dark:border-sky-700 font-mono font-black text-sky-800 dark:text-sky-300 text-xs sm:text-sm tracking-wider shadow-sm">
-            ROOM: {roomId}
+            ROOM: {normalizedRoomId}
           </div>
           
           <motion.button 
@@ -284,7 +285,7 @@ const GameRoom = () => {
         {/* SELECTING QUESTIONS */}
         {gameState === 'selecting' && (
           <QuestionSelection 
-            roomId={roomId} 
+            roomId={normalizedRoomId} 
             questions={questionsPool} 
             onSubmit={() => setGameState('waiting_others')} 
           />
@@ -317,7 +318,7 @@ const GameRoom = () => {
         {/* QUIZ ANSWERING PHASE */}
         {gameState === 'playing' && quizData && (
           <Quiz 
-            roomId={roomId}
+            roomId={normalizedRoomId}
             data={quizData}
             onFinish={() => setGameState('waiting_results')}
           />
@@ -350,7 +351,7 @@ const GameRoom = () => {
             players={gameOverData.players} 
             selections={gameOverData.selections}
             myUsername={username}
-            roomId={roomId}
+            roomId={normalizedRoomId}
           />
         )}
       </div>

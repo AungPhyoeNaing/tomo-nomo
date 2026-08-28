@@ -23,39 +23,57 @@ const io = new Server(server, {
 // State management (in-memory)
 const rooms = {};
 
+const normalizeRoomId = (roomId) => String(roomId || '').toUpperCase().trim();
+const sanitizeUsername = (name) => String(name || '').trim().slice(0, 30);
+
+// Periodic reaper: Purge inactive/abandoned rooms older than 45 minutes
+setInterval(() => {
+  const now = Date.now();
+  const maxIdleMs = 45 * 60 * 1000;
+  for (const roomId in rooms) {
+    const room = rooms[roomId];
+    if (!room.lastActivity || now - room.lastActivity > maxIdleMs) {
+      console.log(`[Reaper] Purging idle room: ${roomId}`);
+      delete rooms[roomId];
+    }
+  }
+}, 10 * 60 * 1000);
+
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   // Handle explicit leave (e.g. "Wrong Room")
   socket.on('leave_room', ({ roomId }) => {
-      const room = rooms[roomId];
-      if (room) {
-          const playerIndex = room.players.findIndex(p => p.id === socket.id);
-          if (playerIndex !== -1) {
-              room.players.splice(playerIndex, 1);
-              socket.leave(roomId);
+    const cleanRoomId = normalizeRoomId(roomId);
+    const room = rooms[cleanRoomId];
+    if (room) {
+      room.lastActivity = Date.now();
+      const playerIndex = room.players.findIndex(p => p.id === socket.id);
+      if (playerIndex !== -1) {
+        room.players.splice(playerIndex, 1);
+        socket.leave(cleanRoomId);
 
-              // An explicit leave abandons the current match. Reset the room so
-              // the remaining player can start a fresh game with a new opponent.
-              room.gameState = 'waiting';
-              room.playerSelections = {};
-              room.players.forEach(player => {
-                player.score = 0;
-                delete player.finished;
-                delete player.answers;
-              });
+        // An explicit leave abandons the current match. Reset the room so
+        // the remaining player can start a fresh game with a new opponent.
+        room.gameState = 'waiting';
+        room.playerSelections = {};
+        room.players.forEach(player => {
+          player.score = 0;
+          delete player.finished;
+          delete player.answers;
+        });
 
-              if (room.players.length === 0) {
-                delete rooms[roomId];
-                return;
-              }
-              
-              io.to(roomId).emit('room_data', {
-                  players: room.players,
-                  gameState: room.gameState
-              });
-          }
+        if (room.players.length === 0) {
+          delete rooms[cleanRoomId];
+          return;
+        }
+        
+        io.to(cleanRoomId).emit('room_data', {
+          players: room.players,
+          gameState: room.gameState
+        });
       }
+    }
   });
 
   socket.on('disconnect', () => {
@@ -67,18 +85,21 @@ io.on('connection', (socket) => {
       const playerIndex = room.players.findIndex(p => p.id === socket.id);
       
       if (playerIndex !== -1) {
+        room.lastActivity = Date.now();
         // If game hasn't started (waiting), remove the player
         if (room.gameState === 'waiting') {
           room.players.splice(playerIndex, 1);
           
-          // Notify remaining player (if any)
-          io.to(roomId).emit('room_data', {
-            players: room.players,
-            gameState: room.gameState
-          });
+          if (room.players.length === 0) {
+            delete rooms[roomId];
+          } else {
+            // Notify remaining player (if any)
+            io.to(roomId).emit('room_data', {
+              players: room.players,
+              gameState: room.gameState
+            });
+          }
         }
-        // If game is in progress, we keep them in the array to allow reconnection
-        // (The join_room logic handles the socket ID update)
         break;
       }
     }
@@ -86,34 +107,41 @@ io.on('connection', (socket) => {
 
   // Join a room
   socket.on('join_room', ({ username, roomId }) => {
-    socket.join(roomId);
+    const cleanRoomId = normalizeRoomId(roomId);
+    const cleanUsername = sanitizeUsername(username);
+
+    if (!cleanRoomId || !cleanUsername) {
+      socket.emit('error', 'Invalid room ID or username');
+      return;
+    }
+
+    socket.join(cleanRoomId);
     
-    if (!rooms[roomId]) {
-      rooms[roomId] = {
+    if (!rooms[cleanRoomId]) {
+      rooms[cleanRoomId] = {
         players: [],
         gameState: 'waiting', // waiting, selecting, playing, results
         questionsPool: [],
-        playerSelections: {}
+        playerSelections: {},
+        lastActivity: Date.now()
       };
       
       // Select 60 random questions for this session
       const shuffled = [...questions].sort(() => 0.5 - Math.random());
-      rooms[roomId].questionsPool = shuffled.slice(0, 60);
+      rooms[cleanRoomId].questionsPool = shuffled.slice(0, 60);
     }
 
-    const room = rooms[roomId];
+    const room = rooms[cleanRoomId];
+    room.lastActivity = Date.now();
 
     // Check if player already exists
-    const existingPlayerIndex = room.players.findIndex(p => p.username === username);
+    const existingPlayerIndex = room.players.findIndex(p => p.username === cleanUsername);
     
     // Room Full Check (if new player)
     if (existingPlayerIndex === -1 && room.players.length >= 2) {
       socket.emit('error', 'Room is full');
       return;
     }
-
-    // Now it's safe to join
-    socket.join(roomId);
 
     if (existingPlayerIndex !== -1) {
        // Update socket id for reconnecting player
@@ -126,7 +154,7 @@ io.on('connection', (socket) => {
        }
        // 2. If playing, send quiz data
        if (room.gameState === 'playing') {
-           const opponent = room.players.find(p => p.username !== username);
+           const opponent = room.players.find(p => p.username !== cleanUsername);
            if (opponent && room.playerSelections[opponent.username]) {
                socket.emit('start_quiz', {
                    opponentName: opponent.username,
@@ -147,11 +175,11 @@ io.on('connection', (socket) => {
        }
 
     } else {
-       room.players.push({ id: socket.id, username, score: 0 });
+       room.players.push({ id: socket.id, username: cleanUsername, score: 0 });
     }
 
     // Notify room of player update
-    io.to(roomId).emit('room_data', {
+    io.to(cleanRoomId).emit('room_data', {
       players: room.players,
       gameState: room.gameState
     });
@@ -159,21 +187,28 @@ io.on('connection', (socket) => {
     // If 2 players, start selection phase
     if (room.players.length === 2 && room.gameState === 'waiting') {
       room.gameState = 'selecting';
-      io.to(roomId).emit('game_start_selection', {
+      io.to(cleanRoomId).emit('game_start_selection', {
         questions: room.questionsPool
       });
     }
   });
 
   // Handle question selection
-  // User sends: { selectedQuestions: [{id, answer}] } -> Questions they picked for opponent to guess about them
+  // User sends: { selectedQuestions: [{id, answer, text, options}] }
   socket.on('submit_selection', ({ roomId, selectedQuestions }) => {
-    const room = rooms[roomId];
+    const cleanRoomId = normalizeRoomId(roomId);
+    const room = rooms[cleanRoomId];
     if (!room) return;
+
+    if (!Array.isArray(selectedQuestions) || selectedQuestions.length !== 10) {
+      socket.emit('error', 'Must select exactly 10 questions.');
+      return;
+    }
 
     const player = room.players.find(p => p.id === socket.id);
     if (!player) return;
 
+    room.lastActivity = Date.now();
     room.playerSelections[player.username] = selectedQuestions;
 
     const player1 = room.players[0];
@@ -217,13 +252,16 @@ io.on('connection', (socket) => {
   // Handle Answer Submission
   // User sends: { answers: [{ questionId, selectedOption }] }
   socket.on('submit_answers', ({ roomId, answers }) => {
-    const room = rooms[roomId];
+    const cleanRoomId = normalizeRoomId(roomId);
+    const room = rooms[cleanRoomId];
     if (!room) return;
 
     const player = room.players.find(p => p.id === socket.id);
     const opponent = room.players.find(p => p.id !== socket.id);
     
     if (!player || !opponent) return;
+
+    room.lastActivity = Date.now();
 
     // Calculate Score
     // The questions this player answered were selected by the opponent.
@@ -233,31 +271,32 @@ io.on('connection', (socket) => {
 
     if (Array.isArray(answers)) {
       answers.forEach(ans => {
-          const truth = opponentTruths.find(q => q && (String(q.id) === String(ans.questionId) || q.id === ans.questionId));
-          if (truth && truth.answer === ans.selectedOption) {
-              score++;
-          }
+        if (!ans) return;
+        const truth = opponentTruths.find(q => q && (String(q.id) === String(ans.questionId) || q.id === ans.questionId));
+        if (truth && truth.answer === ans.selectedOption) {
+          score++;
+        }
       });
     }
 
     player.score = score;
     player.finished = true;
-    player.answers = answers || [];
+    player.answers = Array.isArray(answers) ? answers : [];
 
     // Check if both finished
     const allFinished = room.players.every(p => p.finished);
     
     if (allFinished) {
         room.gameState = 'results';
-        io.to(roomId).emit('game_over', {
+        io.to(cleanRoomId).emit('game_over', {
             players: room.players,
             selections: room.playerSelections
         });
         
         // Cleanup room after 10 minutes to allow viewing results
         setTimeout(() => {
-            if (rooms[roomId] && rooms[roomId].gameState === 'results') {
-                delete rooms[roomId];
+            if (rooms[cleanRoomId] && rooms[cleanRoomId].gameState === 'results') {
+                delete rooms[cleanRoomId];
             }
         }, 10 * 60 * 1000); 
     } else {

@@ -19,7 +19,7 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Quicksand', 'Fredoka', 'Padauk', 'sans-serif'],
+        sans: ['Quicksand', 'Fredoka', 'Padauk', 'Pyidaungsu', 'Myanmar3', 'Myanmar Text', 'Tharlon', 'sans-serif'],
       }
     },
   },

@@ -11,8 +11,9 @@ import { fetchTomoDestinyReading, generateDeepProceduralReading } from './utils/
 import { TOMO_GEMINI_KEYS } from './config/geminiKeys';
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import NomoApp from './nomo/App';
 import AudioController from './components/AudioController';
+
+const NomoApp = React.lazy(() => import('./nomo/App'));
 
 function TomoApp() {
   const [theme, setTheme] = useState('light');
@@ -44,6 +45,7 @@ function TomoApp() {
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
   const requestIdRef = useRef(0);
   const demoTimerRef = useRef(null);
 
@@ -98,6 +100,9 @@ function TomoApp() {
     localStorage.setItem('tomo_active_gemini_key', keyId);
   };
 
+  const progressBarRef = useRef(null);
+  const scrollRafRef = useRef(0);
+
   const jumpToPage = (pageId) => {
     setActivePage(pageId);
     const element = document.getElementById(pageId);
@@ -108,21 +113,32 @@ function TomoApp() {
 
   const handleScroll = (e) => {
     const target = e.target;
-    const maxScroll = target.scrollHeight - target.clientHeight;
-    const progress = maxScroll > 0 ? (target.scrollTop / maxScroll) * 100 : 0;
-    setScrollProgress(progress);
-    
-    const pages = ['page-hero', 'page-inputs', 'page-gauge', 'page-readings', 'page-synergy'];
-    const index = pages.reduce((closestIndex, pageId, pageIndex) => {
-      const element = document.getElementById(pageId);
-      if (!element) return closestIndex;
-      const closest = document.getElementById(pages[closestIndex]);
-      if (!closest) return pageIndex;
-      return Math.abs(element.offsetTop - target.scrollTop) < Math.abs(closest.offsetTop - target.scrollTop)
-        ? pageIndex
-        : closestIndex;
-    }, 0);
-    if (pages[index]) setActivePage(pages[index]);
+    if (scrollRafRef.current) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0;
+      const maxScroll = target.scrollHeight - target.clientHeight;
+      const progress = maxScroll > 0 ? (target.scrollTop / maxScroll) * 100 : 0;
+      if (progressBarRef.current) {
+        progressBarRef.current.style.width = `${progress}%`;
+      }
+      
+      const scrollTop = target.scrollTop;
+      const pages = ['page-hero', 'page-inputs', 'page-gauge', 'page-readings', 'page-synergy'];
+      let closestPage = pages[0];
+      let minDistance = Infinity;
+
+      for (let i = 0; i < pages.length; i++) {
+        const el = document.getElementById(pages[i]);
+        if (el) {
+          const dist = Math.abs(el.offsetTop - scrollTop);
+          if (dist < minDistance) {
+            minDistance = dist;
+            closestPage = pages[i];
+          }
+        }
+      }
+      setActivePage((prev) => (prev !== closestPage ? closestPage : prev));
+    });
   };
 
   const onCalculate = async (useDemo = false) => {
@@ -168,7 +184,8 @@ function TomoApp() {
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       console.error(err);
-      alert(`API Error: ${err.message}. Showing Deep Procedural Reading!`);
+      setToastMessage(`API Notice: ${err.message || 'Gemini error'}. Showing Deep Procedural Reading!`);
+      setTimeout(() => setToastMessage(''), 5000);
       const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
       setResult({ ...tailoredReading, p1Secret, p2Secret });
       setLoading(false);
@@ -178,7 +195,26 @@ function TomoApp() {
 
   return (
     <>
-      <motion.div id="topProgressBar" className="fixed top-0 left-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 z-50" initial={{ width: 0 }} animate={{ width: `${scrollProgress}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.1 }}></motion.div>
+      <div 
+        ref={progressBarRef} 
+        id="topProgressBar" 
+        className="fixed top-0 left-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 z-50 pointer-events-none transition-[width] duration-75 ease-out" 
+        style={{ width: '0%' }}
+      />
+
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-xl flex items-center gap-2 border border-amber-300"
+        >
+          <span>✨</span>
+          <span>{toastMessage}</span>
+          <button type="button" onClick={() => setToastMessage('')} className="ml-2 hover:opacity-80 font-black cursor-pointer">✕</button>
+        </motion.div>
+      )}
 
       {/* GPU-Accelerated Tomo Cosmic Background Atmosphere */}
       <TomoBackgroundParticles />
@@ -186,26 +222,31 @@ function TomoApp() {
       {/* GPU-Accelerated Tomo Cosmic Stardust & Celestial Halo Cursor */}
       <TomoCosmicCursor />
 
-      <nav className="glass-nav fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 py-3.5 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => jumpToPage('page-hero')}>
-          <video src="/tomo-main.mp4" autoPlay loop muted playsInline className="w-9 h-9 rounded-full object-cover border-2 border-red-400 shadow-sm animate-pulse" />
-          <span className="font-extrabold text-red-600 text-base sm:text-lg font-['Fredoka'] tracking-tight">Tomo's Destiny Matcher</span>
+      <nav className="glass-nav fixed top-0 left-0 right-0 z-40 px-2.5 sm:px-6 py-2 sm:py-3.5 flex items-center justify-between shadow-sm border-b border-red-200/40 dark:border-slate-800">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => jumpToPage('page-hero')}>
+          <video src="/tomo-main.mp4" autoPlay loop muted playsInline className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-red-400 shadow-sm animate-pulse" />
+          <span className="font-extrabold text-red-600 text-sm sm:text-lg font-['Fredoka'] tracking-tight">
+            <span className="xs:hidden">Tomo</span>
+            <span className="hidden xs:inline sm:hidden">Tomo Destiny</span>
+            <span className="hidden sm:inline">Tomo's Destiny Matcher</span>
+          </span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-2.5">
+        <div className="flex items-center gap-1 sm:gap-2.5">
           <AudioController track="tomo" />
           <select
             value={activeApiKeyId}
             onChange={handleSelectApiKey}
             aria-label="Select Tomo Gemini API key"
-            className="max-w-[118px] rounded-full border border-red-200 bg-white/70 px-2.5 py-1.5 text-[10px] font-extrabold text-red-700 shadow-sm outline-none dark:border-slate-700 dark:bg-slate-900/80 dark:text-red-300"
+            className="max-w-[82px] sm:max-w-[118px] rounded-full border border-red-200 bg-white/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-extrabold text-red-700 shadow-sm outline-none dark:border-slate-700 dark:bg-slate-900/90 dark:text-red-300 cursor-pointer"
           >
             {TOMO_GEMINI_KEYS.map(key => <option key={key.id} value={key.id}>{key.label}</option>)}
           </select>
           <button 
             type="button" 
             onClick={toggleTheme} 
-            className="tomo-chip-3d px-3 py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1.5 cursor-pointer transition-all"
-            title="Toggle color mode"
+            className="tomo-chip-3d p-1.5 sm:px-3 sm:py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1.5 cursor-pointer transition-all"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Cosmic Dark Mode'}
+            aria-label="Toggle color mode"
           >
             {theme === 'dark' ? (
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -216,38 +257,40 @@ function TomoApp() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             )}
-            <span className="hidden sm:inline">{theme === 'dark' ? 'Light Mode' : 'Cosmic Mode'}</span>
+            <span className="hidden md:inline">{theme === 'dark' ? 'Light' : 'Cosmic'}</span>
           </button>
           
           {/* API Key Modal Trigger from Navbar */}
           <button 
             type="button" 
             onClick={() => setIsApiModalOpen(true)}
-            className="tomo-chip-3d px-3 py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1.5 cursor-pointer hover:scale-105 transition-all shadow-sm"
+            className="tomo-chip-3d p-1.5 sm:px-3 sm:py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1 sm:gap-1.5 cursor-pointer hover:scale-105 transition-all shadow-sm"
             title="Configure Gemini API Key"
+            aria-label="Configure Gemini API Key"
           >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
-            <span className="hidden sm:inline">{apiKey ? 'API Key Set' : 'Set API Key'}</span>
-            <span className={`w-2 h-2 rounded-full ${apiKey ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+            <span className="hidden sm:inline">{apiKey ? 'Key Set' : 'Set Key'}</span>
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 ${apiKey ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
           </button>
 
           {/* Switch to Nomo Quiz Button */}
           <Link 
             to="/nomo" 
-            className="px-3.5 py-1.5 rounded-full bg-gradient-to-r from-sky-100 to-cyan-100 hover:from-sky-200 hover:to-cyan-200 dark:from-sky-950/80 dark:to-cyan-950/80 border border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 text-xs font-extrabold transition-all shadow-sm flex items-center gap-1.5 cursor-pointer hover:scale-105"
+            className="px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-sky-100 to-cyan-100 hover:from-sky-200 hover:to-cyan-200 dark:from-sky-950/80 dark:to-cyan-950/80 border border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 text-[11px] sm:text-xs font-extrabold transition-all shadow-sm flex items-center gap-1 cursor-pointer hover:scale-105"
             title="Switch to Nomo Friendship Chemistry Quiz"
           >
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span>Nomo Quiz</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+            <span className="hidden xs:inline">Nomo</span>
+            <span className="xs:hidden font-black">Nomo</span>
             <span className="text-[10px] text-sky-500 font-black">➔</span>
           </Link>
         </div>
       </nav>
 
-      {/* Floating Side Navigation Dots */}
-      <div className="fixed right-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-3 p-2 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md rounded-full border border-red-200/60 dark:border-slate-700 shadow-lg">
+      {/* Floating Side Navigation Dots (Hidden on Mobile to avoid content blockage) */}
+      <div className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-3 p-2 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md rounded-full border border-red-200/60 dark:border-slate-700 shadow-lg">
         {['page-hero', 'page-inputs', 'page-gauge', 'page-readings', 'page-synergy'].map((pageId, idx) => (
           <button 
             key={pageId} 
@@ -261,15 +304,15 @@ function TomoApp() {
 
       {/* Loading Modal */}
       {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-950/50 backdrop-blur-md p-6 text-center">
-          <div className="tomo-card rounded-full p-3 shadow-2xl mb-6 border-4 border-red-300 flex items-center justify-center tomo-pulse">
-            <video src="/tomo-calculating.mp4" autoPlay loop muted playsInline className="w-32 h-32 rounded-full object-cover shadow-inner border-2 border-red-400/40" />
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-950/60 dark:bg-black/70 backdrop-blur-md p-4 sm:p-6 text-center">
+          <div className="tomo-card rounded-full p-2.5 sm:p-3 shadow-2xl mb-4 sm:mb-6 border-4 border-red-300 flex items-center justify-center tomo-pulse">
+            <video src="/tomo-calculating.mp4" autoPlay loop muted playsInline className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover shadow-inner border-2 border-red-400/40" />
           </div>
-          <h3 className="text-xl md:text-2xl font-bold text-white font-['Fredoka'] drop-shadow-md mb-2">
+          <h3 className="text-lg sm:text-2xl font-bold text-white font-['Fredoka'] drop-shadow-md mb-2">
             ခေတ္တလေးစောင့်ပေးပါနော်
           </h3>
-          <p className="text-sm text-red-100 font-semibold max-w-md drop-shadow">
-           တိုမို က နှစ်ယောက်လုံးရဲ့ အကြောင်းကို သေချာ တွက်ပေးနေပြီနော်.
+          <p className="text-xs sm:text-sm text-red-100 font-semibold max-w-sm sm:max-w-md drop-shadow px-2">
+           တိုမို က နှစ်ယောက်လုံးရဲ့ အကြောင်းကို သေချာ တွက်ပေးနေပြီနော်...
           </p>
         </div>
       )}
@@ -312,7 +355,19 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TomoApp />} />
-        <Route path="/nomo/*" element={<NomoApp />} />
+        <Route 
+          path="/nomo/*" 
+          element={
+            <React.Suspense fallback={
+              <div className="min-h-screen flex flex-col items-center justify-center bg-sky-50 dark:bg-slate-900 text-sky-600 gap-3 font-['Fredoka']">
+                <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
+                <p className="text-base font-bold">Loading Nomo Quiz...</p>
+              </div>
+            }>
+              <NomoApp />
+            </React.Suspense>
+          } 
+        />
       </Routes>
     </BrowserRouter>
   );

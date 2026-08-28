@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import nomoWavingVideo from '../../Nomo_waving_loop_animation_202608141958.mp4';
+
+const nomoWavingVideo = '/nomo-main.mp4';
 
 function NomoHeroSection({ onScrollToForm }) {
   return (

@@ -5,8 +5,9 @@ import GameRoom from './components/GameRoom';
 import BackgroundElements from './components/BackgroundElements';
 import NomoFrostCursor from './components/NomoFrostCursor';
 import AudioController from '../components/AudioController';
-import nomoWavingVideo from '../Nomo_waving_loop_animation_202608141958.mp4';
 import './index.css';
+
+const nomoWavingVideo = '/nomo-main.mp4';
 
 function NomoApp() {
   const [theme, setTheme] = useState('light');

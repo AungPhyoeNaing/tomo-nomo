@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
 
 /**
- * Ultra-smooth, calm, zero-gravity cursor interactive physics engine.
+ * Ultra-smooth, zero-layout-thrashing cursor interactive physics engine.
  * Features gentle, slow drifting repulsion and soft harmonic spring return.
+ * Eliminates getBoundingClientRect inside the RAF loop by caching base particle coordinates.
  * Modifies DOM transforms directly via requestAnimationFrame with 0 React re-renders.
  */
 export function useInteractiveParticles(containerRef) {
@@ -14,26 +15,36 @@ export function useInteractiveParticles(containerRef) {
     const container = containerRef.current;
     if (!container) return;
 
-    // Collect all registered interactive particle elements
-    const elements = container.querySelectorAll('[data-interactive="true"]');
-    particlesRef.current = Array.from(elements).map((el) => {
-      const mass = parseFloat(el.getAttribute('data-mass') || '2.0');
-      const spring = parseFloat(el.getAttribute('data-spring') || '0.018');
-      const damping = parseFloat(el.getAttribute('data-damping') || '0.94');
-      const radius = parseFloat(el.getAttribute('data-radius') || '140');
+    const measureParticles = () => {
+      const elements = container.querySelectorAll('[data-interactive="true"]');
+      particlesRef.current = Array.from(elements).map((el) => {
+        const mass = parseFloat(el.getAttribute('data-mass') || '2.0');
+        const spring = parseFloat(el.getAttribute('data-spring') || '0.018');
+        const damping = parseFloat(el.getAttribute('data-damping') || '0.94');
+        const radius = parseFloat(el.getAttribute('data-radius') || '140');
 
-      return {
-        el,
-        offsetX: 0,
-        offsetY: 0,
-        vx: 0,
-        vy: 0,
-        mass,
-        spring,
-        damping,
-        radius
-      };
-    });
+        const rect = el.getBoundingClientRect();
+        const prevP = particlesRef.current.find(p => p.el === el);
+        const offsetX = prevP ? prevP.offsetX : 0;
+        const offsetY = prevP ? prevP.offsetY : 0;
+
+        return {
+          el,
+          baseX: rect.left - offsetX + rect.width / 2,
+          baseY: rect.top - offsetY + rect.height / 2,
+          offsetX,
+          offsetY,
+          vx: prevP ? prevP.vx : 0,
+          vy: prevP ? prevP.vy : 0,
+          mass,
+          spring,
+          damping,
+          radius
+        };
+      });
+    };
+
+    measureParticles();
 
     let frameId = 0;
 
@@ -68,8 +79,15 @@ export function useInteractiveParticles(containerRef) {
       pointerRef.current.vy = 0;
     };
 
+    let resizeTimer = null;
+    const handleResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(measureParticles, 150);
+    };
+
     window.addEventListener('pointermove', handlePointerMove, { passive: true });
     window.addEventListener('pointerleave', handlePointerLeave, { passive: true });
+    window.addEventListener('resize', handleResize, { passive: true });
 
     const tick = () => {
       let hasActiveMotion = false;
@@ -82,11 +100,11 @@ export function useInteractiveParticles(containerRef) {
       pointerRef.current.vx *= 0.75;
       pointerRef.current.vy *= 0.75;
 
-      for (let i = 0; i < particlesRef.current.length; i++) {
-        const p = particlesRef.current[i];
-        const rect = p.el.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+      const particles = particlesRef.current;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const centerX = p.baseX + p.offsetX;
+        const centerY = p.baseY + p.offsetY;
 
         const dx = px - centerX;
         const dy = py - centerY;
@@ -144,8 +162,11 @@ export function useInteractiveParticles(containerRef) {
     return () => {
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerleave', handlePointerLeave);
+      window.removeEventListener('resize', handleResize);
+      if (resizeTimer) clearTimeout(resizeTimer);
       isRunningRef.current = false;
       cancelAnimationFrame(frameId);
     };
   }, [containerRef]);
 }
+

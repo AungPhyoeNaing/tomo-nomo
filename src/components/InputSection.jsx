@@ -1,194 +1,49 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { localTodayISO, isValidBirthDate } from '../utils/reading';
+import SpellCardFrame from './SpellCardFrame';
+import PlayerAvatar from './PlayerAvatar';
 
-function InputSection({ 
-  p1Name, setP1Name, p1Dob, setP1Dob, 
-  p2Name, setP2Name, p2Dob, setP2Dob, 
-  relType, setRelType, mood, setMood,
-  apiKey, setApiKey, loading, inputError, onCalculate, onDemo
-}) {
-  
-  const handlePreset = () => {
-    setP1Name('သူရိန်');
-    setP1Dob('1996-06-15');
-    setP2Name('သီရိ');
-    setP2Dob('1996-10-08');
-  };
-
-  const handleReset = () => {
-    setP1Name('');
-    setP1Dob('');
-    setP2Name('');
-    setP2Dob('');
-  };
-
-  const todayISO = new Date().toISOString().split('T')[0];
-
+function PersonFields({ number, name, setName, dob, setDob, loading }) {
   return (
-    <section id="page-inputs" className="page-section">
-      <motion.div 
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, staggerChildren: 0.15 }}
-        viewport={{ once: true, margin: "-50px" }}
-        className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-5 px-1 sm:px-2"
-      >
-        <div className="text-center space-y-1">
-          <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-red-600 dark:text-red-400 font-['Fredoka']">
-            Person 1 & Person 2 Soul Details
-          </h2>
-          <p className="text-[11px] sm:text-sm text-red-500 dark:text-red-300 font-bold px-2">
-            နာမည်နှင့် မွေးနေ့လေး ဖြည့်သွင်းပြီး Tomo ၏ စစ်ဆေးချက်ကို ရယူပါ
-          </p>
+    <fieldset className="tomo-person" disabled={loading}>
+      <legend><PlayerAvatar number={number} /><span>{number === 1 ? 'Player one' : 'Player two'}<small>{number === 1 ? 'The main character. That’s you.' : 'Every adventure needs a plus one.'}</small></span></legend>
+      <SpellCardFrame />
+      <label htmlFor={`person-${number}-name`}>Name <span lang="my">အမည်</span></label>
+      <input id={`person-${number}-name`} name={`person${number}Name`} autoComplete="off" maxLength={80} required value={name} onChange={event => setName(event.target.value)} placeholder={number === 1 ? 'Your name' : 'Their name'} />
+      <label htmlFor={`person-${number}-dob`}>Birthday <span lang="my">မွေးနေ့</span></label>
+      <input id={`person-${number}-dob`} name={`person${number}Birthday`} type="date" min="0100-01-01" max={localTodayISO()} required value={dob} onChange={event => setDob(event.target.value)} />
+    </fieldset>
+  );
+}
+
+function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p2Dob, setP2Dob, relType, setRelType, mood, setMood, loading, inputError, onCalculate, onDemo }) {
+  const readyFields = [Boolean(p1Name.trim()), isValidBirthDate(p1Dob), Boolean(p2Name.trim()), isValidBirthDate(p2Dob)];
+  return (
+    <section id="page-inputs" className="page-section tomo-details" aria-labelledby="details-heading">
+      <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Tomo · Connection quest</p><h2 id="details-heading">Assemble your duo.</h2></div><p lang="my">နာမည်နဲ့ မွေးနေ့လေးတွေပဲ လိုပါတယ်နော်။</p></div>
+      <form className="tomo-reading-form" onSubmit={event => { event.preventDefault(); onDemo(); }}>
+        <div className="arcade-form-bar"><span><b aria-hidden="true">☺</b> Duo setup</span><div role="status" aria-label={`${readyFields.filter(Boolean).length} of 4 player details ready`}><span>{readyFields.filter(Boolean).length === 4 ? 'Ready to play' : 'Add your player details'}</span><span className="arcade-ready-meter" aria-hidden="true">{readyFields.map((ready, index) => <i key={index} className={ready ? 'is-ready' : ''} />)}</span></div></div>
+        <div className="tomo-people">
+          <PersonFields number={1} name={p1Name} setName={setP1Name} dob={p1Dob} setDob={setP1Dob} loading={loading} />
+          <span className="tomo-people-link" aria-hidden="true">&</span>
+          <PersonFields number={2} name={p2Name} setName={setP2Name} dob={p2Dob} setDob={setP2Dob} loading={loading} />
         </div>
-
-        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-          <span className="text-[11px] sm:text-xs text-red-500 font-bold">Quick Presets:</span>
-          <button type="button" onClick={handlePreset} className="tomo-chip-3d px-3 py-1 rounded-full text-red-700 dark:text-red-300 text-[11px] sm:text-xs font-bold transition-all cursor-pointer">
-            သူရိန် & သီရိ
-          </button>
-          <button type="button" onClick={handleReset} className="tomo-chip-3d px-3 py-1 rounded-full text-slate-600 dark:text-slate-300 text-[11px] sm:text-xs font-bold transition-all cursor-pointer">
-            ↺ Reset Form
-          </button>
+        <div className="tomo-personalise">
+          <fieldset disabled={loading}><legend>Choose your duo type</legend><div className="tomo-choice-group">
+            {[['Friends', '✳', 'Friends', 'Your favourite teammate.'], ['Couple', '♡', 'Couple', 'A little love, a little magic.']].map(([value, icon, label, detail]) => (
+              <button type="button" key={value} data-connection={value.toLowerCase()} aria-pressed={relType === value} onClick={() => setRelType(value)} className={`tomo-choice ${relType === value ? 'is-selected' : ''}`}><span className="tomo-choice-icon" aria-hidden="true">{icon}</span><span>{label}<small>{detail}</small></span><span className="tomo-choice-check" aria-hidden="true">{relType === value ? '✓' : ''}</span></button>
+            ))}
+          </div></fieldset>
+          <fieldset disabled={loading}><legend>Choose your story’s vibe</legend><div className="tomo-tone-group">
+            {[['Sweet', '✿', 'Warm & caring'], ['Playful', '☺', 'A little teasing'], ['Mystic', '☾', 'Thoughtful & poetic']].map(([value, icon, detail]) => (
+              <button type="button" key={value} data-vibe={value.toLowerCase()} aria-pressed={mood === value} onClick={() => setMood(value)} className={`tomo-tone ${mood === value ? 'is-selected' : ''}`}><span aria-hidden="true">{icon}</span>{value}<small>{detail}</small></button>
+            ))}
+          </div></fieldset>
         </div>
-
-        <div className="grid md:grid-cols-2 gap-3.5 sm:gap-5 w-full">
-          {/* Person 1 Input Card */}
-          <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 flex flex-col gap-3 sm:gap-3.5 shadow-xl relative overflow-hidden text-left">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <img src="/icon_3d_p1.jpg" alt="Person 1 3D" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover border-2 border-red-300 shadow-md shrink-0" />
-              <div>
-                <h3 className="text-sm sm:text-lg font-bold text-red-600 dark:text-red-400 font-['Fredoka']">ပထမ လူသားလေး (First Soul)</h3>
-                <p className="text-[10px] sm:text-[11px] text-red-400 font-medium">နာမည်နဲ့ မွေးနေ့လေး ဖြည့်ပေးပါ</p>
-              </div>
-            </div>
-
-            <div className="space-y-2.5 sm:space-y-3">
-              <div>
-                <label className="block text-[11px] sm:text-xs font-bold text-red-700 dark:text-red-300 mb-1">Name (အမည်)</label>
-                <input 
-                  type="text" 
-                  value={p1Name} 
-                  onChange={e => setP1Name(e.target.value)} 
-                  placeholder="e.g. သူရိန်" 
-                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-red-200/80 dark:border-slate-700/80 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all min-h-[42px] sm:min-h-[44px]" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] sm:text-xs font-bold text-red-700 dark:text-red-300 mb-1">Birthdate (မွေးနေ့)</label>
-                <input 
-                  type="date" 
-                  value={p1Dob} 
-                  max={todayISO} 
-                  onChange={e => setP1Dob(e.target.value)} 
-                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-red-200/80 dark:border-slate-700/80 focus:border-red-400 focus:ring-4 focus:ring-red-100 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all min-h-[42px] sm:min-h-[44px]" 
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Person 2 Input Card */}
-          <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 flex flex-col gap-3 sm:gap-3.5 shadow-xl relative overflow-hidden text-left">
-            <div className="flex items-center gap-2.5 sm:gap-3">
-              <img src="/icon_3d_p2.jpg" alt="Person 2 3D" className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl object-cover border-2 border-orange-300 shadow-md shrink-0" />
-              <div>
-                <h3 className="text-sm sm:text-lg font-bold text-orange-600 dark:text-orange-400 font-['Fredoka']">ဒုတိယ လူသားလေး (Second Soul)</h3>
-                <p className="text-[10px] sm:text-[11px] text-orange-400 font-medium">နာမည်နဲ့ မွေးနေ့လေး ဖြည့်ပေးပါ</p>
-              </div>
-            </div>
-
-            <div className="space-y-2.5 sm:space-y-3">
-              <div>
-                <label className="block text-[11px] sm:text-xs font-bold text-orange-700 dark:text-orange-300 mb-1">Name (အမည်)</label>
-                <input 
-                  type="text" 
-                  value={p2Name} 
-                  onChange={e => setP2Name(e.target.value)} 
-                  placeholder="e.g. သီရိ" 
-                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-orange-200/80 dark:border-slate-700/80 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all min-h-[42px] sm:min-h-[44px]" 
-                />
-              </div>
-
-              <div>
-                <label className="block text-[11px] sm:text-xs font-bold text-orange-700 dark:text-orange-300 mb-1">Birthdate (မွေးနေ့)</label>
-                <input 
-                  type="date" 
-                  value={p2Dob} 
-                  max={todayISO} 
-                  onChange={e => setP2Dob(e.target.value)} 
-                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border-2 border-orange-200/80 dark:border-slate-700/80 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-white focus:outline-none shadow-sm transition-all min-h-[42px] sm:min-h-[44px]" 
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tone & Relationship Selector Bar in Form */}
-        <div className="tomo-card rounded-2xl sm:rounded-[28px] p-3 sm:p-4 max-w-xl mx-auto w-full space-y-2.5 sm:space-y-3 shadow-md">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5 sm:gap-3 text-left">
-            <div className="w-full sm:w-1/2">
-              <label className="block text-[10px] sm:text-[11px] font-black text-red-700 dark:text-red-300 uppercase tracking-wider mb-1">
-                Relationship Mode
-              </label>
-              <div className="grid grid-cols-2 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl border border-red-200/80 dark:border-slate-700/80 gap-1 text-center">
-                <button 
-                  type="button" 
-                  onClick={() => setRelType && setRelType('Friends')}
-                  className={`py-1.5 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${relType === 'Friends' ? 'bg-white dark:bg-slate-700 text-red-600 shadow-sm border border-red-200' : 'text-slate-600 dark:text-slate-400'}`}
-                >
-                  Friends 👯‍♂️
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => setRelType && setRelType('Couple')}
-                  className={`py-1.5 px-1.5 sm:px-2 rounded-lg text-[11px] sm:text-xs font-bold transition-all cursor-pointer ${relType === 'Couple' ? 'bg-white dark:bg-slate-700 text-red-600 shadow-sm border border-red-200' : 'text-slate-600 dark:text-slate-400'}`}
-                >
-                  Couple ❤️
-                </button>
-              </div>
-            </div>
-
-            <div className="w-full sm:w-1/2">
-              <label className="block text-[10px] sm:text-[11px] font-black text-rose-700 dark:text-rose-300 uppercase tracking-wider mb-1">
-                Tomo's Mood Tone
-              </label>
-              <div className="grid grid-cols-3 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-xl border border-rose-200/80 dark:border-slate-700/80 gap-1 text-center">
-                {[
-                  { val: 'Sweet', text: 'Sweet', dot: 'bg-rose-400' },
-                  { val: 'Playful', text: 'Playful', dot: 'bg-amber-400' },
-                  { val: 'Mystic', text: 'Mystic', dot: 'bg-purple-400' }
-                ].map(item => (
-                  <button 
-                    key={item.val}
-                    type="button" 
-                    onClick={() => setMood && setMood(item.val)}
-                    className={`py-1.5 px-0.5 sm:px-1 rounded-lg text-[10px] sm:text-[11px] font-extrabold transition-all cursor-pointer flex items-center justify-center gap-1 ${mood === item.val ? 'bg-white dark:bg-slate-700 text-rose-600 shadow-sm border border-rose-200' : 'text-slate-600 dark:text-slate-400'}`}
-                  >
-                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.dot}`}></span>
-                    <span>{item.text}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3.5 pt-1">
-          {inputError && (
-            <p role="alert" className="basis-full text-center text-xs font-bold text-red-600 dark:text-red-300 px-2">{inputError}</p>
-          )}
-          <motion.button type="button" disabled={loading} whileHover={{ scale: loading ? 1 : 1.02 }} whileTap={{ scale: loading ? 1 : 0.97 }} onClick={onCalculate} className="tomo-button-3d-primary w-full sm:w-auto px-6 sm:px-8 py-3.5 sm:py-4 text-white font-extrabold rounded-2xl text-xs sm:text-sm tracking-wide flex items-center justify-center gap-2 cursor-pointer font-['Fredoka'] shadow-lg disabled:cursor-wait disabled:opacity-60 min-h-[48px]">
-            <img src="/icon_3d_heart.jpg" alt="Heart" className="w-5 h-5 rounded-full object-cover shadow-sm shrink-0" />
-            <span>Tomo ရဲ့ ဖတ်ရှုချက် ရယူမည် ➔</span>
-          </motion.button>
-
-          <motion.button type="button" disabled={loading} whileHover={{ scale: loading ? 1 : 1.02 }} whileTap={{ scale: loading ? 1 : 0.97 }} onClick={onDemo} className="tomo-button-3d-secondary w-full sm:w-auto px-5 sm:px-6 py-3.5 sm:py-4 text-red-600 font-extrabold rounded-2xl text-xs flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:cursor-wait disabled:opacity-60 min-h-[48px]">
-            <img src="/icon_3d_p1.jpg" alt="Demo" className="w-4 h-4 rounded-full object-cover shrink-0" />
-            <span>Tomo တွက်ချက်မှု နမူနာ</span>
-          </motion.button>
-        </div>
-      </motion.div>
+        {inputError && <p role="alert" className="tomo-form-error">{inputError}</p>}
+        <div className="tomo-form-footer"><div><p>Your duo is ready. Are you?</p><small>Unlock your chemistry score, character profiles & duo card.</small></div><div className="tomo-form-actions"><button type="submit" disabled={loading} className="tomo-primary">{loading ? 'Unlocking your story…' : 'Reveal our chemistry'} <span aria-hidden="true">✦</span></button><button type="button" disabled={loading} onClick={onCalculate} className="tomo-text-button">Use an AI reading instead</button></div></div>
+        <div className="tomo-form-tools"><span>Play instantly with the built-in reading. Optional AI needs a Gemini key.</span><button type="button" disabled={loading} onClick={() => { setP1Name(''); setP1Dob(''); setP2Name(''); setP2Dob(''); }} className="tomo-text-button">Clear details</button></div>
+      </form>
     </section>
   );
 }

@@ -5,7 +5,7 @@ import socket from '../socket';
 import QuestionSelection from './QuestionSelection';
 import Quiz from './Quiz';
 import Results from './Results';
-import { BURMESE_QUESTIONS } from '../questions';
+import { readSession, saveSession, clearSession } from '../session';
 
 const STAGES = [
   { id: 'waiting', label: '1. Lobby' },
@@ -20,7 +20,7 @@ const GameRoom = () => {
   const navigate = useNavigate();
 
   const normalizedRoomId = String(roomId || '').toUpperCase().trim();
-  const [username, setUsername] = useState(location.state?.username || '');
+  const username = (location.state?.username || readSession(normalizedRoomId)?.username || '').trim();
   const [players, setPlayers] = useState([]);
   const [gameState, setGameState] = useState('waiting'); 
   const [questionsPool, setQuestionsPool] = useState([]);
@@ -42,8 +42,19 @@ const GameRoom = () => {
 
     const handleConnect = () => {
       setConnectionError('');
-      socket.emit('join_room', { username, roomId: normalizedRoomId });
+      const session = readSession(normalizedRoomId);
+      socket.emit('join_room', {
+        username, roomId: normalizedRoomId,
+        resumeToken: session?.username === username ? session.resumeToken : undefined
+      });
     };
+
+    const handleSession = (session) => {
+      saveSession(normalizedRoomId, session);
+      setConnectionError('');
+    };
+    const handleDisconnect = () => setConnectionError('Connection lost. Reconnecting… Your place is held for two minutes.');
+    const handleActionError = message => setConnectionError(message);
 
     const handleConnectError = () => {
       setConnectionError('Unable to connect to the local game server. Check that the Nomo server is running on port 3080.');
@@ -51,19 +62,23 @@ const GameRoom = () => {
 
     socket.on('error', handleSocketError);
     socket.on('connect_error', handleConnectError);
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
+    socket.on('room_session', handleSession);
+    socket.on('action_error', handleActionError);
 
     socket.on('room_data', (data) => {
       setPlayers(data?.players || []);
-      setGameState(data?.gameState || 'waiting');
+      // Phase-specific events restore each player's own submitted/waiting state.
+      if (data?.gameState === 'waiting') {
+        setGameState('waiting');
+        setQuizData(null);
+        setGameOverData(null);
+      }
     });
 
     socket.on('game_start_selection', (data) => {
-      const rawQuestions = data?.questions && data.questions.length ? data.questions : BURMESE_QUESTIONS.slice(0, 60);
-      const burmeseQuestions = rawQuestions.map(q => {
-        const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
-        return bq ? { ...bq, ...q } : q;
-      });
-      setQuestionsPool(burmeseQuestions);
+      setQuestionsPool(data.questions);
       setGameState('selecting');
     });
 
@@ -73,14 +88,7 @@ const GameRoom = () => {
 
     socket.on('start_quiz', (data) => {
       if (!data) return;
-      const updatedQuizData = {
-        ...data,
-        questionsToAnswer: (data.questionsToAnswer || []).map(q => {
-          const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
-          return bq ? { ...bq, options: bq.options || q.options, answer: q.answer } : q;
-        })
-      };
-      setQuizData(updatedQuizData);
+      setQuizData(data);
       setGameState('playing');
     });
 
@@ -90,26 +98,14 @@ const GameRoom = () => {
 
     socket.on('game_over', (data) => {
       if (!data) return;
-      const updatedSelections = {};
-      if (data.selections) {
-        Object.keys(data.selections).forEach(userKey => {
-          updatedSelections[userKey] = (data.selections[userKey] || []).map(q => {
-            const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
-            return bq ? { ...q, text: bq.text || q.text, options: bq.options || q.options } : q;
-          });
-        });
-      }
-      setGameOverData({ ...data, selections: updatedSelections });
+      setGameOverData(data);
       setPlayers(data.players || []);
       setGameState('results');
     });
 
-    // Join exactly once after the socket is ready. This also handles returning
-    // to a new room while the singleton socket is already connected.
     if (socket.connected) {
       handleConnect();
     } else {
-      socket.once('connect', handleConnect);
       socket.connect();
     }
 
@@ -117,25 +113,38 @@ const GameRoom = () => {
       socket.off('error', handleSocketError);
       socket.off('connect_error', handleConnectError);
       socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
+      socket.off('room_session', handleSession);
+      socket.off('action_error', handleActionError);
       socket.off('room_data');
       socket.off('game_start_selection');
       socket.off('waiting_for_opponent');
       socket.off('start_quiz');
       socket.off('waiting_results');
       socket.off('game_over');
+      // A navigation away should release the transport; a refresh can resume.
+      socket.disconnect();
     };
   }, [username, roomId, navigate]);
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const inviteUrl = `${window.location.origin}/nomo?room=${normalizedRoomId}`;
-    navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(inviteUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setConnectionError(`Copy this invite link: ${inviteUrl}`);
+    }
   };
 
   const handleLeave = () => {
-    socket.emit('leave_room', { roomId: normalizedRoomId });
-    navigate('/nomo');
+    const finish = () => {
+      clearSession(normalizedRoomId);
+      navigate('/nomo');
+    };
+    if (socket.connected) socket.timeout(1500).emit('leave_room', { roomId: normalizedRoomId }, finish);
+    else finish();
   };
 
   const opponent = players.find(p => p.username !== username);
@@ -150,7 +159,7 @@ const GameRoom = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div data-arcade-panel="room" className="w-full max-w-4xl mx-auto space-y-6">
       {connectionError && (
         <div role="alert" className="rounded-2xl border-2 border-amber-300 bg-amber-50 px-4 py-3 text-center text-sm font-bold text-amber-800 shadow-sm">
           {connectionError}
@@ -287,7 +296,6 @@ const GameRoom = () => {
           <QuestionSelection 
             roomId={normalizedRoomId} 
             questions={questionsPool} 
-            onSubmit={() => setGameState('waiting_others')} 
           />
         )}
 
@@ -320,7 +328,6 @@ const GameRoom = () => {
           <Quiz 
             roomId={normalizedRoomId}
             data={quizData}
-            onFinish={() => setGameState('waiting_results')}
           />
         )}
         

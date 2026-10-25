@@ -1,52 +1,37 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import ArcadeCharacter from './ArcadeCharacter';
+import ArcadeScenery from './ArcadeScenery';
 
 function HeroSection({ jumpToPage }) {
+  const [mode, setMode] = useState('tomo');
+  const [boops, setBoops] = useState(0);
+  const isTomo = mode === 'tomo';
   return (
-    <section id="page-hero" className="page-section">
-      <motion.div 
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        whileInView={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, type: "spring", bounce: 0.3 }}
-        viewport={{ once: true, margin: "-50px" }}
-        className="max-w-3xl mx-auto text-center space-y-4 sm:space-y-6 px-2"
-      >
-        <div className="relative inline-block">
-          <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-red-400 via-rose-400 to-orange-300 opacity-75 blur-md animate-pulse"></div>
-          <video 
-            id="tomoHeroImg" 
-            src="/tomo-main.mp4" 
-            autoPlay 
-            loop 
-            muted 
-            playsInline 
-            className="relative mx-auto w-24 h-24 sm:w-32 sm:h-32 md:w-36 md:h-36 rounded-full object-cover shadow-2xl border-4 border-white tomo-bounce cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300 ring-4 ring-red-400/50" 
-          />
+    <section id="page-hero" className="page-section arcade-hero" aria-labelledby="tomo-heading">
+      <div className="arcade-welcome"><span className="arcade-online" /> Two players. Endless plot twists.</div>
+      <h1 id="tomo-heading">Good chemistry.<br />Great little adventures.</h1>
+      <p className="arcade-intro">Your favourite human. A little curiosity. Let’s see what happens.</p>
+      <div className="arcade-machine">
+        <div className="arcade-machine-top"><span><i /> The connection arcade</span><span>✦ &nbsp; Made for two</span></div>
+        <div className={`arcade-stage ${isTomo ? '' : 'stage-ice'}`}>
+          <ArcadeScenery ice={!isTomo} />
+          <div className="stage-ticket"><span>{isTomo ? '♡' : '⚡'}</span>{isTomo ? 'A little cosmic chemistry' : 'Bestie knowledge: put to the test'}</div>
+          <button type="button" className="duo-boop" onClick={() => setBoops(count => count + 1)} aria-label={`Say hello to ${isTomo ? 'Tomo' : 'Nomo'}`}><ArcadeCharacter character={mode} /></button>
+          <div className="stage-speech" key={`${mode}-${boops}`} role="status">{boops ? ['Hey, that tickles!', 'Bestie energy detected.', 'Okay, we like you!', 'One more adventure?'][(boops - 1) % 4] : isTomo ? 'You + me = ?' : 'Think you know me?'}</div>
+          <span className="stage-name character-name">{isTomo ? 'Tomo · Your connection guide' : 'Nomo · Your challenge host'}</span>
+          <span className="stage-caption">{isTomo ? 'New connection unlocked?' : 'Challenge your favourite human.'}</span>
         </div>
-        
-        <div className="space-y-2 sm:space-y-2.5">
-          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full bg-white/85 dark:bg-slate-800/90 border border-red-200/80 dark:border-rose-900/60 text-red-600 dark:text-red-300 text-[10px] sm:text-xs font-bold tracking-wide shadow-sm backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-rose-500 animate-pulse"></span>
-            <span>Tomo Destiny & Chemistry Matcher</span>
+        <div className="arcade-control-deck">
+          <div className="arcade-mode-picker" role="group" aria-label="Choose your adventure">
+            <button type="button" aria-pressed={isTomo} onClick={() => { setMode('tomo'); setBoops(0); }} className={`arcade-mode ${isTomo ? 'mode-active' : ''}`}><span className="mode-icon">♡</span><span><strong>Tomo</strong><small>Discover your chemistry</small></span><span className="mode-light" /></button>
+            <button type="button" aria-pressed={!isTomo} onClick={() => { setMode('nomo'); setBoops(0); }} className={`arcade-mode nomo-mode ${!isTomo ? 'mode-active' : ''}`}><span className="mode-icon">⚡</span><span><strong>Nomo</strong><small>The bestie challenge</small></span><span className="mode-light" /></button>
           </div>
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 tracking-tight font-['Fredoka'] leading-tight sm:leading-tight">
-            Tomo's Destiny Matcher
-          </h1>
-          <p className="text-xs sm:text-base md:text-lg text-red-700 dark:text-red-300 font-semibold max-w-xl mx-auto leading-relaxed px-2">
-            တိုမို (Tomo) က နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားနဲ့ အချင်းချင်း ဆက်နွယ်နေမှုကို အသေးစိတ် ကြည့်ပေးမယ်နော်
-          </p>
+          <div className="arcade-start-row"><p><strong>{isTomo ? 'Meet your connection’s main characters.' : 'How well do you really know each other?'}</strong><span>{isTomo ? '2 names + 2 birthdays → your duo’s story' : '2 players + real answers → the ultimate reveal'}</span></p>{isTomo ? <button type="button" onClick={() => jumpToPage('page-inputs')} className="tomo-primary arcade-play"><span aria-hidden="true">▶</span> Let’s play</button> : <Link to="/nomo" className="tomo-primary arcade-play"><span aria-hidden="true">▶</span> Let’s play</Link>}</div>
         </div>
-
-        <div className="pt-2 sm:pt-4">
-          <button 
-            type="button" 
-            onClick={() => jumpToPage('page-inputs')} 
-            className="tomo-button-3d-primary w-full xs:w-auto px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl text-white font-extrabold text-xs sm:text-base inline-flex items-center justify-center gap-2 sm:gap-2.5 cursor-pointer shadow-xl active:translate-y-1 transition-all min-h-[48px]"
-          >
-            <span>Enter Soul Information ➔</span>
-          </button>
-        </div>
-      </motion.div>
+      </div>
+      <div className="arcade-bottom-note"><span>✿ No right answers. Just your kind of weird.</span><span>Friends, crushes & favourite humans welcome.</span></div>
+      <div className="arcade-next"><span /> Your next adventure starts below <span /></div>
     </section>
   );
 }

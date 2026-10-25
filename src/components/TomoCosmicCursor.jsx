@@ -45,6 +45,7 @@ function TomoCosmicCursor() {
   );
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     // Only disable on pure touch-only devices with NO mouse/trackpad pointer
     const hasFinePointer = window.matchMedia('(pointer: fine)').matches || window.matchMedia('(any-pointer: fine)').matches;
     const isPureTouchOnly = window.matchMedia('(pointer: coarse)').matches && !hasFinePointer;

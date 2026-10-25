@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import socket from '../socket';
 import NomoHeroSection from './HeroSection';
+import GameTicketFrame from './GameTicketFrame';
 
 const generateFriendlyRoomId = () => {
   const prefixes = ['NOMO', 'SOUL', 'DESTINY', 'BOND', 'STAR'];
-  const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
-  const num = Math.floor(100 + Math.random() * 900);
+  const values = crypto.getRandomValues(new Uint32Array(2));
+  const prefix = prefixes[values[0] % prefixes.length];
+  const num = 100000 + values[1] % 900000;
   return `${prefix}-${num}`;
 };
 
@@ -47,13 +49,13 @@ const JoinGame = () => {
     const cleanName = username.trim();
     const cleanRoom = roomId.trim().toUpperCase();
 
-    if (!cleanName) {
+    if (!cleanName || cleanName.length > 30) {
       setError('ကျေးဇူးပြု၍ သင့်နာမည်လေး အရင်ရိုက်ထည့်ပါ (Please enter your name)');
       return;
     }
 
-    if (!cleanRoom) {
-      setError('ကျေးဇူးပြု၍ Room ID ထည့်ပါ (Please enter a Room ID)');
+    if (!/^[A-Z0-9-]{1,32}$/.test(cleanRoom)) {
+      setError('Room codes must contain 1–32 letters, numbers or hyphens.');
       return;
     }
 
@@ -68,12 +70,14 @@ const JoinGame = () => {
       {/* Main Room Selection & Creation Form Card */}
       <motion.div 
         id="nomo-room-form"
+        data-arcade-panel="lobby"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         viewport={{ once: true, margin: "-40px" }}
-        className="nomo-card rounded-[36px] p-6 sm:p-8 shadow-2xl relative overflow-hidden text-left"
+        className="nomo-card nomo-ticket nomo-lobby-ticket p-6 sm:p-8 relative text-left"
       >
+        <GameTicketFrame />
         <div className="flex items-center gap-3 border-b border-sky-100 dark:border-slate-800 pb-4 mb-6">
           <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-sky-400 to-cyan-400 flex items-center justify-center text-white shadow-md">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -82,7 +86,7 @@ const JoinGame = () => {
           </div>
           <div>
             <h2 className="text-xl font-extrabold text-sky-600 dark:text-sky-400 font-['Fredoka']">
-              Game Lobby & Room Setup
+              Your next adventure starts here.
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">
               Room တစ်ခု ဖန်တီးပြီး သူငယ်ချင်းကို Link ပို့ကာ အပြိုင်ကစားပါ
@@ -96,6 +100,7 @@ const JoinGame = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button" 
+            aria-pressed={mode === 'create'}
             onClick={() => { setMode('create'); setError(''); }}
             className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
               mode === 'create' 
@@ -110,6 +115,7 @@ const JoinGame = () => {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             type="button" 
+            aria-pressed={mode === 'join'}
             onClick={() => { setMode('join'); setError(''); }}
             className={`py-3 px-4 rounded-xl text-xs sm:text-sm font-black transition-all cursor-pointer ${
               mode === 'join' 
@@ -133,10 +139,13 @@ const JoinGame = () => {
           )}
 
           <div>
-            <label className="block text-xs font-extrabold text-sky-900 dark:text-sky-200 mb-1.5 uppercase tracking-wider">
+            <label htmlFor="nomo-player-name" className="block text-xs font-extrabold text-sky-900 dark:text-sky-200 mb-1.5 uppercase tracking-wider">
               Your Name (သင့်နာမည်)
             </label>
             <input 
+              id="nomo-player-name"
+              maxLength={30}
+              required
               type="text" 
               value={username} 
               onChange={(e) => setUsername(e.target.value)}
@@ -147,7 +156,7 @@ const JoinGame = () => {
 
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="block text-xs font-extrabold text-sky-900 dark:text-sky-200 uppercase tracking-wider">
+              <label htmlFor="nomo-room-code" className="block text-xs font-extrabold text-sky-900 dark:text-sky-200 uppercase tracking-wider">
                 {mode === 'create' ? 'Generated Room ID' : 'Enter Room ID'}
               </label>
               {mode === 'create' && (
@@ -166,6 +175,9 @@ const JoinGame = () => {
 
             <div className="relative">
               <input 
+                id="nomo-room-code"
+                maxLength={32}
+                required
                 type="text" 
                 value={roomId} 
                 onChange={(e) => setRoomId(e.target.value.toUpperCase())}

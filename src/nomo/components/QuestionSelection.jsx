@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import socket from '../socket';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
-import { BURMESE_QUESTIONS } from '../questions';
+import GameTicketFrame from './GameTicketFrame';
 
 const CATEGORIES = [
   { id: 'all', label: 'All Topics', icon: '✨', range: null },
@@ -23,13 +23,9 @@ const getQuestionCategory = (id) => {
   return { label: 'General', icon: '✨' };
 };
 
-const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
+const QuestionSelection = ({ roomId, questions = [] }) => {
   const safeQuestions = useMemo(() => {
-    const rawList = Array.isArray(questions) && questions.length ? questions : BURMESE_QUESTIONS.slice(0, 60);
-    return rawList.map(q => {
-      const bq = BURMESE_QUESTIONS.find(b => String(b.id) === String(q.id) || b.id === q.id);
-      return bq ? { ...bq, ...q, options: bq.options || q.options } : q;
-    });
+    return Array.isArray(questions) ? questions : [];
   }, [questions]);
 
   const [selections, setSelections] = useState({});
@@ -43,7 +39,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
 
   // Mini celebratory confetti when 10/10 is completed
   useEffect(() => {
-    if (selectedCount === 10) {
+    if (selectedCount === 10 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       confetti({
         particleCount: 45,
         spread: 60,
@@ -109,6 +105,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
   };
 
   const handleSubmit = () => {
+    if (!socket.connected) return;
     if (selectedCount !== 10) {
       alert(`ကျေးဇူးပြု၍ မေးခွန်း ၁၀ ခု အတိအကျ ရွေးပေးပါ။ (လက်ရှိ: ${selectedCount} ခု)`);
       return;
@@ -117,7 +114,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
       roomId, 
       selectedQuestions: Object.values(selections) 
     });
-    onSubmit();
+    // The server confirms acceptance with waiting_for_opponent/start_quiz.
   };
 
   const filteredQuestions = useMemo(() => {
@@ -233,6 +230,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
           <div className="flex items-center gap-1 p-1 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md rounded-2xl border border-slate-200/80 dark:border-slate-700/80 text-xs">
             <button
               type="button"
+              aria-pressed={filterView === 'all'}
               onClick={() => setFilterView('all')}
               className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                 filterView === 'all'
@@ -244,6 +242,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
             </button>
             <button
               type="button"
+              aria-pressed={filterView === 'selected'}
               onClick={() => setFilterView('selected')}
               className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1 ${
                 filterView === 'selected'
@@ -267,6 +266,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
             return (
               <motion.button
                 key={slotIdx}
+                data-filled={isSlotFilled}
                 whileHover={{ scale: 1.08 }}
                 whileTap={{ scale: 0.94 }}
                 type="button"
@@ -305,6 +305,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
             return (
               <motion.button
                 key={cat.id}
+                aria-pressed={isActive}
                 whileHover={{ scale: 1.04, y: -1 }}
                 whileTap={{ scale: 0.96 }}
                 type="button"
@@ -355,13 +356,15 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
               id={`q-card-${q.id}`}
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              data-chosen={isSelected}
               onClick={() => setActiveModalQuestion(q)}
-              className={`rounded-[28px] p-5 border-2 transition-all duration-200 overflow-hidden shadow-md cursor-pointer flex flex-col justify-between gap-3 text-left relative ${
+              className={`nomo-ticket p-6 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 text-left relative ${
                 isSelected 
                   ? 'nomo-card-ice ring-2 ring-sky-300/80 dark:ring-sky-700/80 shadow-lg' 
                   : 'nomo-card hover:border-sky-300'
               }`}
             >
+              <GameTicketFrame />
               <div className="space-y-2.5">
                 {/* Header Meta Pill */}
                 <div className="flex items-center justify-between gap-2">
@@ -525,6 +528,7 @@ const QuestionSelection = ({ roomId, questions = [], onSubmit }) => {
                         whileHover={{ scale: 1.015, y: -1 }}
                         whileTap={{ scale: 0.985 }}
                         type="button" 
+                        aria-pressed={isSelected}
                         onClick={() => handleSelectAnswer(activeModalQuestion, opt)}
                         className={`w-full p-4 rounded-2xl font-extrabold text-xs sm:text-sm text-left flex items-start justify-between gap-3.5 transition-all cursor-pointer shadow-md ${
                           isSelected 

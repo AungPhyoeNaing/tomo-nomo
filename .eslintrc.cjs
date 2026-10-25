@@ -10,11 +10,12 @@ module.exports = {
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
   },
-  plugins: ['react'],
+  plugins: ['react', 'react-hooks'],
   settings: {
     react: { version: 'detect' },
   },
   rules: {
+    'react-hooks/rules-of-hooks': 'error',
     'no-unused-vars': 'off',
     'react/jsx-uses-react': 'off',
     'react/react-in-jsx-scope': 'off',

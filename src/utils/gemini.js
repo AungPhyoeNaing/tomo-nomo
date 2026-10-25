@@ -1,4 +1,6 @@
-import { getScoreResonanceTier, getCrossSystemSynthesisReport } from './astrology.js';
+import { getScoreResonanceTier, calculateDetailedMetricsBreakdown } from './astrology.js';
+import { validateReading, validateBurmeseReading, normalizePersonName } from './reading.js';
+import { DEFAULT_TOMO_MODEL, TOMO_MODELS, TOMO_PROMPT_VERSION, BURMESE_READING_SYSTEM, buildTomoPrompt, TOMO_RESPONSE_SCHEMA } from './tomoPrompt.js';
 
 // =========================================================
 // ASTROLOGICAL PERSONALITY ARCHETYPES & DESCRIPTIONS
@@ -87,7 +89,7 @@ const SIGN_DESCRIPTIONS = {
  * - Mood Tone ('Playful', 'Mystic', 'Sweet')
  * - Score Tier (90+, 80-89, 70-79, <70)
  */
-export function generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, score) {
+function generateLegacyProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, score) {
   const isCouple = relType === 'Couple';
   const isPlayful = mood === 'Playful';
   const p1SignKey = p1Secret?.western || 'Gemini';
@@ -439,6 +441,32 @@ ${p2Name} သည် မိတ်ဆွေများကြားတွင် ${
   };
 }
 
+// The offline engine is a deterministic story template, not an AI or personality assessment.
+export function generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, score) {
+  p1Name = normalizePersonName(p1Name);
+  p2Name = normalizePersonName(p2Name);
+  const reading = generateLegacyProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, score);
+  if (mood !== 'Mystic') return reading;
+  const isCouple = relType === 'Couple';
+  const bond = isCouple ? 'ချစ်သူ' : 'သူငယ်ချင်း';
+  const profile = (name, metrics) => {
+    const desc = SIGN_DESCRIPTIONS[metrics?.western] || SIGN_DESCRIPTIONS.Gemini;
+    const innerTheme = metrics?.lifePathTrait || 'နားလည်စာနာမှု၊ ကိုယ်ပိုင်အချိန်နှင့် အပြန်အလှန်လေးစားမှု';
+    return '[ပင်ကိုစတိုင်]\n' + name + ' ရဲ့ ပုံရိပ်ကို ကြယ်တစ်စင်းလို မြင်ကြည့်ရအောင်။ ' + desc.outer + ' ဆိုတဲ့ စတိုင်နဲ့ ကိုယ့်အတွေ့အကြုံ တိုက်ဆိုင်သလား ပြန်စဉ်းစားကြည့်နိုင်တယ်။\n\n' +
+      '[အဆင်မပြေတတ်တဲ့အချိန်]\nတောက်ပတဲ့အလင်းမှာလည်း အရိပ်ရှိတတ်တယ်။ စိတ်ပင်ပန်းတဲ့နေ့မှာ ' + bond + 'နဲ့ စကားမပြောခင် အနားယူချိန် ခဏလိုသလား ကိုယ့်ကိုယ်ကို မေးကြည့်ပါ။\n\n' +
+      '[စကားပြောပုံ]\nဒီပုံပြင်မှာ ' + innerTheme + ' ဆိုတဲ့ အကြောင်းအရာတွေကို အလေးထားထားတယ်။ ကိုယ်လိုအပ်တာကို တစ်ဖက်လူ အလိုလိုသိမယ်လို့ မယူဆဘဲ ရိုးရိုးရှင်းရှင်း ပြောကြည့်နိုင်တယ်။\n\n' +
+      '[စမ်းကြည့်နိုင်တဲ့အရာ]\nဒီနေ့ ခံစားချက်ကို စကားတစ်ကြောင်းနဲ့ ပြောပြီး တစ်ဖက်လူရဲ့ စကားကို မဖြတ်ဘဲ နားထောင်ကြည့်ပါ။ အလင်းချင်းမတူပေမယ့် တစ်လမ်းတည်း လျှောက်လို့ရနိုင်တယ်။';
+  };
+  return { ...reading,
+    tomo_deep_reading_p1: profile(p1Name, p1Secret), tomo_deep_reading_p2: profile(p2Name, p2Secret),
+    relationship_title: isCouple ? 'အလင်းချင်းမတူတဲ့ ချစ်သူနှစ်ဦးရဲ့ ခရီး' : 'ကြယ်လမ်းကြောင်းဆုံတဲ့ သူငယ်ချင်းနှစ်ဦး',
+    tomo_dynamic_insight: p1Name + ' နဲ့ ' + p2Name + ' တို့ကို မတူတဲ့အလင်းနှစ်ခုလို မြင်ကြည့်ရအောင်။ ဒီဖတ်ရှုချက်က ဘယ်သူက ဘယ်လိုလူလဲဆိုတာ ဆုံးဖြတ်ပေးတာ မဟုတ်ဘဲ အချင်းချင်း သိလာဖို့ စကားစတစ်ခုပါ။\n\nအလျင်မတူတဲ့အချိန် တစ်ယောက်က နားထောင်ပေးပြီး နောက်တစ်ယောက်က လိုအပ်တာ ပြောပြပေးနိုင်တယ်။ အစီအစဉ်တစ်ခု မချခင် နှစ်ယောက်လုံး ဘာလိုချင်လဲ အရင်မေးကြည့်ပါ။',
+    tomo_strengths: ['မတူတဲ့ အမြင်နှစ်ခုက စိတ်ကူးအသစ်တစ်ခု ဖြစ်လာနိုင်တယ်။ အတူလုပ်ချင်တဲ့ အရာတစ်ခုစီ ပြောကြည့်ပါ။', 'စကားကို အဆုံးထိ နားထောင်ပေးခြင်းက ယုံကြည်မှု တည်ဆောက်ဖို့ အကူအညီဖြစ်နိုင်တယ်။', 'တစ်ယောက်ရဲ့ ကိုယ်ပိုင်အချိန်ကို လေးစားပေးရင် အတူရှိချိန် ပိုအေးချမ်းနိုင်တယ်။'],
+    tomo_challenges: ['စိတ်မတူတာကို အပြစ်လို့ မမြင်ဘဲ ဘယ်လိုညှိကြမလဲ မေးကြည့်ပါ။', 'မသေချာတဲ့အရာကို ခန့်မှန်းမယ့်အစား တစ်ဖက်လူကို တိုက်ရိုက်မေးကြည့်ပါ။', 'ကိုယ့်အကြိုက်တစ်ခုနဲ့ တစ်ဖက်လူအကြိုက်တစ်ခုကို အလှည့်ကျ စမ်းကြည့်ပါ။'],
+    tomo_secret_advice: 'ရေစက်ကို အမှတ်တစ်ခုတည်းနဲ့ မဆုံးဖြတ်ပါနဲ့။ ဒီည ငါနင့်ကို ဘယ်လို ပိုနားလည်ပေးနိုင်မလဲလို့ မေးပြီး အဖြေကို နားထောင်ကြည့်ပါ။ ကြယ်အလင်းထက် နေ့စဉ်ဂရုစိုက်မှုက လမ်းကို ပိုလင်းစေနိုင်တယ်။'
+  };
+}
+
 // Fallback demo references
 export const DEMO_RESULT = generateDeepProceduralReading(
   'သူရိန်',
@@ -463,202 +491,98 @@ export const PLAYFUL_DEMO_RESULT = generateDeepProceduralReading(
 // =========================================================
 // CALL GEMINI 3.1 FLASH LITE WITH DYNAMIC DIVERSE DIRECTIVES
 // =========================================================
-export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore, apiKey) {
-  const model = "gemini-3.1-flash-lite";
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const scoreTier = getScoreResonanceTier(algorithmicScore);
-  const isCouple = relType === 'Couple';
-  const synthesis = getCrossSystemSynthesisReport(p1Secret, p2Secret, relType);
+const readingCache = new Map();
+const CACHE_TTL_MS = 10 * 60 * 1000;
+export function clearTomoReadingCache() { readingCache.clear(); }
 
-  let toneDirectives = "";
-  if (mood === 'Playful') {
-    toneDirectives = `
-MOOD STYLE: SUPER FRIENDLY, CUTE, LOVABLE, ADORABLE & ENDEARINGLY PLAYFUL (အလွန် ချစ်ဖို့ကောင်းပြီး ခင်မင်ရင်းနှီးသော ချစ်စနိုး အခွီစတိုင်)!
-- Tone: Speak like an affectionate, bubbly, super close virtual companion (Tomo) who loves them dearly, talking in a warm, intimate, cute, and friendly manner (အလွန် ခင်ခင်မင်မင်၊ နွေးနွေးထွေးထွေးနဲ့ ချစ်စနိုး အူယားစဖွယ် လေသံ).
-- Conversational Flair: Use adorable, affectionate Burmese conversational endings and endearing nuances (e.g. "နော်", "လေးတွေ", "ချစ်စနိုး အလွဲလေးတွေ", "အူယားစရာလေးတွေ", "တစ်ယောက်ကိုတစ်ယောက် အသည်းယားနေကြတာလေးတွေ", "စကားနိုင်လုပြီးမှ ပြန်ချစ်နေကြတာလေးတွေ").
-- Content: Tease their real-life quirks, bad habits, and weak sides in a delightfully charming, cute, and humorous way without being harsh (အပြစ်တင်တာမျိုးမဟုတ်ဘဲ ချစ်စနိုး အလွဲလေးများအဖြစ် ရယ်မောပျော်ရွှင်စေရန် ချစ်ဖို့ကောင်းစွာ ရေးသားပါ).
-- Avoid dry or cold clinical analysis. Make it vibrant, friendly, cute, heartwarming, and full of smiles!
-`;
-  } else if (mood === 'Mystic') {
-    toneDirectives = `
-MOOD STYLE: POETIC, CELESTIAL, DEEPLY INTROSPECTIVE & PHILOSOPHICAL!
-- Tone: Like an ancient astrological sage and spiritual confidant.
-- Content: Explore inner soul alchemy, mutual energetic resonance, shadow traits, karmic flaws, emotional triggers, and spiritual growth lessons with eloquent Burmese phrasing.
-- RULE: Use rich, varied literary metaphors. Avoid robotic repetition of buzzwords.
-`;
-  } else {
-    toneDirectives = `
-MOOD STYLE: WARM, CARING, EMPATHETIC, HONEST & ENCOURAGING!
-- Tone: Like a wise, deeply loving virtual companion who validates their hearts while gently and honestly pointing out their blind spots.
-- Content: Highlight everyday acts of kindness as well as areas where they need to show more patience, listen better, reduce selfishness, and control their temper.
-- RULE: Use genuine, varied expressions of warmth, honesty, and care without formulaic filler phrases.
-`;
-  }
-
-  const modeDirectives = isCouple ? `
-=== CRITICAL RELATIONSHIP MODE DIRECTIVE: ROMANTIC COUPLE MODE 💖 ===
-- THEMES: Romantic chemistry, emotional vulnerability, love languages (words, touch, time, acts of service), attachment styles, physical & emotional intimacy, couple arguments, jealousy/insecurity, living together habits, and long-term future commitment.
-- TERMINOLOGY: Use romantic Burmese terms such as "ချစ်သူစုံတွဲ", "ရိုမန်တစ် ရေစက်", "ရင်ခွင်", "အချစ်ရေး သဟဇာတ", "သံယောဇဉ်ခရီး", "ချစ်သူဘဝ".
-- IN CHARACTER PROFILES: Evaluate their romantic persona, love attachment quirks, how they handle couple fights, and their subconscious romantic needs.
-- IN DYNAMIC INSIGHT: Discuss romantic dating dynamics, resolving couple fights, physical and emotional affection, and mutual vulnerability.
-` : `
-=== CRITICAL RELATIONSHIP MODE DIRECTIVE: BEST FRIENDS DESTINY MODE 🌟 ===
-- THEMES: Deep platonic camaraderie, loyalty, partner-in-crime synergy, secret-sharing, late-night hangouts, venting about life/career, hilarious debates, mutual hype squad, and respecting social boundaries.
-- STRICT RULE: DO NOT USE ROMANTIC TERMINOLOGY (NO "ချစ်သူ", "ရည်းစား", "ရိုမန်တစ်", "အိမ်ထောင်ဖက်", "အချစ်ရေး").
-- TERMINOLOGY: Use authentic friendship terms such as "မိတ်ဆွေစစ်", "သူငယ်ချင်း", "တိုင်ပင်ဖော် တိုင်ပင်ဖက်", "လက်တွဲဖော် မိတ်ဆွေ", "အလွဲဖော် အလွဲဖက်".
-- IN CHARACTER PROFILES: Evaluate their social persona among friends, friendship flaws (flaking, ghosting, stubbornness in debates), and what makes them a trusted confidant.
-- IN DYNAMIC INSIGHT: Discuss hangout dynamics, intellectual debates, supporting each other through life stress, splitting bills, and keeping their bond drama-free.
-`;
-
-  const promptText = `
-You are 'Tomo' (တိုမို), an elite AI relationship matchmaker and personality psychologist.
-${toneDirectives}
-${modeDirectives}
-
-CRITICAL MANDATORY RULES:
-1. FAIR & BALANCED READINGS (DO NOT PRAISE ONLY - POINT OUT WEAK SIDES FAIRLY):
-   - Every human has strengths AND flaws/bad habits/blind spots. Do NOT write one-sided praise or flattery.
-   - For BOTH ${p1Name} and ${p2Name}, you MUST analyze their negative/weak sides with equal honesty and depth:
-     a) Positive Qualities (Outer persona, talents, positive drive in ${relType} mode).
-     b) Weak Sides, Flaws & Bad Habits (e.g. stubbornness, impatience, procrastination, bossiness, cold withdrawal/silent treatment, overthinking, jealousy, pride/ego, temper tantrums, passive-aggressiveness).
-     c) Conflict Triggers & Toxic Reactions (How they react when angry or stressed, and what triggers their dark side).
-     d) Inner Needs & Advice for Personal Growth.
-
-2. STRICTLY NO TECHNICAL ASTROLOGICAL JARGON:
-   Do NOT output raw astrological formulas like "ဘာဖွားမို့လို့", "ဘာဓာတ်မို့လို့", "မဟာဘုတ် ဘာဌာနမို့လို့", "ဘာရာသီခွင်မို့လို့", "ဘာနှစ်ဖွားမို့လို့", "Destiny Number ဘယ်လောက်မို့လို့".
-   Instead, convert all astrological insights seamlessly into rich, nuanced, storytelling psychology, daily lifestyle dynamics, and genuine relationship observations!
-
-3. HIGH VOCABULARY DIVERSITY & ANTI-REPETITION:
-   - DO NOT repeat the same cliches or fixed tropes (e.g. NEVER default to generic filler words repeatedly).
-   - Write with expansive, natural, eloquent Burmese conversational phrasing.
-
-=== PERSON 1: ${p1Name} ===
-Astrological & Psychological Matrix:
-- Sun Sign: ${p1Secret.westernMm} (${p1Secret.westernElement} Element)
-- Moon Sign (Emotional Subconscious): ${p1Secret.moonSignMm || p1Secret.westernMm} (${p1Secret.moonElement || p1Secret.westernElement} Element)
-- Venus Sign (Love & Attachment Style): ${p1Secret.venusSignMm || p1Secret.westernMm} (${p1Secret.venusElement || p1Secret.westernElement} Element)
-- Mars Sign (Energy & Drive): ${p1Secret.marsSignMm || p1Secret.westernMm}
-- Burmese Mahabote: ${p1Secret.mahaboteDayMm} (${p1Secret.mahabotePlanet}), House: ${p1Secret.mahaboteHouse}
-- Chinese Zodiac: ${p1Secret.animalMm}, Element: ${p1Secret.elementMm}
-- Life Path Number: #${p1Secret.lifePathNumber || 1} (${p1Secret.lifePathArchetype || ''})
-- Destiny Number: #${p1Secret.destinyNumber} (${p1Secret.destinyArchetype})
-
-=== PERSON 2: ${p2Name} ===
-Astrological & Psychological Matrix:
-- Sun Sign: ${p2Secret.westernMm} (${p2Secret.westernElement} Element)
-- Moon Sign (Emotional Subconscious): ${p2Secret.moonSignMm || p2Secret.westernMm} (${p2Secret.moonElement || p2Secret.westernElement} Element)
-- Venus Sign (Love & Attachment Style): ${p2Secret.venusSignMm || p2Secret.westernMm} (${p2Secret.venusElement || p2Secret.westernElement} Element)
-- Mars Sign (Energy & Drive): ${p2Secret.marsSignMm || p2Secret.westernMm}
-- Burmese Mahabote: ${p2Secret.mahaboteDayMm} (${p2Secret.mahabotePlanet}), House: ${p2Secret.mahaboteHouse}
-- Chinese Zodiac: ${p2Secret.animalMm}, Element: ${p2Secret.elementMm}
-- Life Path Number: #${p2Secret.lifePathNumber || 1} (${p2Secret.lifePathArchetype || ''})
-- Destiny Number: #${p2Secret.destinyNumber} (${p2Secret.destinyArchetype})
-
-=== 5-PILLAR CALCULATION MATRIX & CROSS-SYSTEM COMMONALITIES ===
-1. Western Astronomical Ephemeris & Planetary Synergy (Sub-score: ${synthesis.breakdownScores.zodiacScore}%):
-   - ${synthesis.commonalitySynthesis.western}
-2. Myanmar Mahabote 7 Houses & Planetary Deities (Sub-score: ${synthesis.breakdownScores.mahaboteScore}%):
-   - ${synthesis.commonalitySynthesis.mahabote}
-3. Chinese Shengxiao Zodiac Alliances (Sub-score: ${synthesis.breakdownScores.animalScore}%):
-   - ${synthesis.commonalitySynthesis.chineseZodiac}
-4. Chinese 5 Elements Yin-Yang Energy Cycle (Sub-score: ${synthesis.breakdownScores.elementScore}%):
-   - ${synthesis.commonalitySynthesis.fiveElements}
-5. Pythagorean Dual Numerology & Life Path (Sub-score: ${synthesis.breakdownScores.numScore}%):
-   - ${synthesis.commonalitySynthesis.numerology}
-
-=== MATCH RESONANCE CONTEXT & TIER ALIGNMENT ===
-- Relationship Mode: ${relType}
-- Selected Mood Tone: ${mood}
-- Match Resonance: ${algorithmicScore}% [Tier: ${scoreTier.levelMm}]
-- Psychological Tone Directive: ${scoreTier.guidance}
-- Core Dynamic Vibe: ${scoreTier.vibe}
-
-CRITICAL ACCURACY REQUIREMENT:
-The narrative depth, dynamic insight, strengths, challenges, and relationship title MUST faithfully reflect this ${algorithmicScore}% match resonance level (${scoreTier.levelMm}) by integrating the 5 calculations:
-- COMMONLY SHARED HARMONIES: Synthesize the commonalities where multiple systems agree (e.g. mutual emotional attunement, elemental flow, or supportive planetary houses) into their deep connection and mutual talents.
-- FRICTIONS & SHADOW SPOTS: Identify where the systems reveal friction (e.g. conflicting elements, challenging Mahabote houses, or differing life path purposes). Describe their authentic day-to-day misunderstandings, impatience, and ego clashes with actionable advice on how to bridge the gap.
-- If score >= 90%: Celebrate rare effortless chemistry and deep sync in ${relType} mode, while pointing out minor stubborn habits.
-- If score is 80-89%: Describe reliable balance and complementary differences, alongside real communication hurdles.
-- If score is 70-79%: Emphasize contrasting habits, sparky dynamics, ego friction, and specific areas where they must compromise.
-- If score < 70%: Emphasize distinct viewpoints, stubborn habits, differences in expression, and deep growth lessons that require patience and maturity.
-
-=== OUTPUT JSON REQUIREMENTS ===
-Write in Burmese with exact tone '${mood}' tailored strictly to '${relType}' mode:
-1. 'tomo_deep_reading_p1': A detailed, balanced 4-paragraph character analysis of ${p1Name} structured as:
-   - [၁။ ${isCouple ? 'အချစ်ရေးနှင့် ရိုမန်တစ် ပင်ကိုယ်စရိုက်' : 'မိတ်ဆွေအပေါင်းအသင်းများကြား ပင်ကိုယ်စရိုက်နှင့် အားသာချက်များ'}] (Core strengths & persona)
-   - [၂။ ${isCouple ? 'အချစ်ရေးတွင် တွေ့ရတတ်သော အားနည်းချက်များနှင့် အကျင့်ဆိုးများ' : 'သူငယ်ချင်းဆက်ဆံရေးတွင် ဖြစ်တတ်သော အလွဲများနှင့် အားနည်းချက်များ'}] (Flaws, bad habits & weak sides)
-   - [၃။ ${isCouple ? 'ချစ်သူချင်း ရန်ဖြစ်ချိန်/စိတ်ကောက်ချိန် တုံ့ပြန်ပုံနှင့် သတိထားရမည့် အချက်များ' : 'သဘောထားကွဲလွဲချိန်/စိတ်ဆိုးချိန် တုံ့ပြန်ပုံနှင့် သတိထားရမည့် အချက်များ'}] (Conflict triggers & shadow behavior)
-   - [၄။ ${isCouple ? 'ချစ်သူဘဝတွင် အမှန်တကယ် လိုအပ်သော အတွင်းစိတ်နှင့် ပြုပြင်သင့်သော အလေ့အထ' : 'မိတ်ဆွေကောင်းတစ်ဦးအဖြစ် လိုအပ်သော အတွင်းစိတ်နှင့် ပြုပြင်သင့်သော အလေ့အထ'}] (Inner needs & advice for growth)
-2. 'tomo_deep_reading_p2': A detailed, balanced 4-paragraph character analysis of ${p2Name} using the exact same 4-part structure.
-3. 'relationship_title': A compelling, memorable title strictly matching '${mood}', '${relType}' mode, and the ${algorithmicScore}% tier (${scoreTier.levelMm}).
-4. 'tomo_dynamic_insight': A rich 3-to-4 paragraph synergy deep dive matching '${mood}' and '${relType}' mode explaining both their compatibility AND their real friction points, ego clashes, and daily interactions.
-5. 'tomo_strengths': 4 detailed strengths with real ${relType.toLowerCase()} relationship examples.
-6. 'tomo_challenges': 4 balanced growth areas with practical advice (2 focusing on ${p1Name}'s flaws, 2 focusing on ${p2Name}'s flaws).
-7. 'tomo_secret_advice': A customized guidance letter from Tomo matching '${mood}', '${relType}' mode, and ${algorithmicScore}% tier addressing how they can balance their bond together.
-8. 'chemistry_score': Set to ${algorithmicScore}.
-
-Return JSON only.
-`;
+export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore, apiKey, options = {}) {
+  const model = options.model || DEFAULT_TOMO_MODEL;
+  if (!TOMO_MODELS.some(item => item.id === model)) throw new Error('Choose a supported Gemini model.');
+  if (!['Friends', 'Couple'].includes(relType) || !['Sweet', 'Playful', 'Mystic'].includes(mood)) throw new Error('Choose a valid reading mode and tone.');
+  if (!apiKey?.trim()) throw new Error('Add your Gemini API key first.');
+  if (!Number.isFinite(algorithmicScore) || algorithmicScore < 0 || algorithmicScore > 100) throw new Error('Invalid symbolic game score.');
+  const names = [normalizePersonName(p1Name), normalizePersonName(p2Name)];
+  if (names.some(name => !name || name.length > 80)) throw new Error('Enter two names of up to 80 characters.');
+  const promptText = buildTomoPrompt({ p1Name: names[0], p1Secret, p2Name: names[1], p2Secret, relType, mood, algorithmicScore,
+    breakdown: calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType).map(({ label, score }) => ({ label, score })) });
+  // Cache only in memory, for this key/model/input/prompt version. Never put keys in URLs or persist readings.
+  const canCache = Boolean(globalThis.crypto?.subtle);
+  const keyBytes = canCache ? await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey.trim())) : null;
+  const keyDigest = keyBytes ? Array.from(new Uint8Array(keyBytes), byte => byte.toString(16).padStart(2, '0')).join('') : null;
+  const cacheKey = JSON.stringify([TOMO_PROMPT_VERSION, keyDigest, model, promptText]);
+  if (options.signal?.aborted) throw new DOMException('Reading cancelled.', 'AbortError');
+  const now = Date.now();
+  for (const [key, entry] of readingCache) if (entry.expiresAt <= now) readingCache.delete(key);
+  const cached = canCache ? readingCache.get(cacheKey) : undefined;
+  if (cached) return structuredClone({ ...cached.reading, readingInfo: { ...cached.reading.readingInfo, cached: true } });
 
   const payload = {
-    contents: [{ parts: [{ text: promptText }] }],
-    systemInstruction: {
-      parts: [{
-        text: `You are 'Tomo' (တိုမို), an elite relationship psychologist and warm, loving virtual companion. Write extensive, balanced, honest storytelling Burmese readings specifically tailored to ${relType} mode ('Friends' vs 'Couple'). When mood is 'Playful', maintain a super friendly, cute, lovable, and endearing tone (အလွန် ချစ်ဖို့ကောင်းပြီး ခင်မင်ရင်းနှီးသော လေသံ) without technical astrological label boilerplate ("ဘာဓာတ်မို့လို့", "ဘာဖွားမို့လို့") or repetitive slang.`
-      }]
-    },
+    systemInstruction: { parts: [{ text: BURMESE_READING_SYSTEM }] },
+    contents: [{ role: 'user', parts: [{ text: promptText }] }],
     generationConfig: {
-      temperature: mood === 'Playful' ? 0.98 : 0.92,
-      topP: 0.95,
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: "OBJECT",
-        properties: {
-          tomo_deep_reading_p1: { type: "STRING" },
-          tomo_deep_reading_p2: { type: "STRING" },
-          chemistry_score: { type: "NUMBER" },
-          relationship_title: { type: "STRING" },
-          tomo_dynamic_insight: { type: "STRING" },
-          tomo_strengths: { type: "ARRAY", items: { type: "STRING" } },
-          tomo_challenges: { type: "ARRAY", items: { type: "STRING" } },
-          tomo_secret_advice: { type: "STRING" }
-        },
-        required: [
-          "tomo_deep_reading_p1", "tomo_deep_reading_p2", "chemistry_score",
-          "relationship_title", "tomo_dynamic_insight", "tomo_strengths",
-          "tomo_challenges", "tomo_secret_advice"
-        ]
-      }
+      temperature: 1,
+      maxOutputTokens: 8192,
+      thinkingConfig: { thinkingLevel: 'low' },
+      responseMimeType: 'application/json',
+      responseSchema: TOMO_RESPONSE_SCHEMA
     }
   };
-
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
-
+  let timedOut = false;
+  const cancel = () => controller.abort();
+  options.signal?.addEventListener('abort', cancel, { once: true });
+  const timeoutMs = options.timeoutMs ?? 60000;
+  const timeoutId = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  let lastQualityError;
+  let totalTokens = 0;
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      signal: controller.signal
-    });
-
-    if (!response.ok) {
-      const errorJson = await response.json().catch(() => ({}));
-      throw new Error(errorJson.error?.message || `HTTP ${response.status}`);
+    // At most one repair, only for malformed/poor-language content. Never retry quota/auth errors.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (controller.signal.aborted) throw new DOMException('Reading cancelled.', 'AbortError');
+      const requestPayload = attempt === 0 ? payload : {
+        ...payload,
+        contents: [{ role: 'user', parts: [{ text: promptText + '\nRepair instruction: the previous attempt failed this app check: ' + lastQualityError.message + '\nWrite the complete JSON again; check all Burmese fields and the exact four-block/three-item structure.' }] }]
+      };
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey.trim() },
+        body: JSON.stringify(requestPayload), signal: controller.signal
+      });
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => ({}));
+        const message = String(errorJson.error?.message || `Gemini HTTP ${response.status}`).split(apiKey.trim()).join('[key]').slice(0, 180);
+        const error = new Error(message);
+        error.code = `GEMINI_HTTP_${response.status}`;
+        throw error;
+      }
+      const data = await response.json();
+      const candidate = data.candidates?.[0];
+      totalTokens += Number(data.usageMetadata?.totalTokenCount) || 0;
+      if (data.promptFeedback?.blockReason || (candidate?.finishReason && candidate.finishReason !== 'STOP')) {
+        const error = new Error(candidate?.finishReason === 'MAX_TOKENS' ? 'Gemini reached the output limit. Try the built-in reading or another model.' : 'Gemini could not complete this reading.');
+        error.code = 'GEMINI_INCOMPLETE';
+        throw error;
+      }
+      const jsonText = candidate?.content?.parts?.filter(part => !part.thought && typeof part.text === 'string').map(part => part.text).join('');
+      if (!jsonText) throw new Error('No response received from Gemini API.');
+      try {
+        const validated = validateReading(JSON.parse(jsonText), algorithmicScore);
+        const reading = validateBurmeseReading(validated, { relType, names });
+        const result = { ...reading, readingInfo: { source: 'gemini', model, cached: false, attempts: attempt + 1, totalTokens, durationMs: Date.now() - now, promptVersion: TOMO_PROMPT_VERSION } };
+        if (canCache) {
+          if (readingCache.size >= 8) readingCache.delete(readingCache.keys().next().value);
+          readingCache.set(cacheKey, { reading: structuredClone(result), expiresAt: Date.now() + CACHE_TTL_MS });
+        }
+        return result;
+      } catch (error) {
+        lastQualityError = new Error(error instanceof SyntaxError ? 'Return a complete valid JSON object without code fences.' : error.message);
+      }
     }
-
-    const resData = await response.json();
-    const jsonText = resData.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!jsonText) throw new Error("No response received from Gemini API.");
-    return JSON.parse(jsonText);
+    throw lastQualityError;
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Gemini request timed out after 30 seconds.');
-    }
+    if (error.name === 'AbortError' && timedOut) throw new Error(`Gemini request timed out after ${timeoutMs / 1000} seconds.`);
     throw error;
   } finally {
     clearTimeout(timeoutId);
+    options.signal?.removeEventListener('abort', cancel);
   }
 }

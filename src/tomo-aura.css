@@ -1,0 +1,178 @@
+/* Tomo's solar palette: obsidian, ember brown, molten orange, amber, sun gold. */
+.tomo-experience, body.dark .tomo-experience {
+  --tomo-bg: #110f15; --tomo-paper: #211e28; --tomo-ink: #ede7e5;
+  --tomo-muted: #ee9b77; --tomo-accent: #eda282; --tomo-tint: #6a290d;
+  --tomo-line: #ac4215; --tomo-lilac: #2b2734;
+  --control-edge: #ec9d7c; --control-shadow: #151319; --control-fill: #5c230b; --control-soft: #65270c;
+  --aura-orchid: #eb895f; --aura-violet: #e87645; --aura-pink: #eda384; --aura-gold: #f0b399;
+  color-scheme: dark;
+}
+body.dark .tomo-experience { --tomo-bg: #131116; --tomo-paper: #25212c; --control-soft: #292531; --tomo-muted: #f1b59b; }
+body .tomo-experience .tomo-main {
+  background-color: var(--tomo-bg);
+  background-image: radial-gradient(ellipse at 14% 10%, #d6531a2e, transparent 46%), radial-gradient(ellipse at 92% 50%, #e35a1f20, transparent 48%), radial-gradient(#f6d2c238 .8px, transparent 1px), radial-gradient(#f2baa224 1px, transparent 1.5px);
+  background-size: 100% 100%, 100% 100%, 43px 43px, 109px 109px;
+  background-position: 0 0, 0 0, 0 0, 19px 27px;
+}
+body .tomo-experience .tomo-header { background: var(--tomo-bg); border-bottom-color: #e56229; }
+body .tomo-experience .tomo-brand > span { background: #e3581d; color: var(--aura-gold); box-shadow: 3px 3px 0 #e87543; }
+body .tomo-experience .tomo-brand strong { color: #f1edeb; }
+body .tomo-experience .arcade-welcome { color: #f5ccbb; }.tomo-experience .arcade-online { background: #efae92; box-shadow: 0 0 0 3px #ed916a22, 0 0 12px #ee997480; }
+body .tomo-experience .arcade-hero h1 { color: #f1ecea; text-shadow: 0 3px 0 #b74717, 0 0 35px #eb885e30; }
+body .tomo-experience .arcade-intro { color: #f3c1ac; }
+body .tomo-experience .arcade-machine { background: var(--tomo-paper); border-color: #ec9d7c; box-shadow: 0 6px 0 #9a3c13, 0 10px 0 #26222d, 0 0 45px #e76d3924; }
+body .tomo-experience .arcade-machine-top { background: #7d3110; color: #f4f0ee; border-bottom-color: #eb875c; }
+body .tomo-experience .arcade-machine-top > span:last-child { color: #f0b399; }.tomo-experience .arcade-machine-top i { background: #efae92; border-color: #f7d7c9; box-shadow: 0 0 9px #ee9772; }
+body .tomo-experience .arcade-stage:not(.stage-ice) { background: radial-gradient(ellipse at 50% 65%, #e66731 0%, #9b3c13 40%, #302b3a 82%); }
+body .tomo-experience .arcade-stage:not(.stage-ice) .arcade-character { border-color: #f4c6b3; outline-color: #efa98c; box-shadow: 0 0 0 11px #bc4917, 0 0 0 14px #eea585, 0 0 0 18px #e5663033, 0 0 45px 15px #e97d4f4d; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-ticket { background: #67280d; color: #f5c9b6; border-color: #f1b49a; box-shadow: 3px 3px 0 #14121866; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-ticket > span { color: #f1b49a; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-speech { background: #f2eeec; color: #8a3511; border-color: #ec9d7c; box-shadow: 3px 3px 0 #14121866; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-name { background: #7e3110; color: #f3c3ae; border-color: #f2baa2; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-caption { color: #f5f2f1; }
+body .tomo-experience .arcade-control-deck { background: var(--tomo-paper); }
+body .tomo-experience .arcade-mode { background: #5e240c; border-color: #e1571c; color: #f1ecea; box-shadow: 0 3px 0 #15131a; }
+body .tomo-experience .arcade-mode.mode-active { background: #9a3c13; border-color: #efab8d; color: #f9f7f7; box-shadow: 0 3px 0 #e45f26; }
+body .tomo-experience .arcade-mode.nomo-mode.mode-active { background: #6a290d; border-color: #e87747; color: #f2eeec; box-shadow: 0 3px 0 #863410; }
+body .tomo-experience .mode-icon { background: #6b290d; border-color: #e7713f; color: #f2bda7; }.tomo-experience .nomo-mode .mode-icon { background: #5f250c; color: #f5cdbc; border-color: #d3521a; }
+body .tomo-experience .mode-active .mode-light { background: #f5ccbb; border-color: #f2eeed; box-shadow: 0 0 0 1.5px #ea8256, 0 0 10px #ee9974; }
+body .tomo-experience .tomo-primary { background: linear-gradient(120deg, #e45c21, #de561b); border-color: #ed9f7e; color: #f9f7f7; box-shadow: 0 5px 0 #772e0f, inset 0 2px 0 #f2bba466, 0 0 18px #e45c2124; }
+body .tomo-experience .tomo-primary:hover:not(:disabled) { background: linear-gradient(120deg, #e87848, #e5622a); box-shadow: 0 5px 0 #772e0f, 0 0 23px #eb865a40; }
+body .tomo-experience .tomo-primary:active:not(:disabled) { box-shadow: 0 1px 0 #772e0f; }
+body .tomo-experience .tomo-header :is(.tomo-chip-3d, .tomo-icon-button, .tomo-settings-button) { background: #5f250c; border-color: #e87341; color: #efebe9; box-shadow: 0 3px 0 #131117; }
+body .tomo-experience .tomo-header .tomo-settings-button { background: #67280d; border-color: #e87848; }.tomo-experience .tomo-key-dot { background: #efab8d; }.tomo-experience .tomo-key-dot.is-ready { background: #ec9e7d; }
+body .tomo-experience .tomo-section-nav { background: #26222e; border-color: #e5622a; box-shadow: 0 3px 0 #100e13; }
+body .tomo-experience .tomo-section-nav button { color: #f4c6b2; }body .tomo-experience .tomo-section-nav button[aria-current] { background: #df561c; color: #faf9f9; }
+body .tomo-experience .tomo-nomo-link, body .tomo-experience .tomo-section-kicker { color: #f5c9b6; }
+body .tomo-experience .tomo-reading-form { background: var(--tomo-paper); border-color: #e97c4d; box-shadow: 0 7px 0 #7a2f0f; }
+body .tomo-experience .arcade-form-bar { background: #883511; border-bottom-color: #ea8255; color: #f1ecea; }.tomo-experience .arcade-form-bar b { color: #efae92; }.tomo-experience .arcade-ready-meter i { background: #2a2632; border-color: #e56229; }.tomo-experience .arcade-ready-meter i.is-ready { background: #f3c1ac; border-color: #f0ebe9; box-shadow: 0 0 8px #ec8e6644; }
+body .tomo-experience .tomo-person { background: #64270c; border-color: #e7703d; box-shadow: 0 4px 0 #1e1b24; }body .tomo-experience .tomo-person:nth-child(3) { background: #68280d; border-color: #ea8052; box-shadow: 0 4px 0 #211e27; }
+body .tomo-experience .tomo-person legend img { border-color: #eda383; box-shadow: 0 3px 0 #903812; }
+body .tomo-experience .tomo-person :is(label, label > span) { color: #f7d4c5; }
+body .tomo-experience .tomo-person input { background: #211e27; color: #f8f6f5; border-color: #e76f3c; box-shadow: inset 0 3px 0 #121015; }body .tomo-experience .tomo-person:nth-child(3) input { border-color: #e5642c; }body .tomo-experience .tomo-person input:focus { border-color: #f1b499; box-shadow: 0 0 0 3px #ea825630; }
+body .tomo-experience .tomo-people-link { background: #a94115; color: #f2bda6; border-color: #ee9974; box-shadow: 0 3px 0 #221f29; }
+body .tomo-experience .tomo-choice, body .tomo-experience .tomo-tone { background: #2c2834; color: #f4f0ee; border-color: #e46129; box-shadow: 0 4px 0 #151319; }
+body .tomo-experience .tomo-choice.is-selected { background: #7c300f; border-color: #efaa8c; box-shadow: 0 4px 0 #c14b18; }
+body .tomo-experience .tomo-choice-icon { background: #702b0e; color: #f4c4af; border-color: #e7713f; }.tomo-experience .tomo-choice-check { background: #26222e; border-color: #e87645; }body .tomo-experience .tomo-choice.is-selected .tomo-choice-check { background: #e87747; border-color: #f2b9a1; color: #ffffff; }
+body .tomo-experience .tomo-tone > span { background: #752d0e; color: #f6d2c2; border-color: #e87645; }body .tomo-experience .tomo-tone:nth-child(2) > span { background: #8d3611; color: #f8d9cb; border-color: #eb895f; }body .tomo-experience .tomo-tone:nth-child(3) > span { background: #8d3611; color: #f2bca5; border-color: #ee9873; }
+body .tomo-experience .tomo-tone.is-selected { background: #823210; border-color: #f0b094; box-shadow: 0 4px 0 #d9541b; }body .tomo-experience .tomo-tone:nth-child(2).is-selected { background: #9e3d14; border-color: #f2baa2; box-shadow: 0 4px 0 #e0571c; }body .tomo-experience .tomo-tone:nth-child(3).is-selected { background: #ae4315; border-color: #f2bca5; box-shadow: 0 4px 0 #e97a4b; }
+body .tomo-experience .tomo-tone small, body .tomo-experience .tomo-choice small { color: #f4c5b1; }
+body .tomo-experience .tomo-form-footer { background: var(--control-soft); border-color: #e66c38; }
+body .tomo-experience .tomo-text-button, body .tomo-experience .tomo-outline-button { background: #5d240b; border-color: #e87645; color: #f8ddd1; box-shadow: 0 3px 0 #17151c; }body .tomo-experience .tomo-text-button:hover, body .tomo-experience .tomo-outline-button:hover { background: #883511; }
+body .tomo-experience .tomo-reading-tags span { background: #813210; color: #f4c3af; border-color: #e45c22; box-shadow: 0 2px 0 #201d26; }body .tomo-experience .tomo-reading-tags span + span { background: #863411; color: #f8d9cb; border-color: #e97c4e; box-shadow: 0 2px 0 #221f28; }
+body .tomo-experience .tomo-match-summary, body .tomo-experience .tomo-profiles { background: var(--tomo-paper); border-color: #e97c4e; box-shadow: 0 6px 0 #7d3110; }
+body .tomo-experience .tomo-score-ring { background: #7e3110; border-color: #ec9c7a; box-shadow: 0 0 0 6px #a74115, 0 0 36px #eb875c30; }body .tomo-experience .tomo-score-ring svg circle:last-child { stroke: #f2baa2; }
+body .tomo-experience .tomo-metrics { background: var(--tomo-paper); border-color: #e3591e; }.tomo-experience .tomo-metric-track { background: #2f2a38; border-color: #d7531b; }.tomo-experience .tomo-metric-track > div { background: #eb865b; border-color: #f4c5b0; }.tomo-experience .tomo-metric-grid > div:nth-child(2n) .tomo-metric-track > div { background: #ea8458; border-color: #f5ccbb; }.tomo-experience .tomo-metric-grid > div:nth-child(3n) .tomo-metric-track > div { background: #ee9771; border-color: #f6d0bf; }
+body .tomo-experience .tomo-profile-tabs { background: #27232e; border-color: #e45f26; }body .tomo-experience .tomo-profile-tabs button[aria-selected=true] { background: #7b2f0f; border-color: #ed926b; }body .tomo-experience .tomo-profile-tabs button:nth-child(2)[aria-selected=true] { background: #913812; border-color: #eda383; }
+body .tomo-experience .tomo-growth-grid > div { background: #2f2b38; border-color: #e76e3a; box-shadow: 0 5px 0 #1a171f; }body .tomo-experience .tomo-growth-grid > div:nth-child(2) { background: #2f2b38; border-color: #e87645; box-shadow: 0 5px 0 #1a171f; }
+body .tomo-experience .tomo-letter { background: #7d300f; border-color: #ec8d64; box-shadow: 0 5px 0 #221f29; }.tomo-experience .tomo-letter-signature { color: #f6d0c0; }
+body .tomo-experience .arcade-settings { background: var(--tomo-paper); border-color: #ed9169; box-shadow: 0 8px 0 #221f29, 0 0 0 7px #e8794944; }body .tomo-experience .arcade-settings-header { background: #9a3c13; border-color: #e97d4f; }.tomo-experience .arcade-settings-note { background: #61250c; border-color: #e66933; color: #f5ccba; }.tomo-experience .arcade-close { background: #f7d5c7; color: #923812; border-color: #e7713e; }
+body .tomo-experience .arcade-settings :is(select, input) { background: #1f1c26; border-color: #e5622a; color: #f1ecea; }
+body .tomo-experience .arcade-small-button { background: #752d0e; color: #ede8e6; border-color: #e97e50; }.tomo-experience .arcade-key-status span { color: #f3c2ad; }
+body .tomo-experience .tomo-loading-panel { background: #2f2b38; border-color: #ed946e; box-shadow: 0 8px 0 #1e1b24, 0 0 0 8px #e7713e33; }
+body .tomo-experience .tomo-toast, body .tomo-experience .tomo-form-error { background: #66280d; border-color: #eda180; color: #f7d6c8; box-shadow: 0 3px 0 #1d1a22; }
+body .tomo-experience .tomo-scroll-progress { background: #ee9975; box-shadow: 0 0 12px #ee997577; }
+body .tomo-experience .tomo-main::-webkit-scrollbar-track { background: #1d1a22; }body .tomo-experience .tomo-main::-webkit-scrollbar-thumb { background: #e87645; border-radius: 8px; }
+@media(max-width: 700px) { body .tomo-experience .arcade-stage:not(.stage-ice) .arcade-character { box-shadow: 0 0 0 9px #bc4917, 0 0 0 12px #eea585, 0 0 28px 12px #e97d4f4d; } }
+/* Tomo's shapes: enchanted tickets, potion bottles, moon medallions, spell seals. */
+body .tomo-experience .tomo-person { --spell-paper: #5d240b; --spell-line: #eea586; background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 25px 28px 32px; isolation: isolate; }
+body .tomo-experience .tomo-person:nth-child(3) { --spell-paper: #5f250c; --spell-line: #f0b094; background: transparent; border: 0; box-shadow: none; }
+.spell-card-frame { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; overflow: visible; }
+.spell-card-shadow { fill: #151319; stroke: #151319; stroke-width: 2px; }.spell-card-paper { fill: var(--spell-paper); stroke: var(--spell-line); stroke-width: 2px; }.spell-card-inlay { fill: none; stroke: var(--spell-line); stroke-width: 1px; opacity: .35; }
+body .tomo-experience .tomo-person legend img { background: #823210; border: 3px solid #f8d9cb; outline: 3px solid #c14b18; outline-offset: 2px; }
+body .tomo-experience .tomo-person input { border-radius: 4px 14px 4px 14px; border-bottom-width: 4px; }
+body .tomo-experience .tomo-reading-form { border-radius: 30px 6px 30px 6px; border-width: 3px; box-shadow: 0 7px 0 #65270c, 0 0 0 5px #e45d231a; }
+body .tomo-experience .arcade-form-bar { background: linear-gradient(90deg, #983b13, #a03e14, #983b13); border-bottom: 3px double #ee9771; }
+body .tomo-experience .arcade-ready-meter i { width: 14px; height: 14px; border-radius: 2px; transform: rotate(45deg) scale(.78); }.tomo-experience .arcade-ready-meter { gap: 6px; }
+body .tomo-experience .tomo-people-link { width: 35px; height: 42px; border-radius: 50% 50% 45% 45%; background: #a94115; color: #f2bda6; border-width: 3px; outline: 1px solid #eea585; outline-offset: 3px; }
+body .tomo-experience .tomo-tone { position: relative; margin-top: 15px; border: 2px solid #e97e50; border-bottom-width: 6px; border-radius: 35% 35% 25% 25% / 24% 24% 16% 16%; padding: 23px 6px 14px; min-height: 153px; background: linear-gradient(165deg, #762e0f 15%, #26222e); box-shadow: inset 4px 0 0 #f6d2c312, 0 4px 0 #19161e; }
+body .tomo-experience .tomo-tone::before { content: ''; position: absolute; top: -14px; left: calc(50% - 18px); width: 36px; height: 17px; background: #e97949; border: 2px solid #f3bfa9; border-bottom: 4px solid #a84115; border-radius: 5px 5px 2px 2px; box-shadow: inset 0 3px 0 #f5c8b555; }
+body .tomo-experience .tomo-tone:nth-child(2)::before { background: #e87543; border-color: #f4c8b5; border-bottom-color: #b34516; }body .tomo-experience .tomo-tone:nth-child(3)::before { background: #e66b36; border-color: #f2b9a1; border-bottom-color: #aa4215; }
+body .tomo-experience .tomo-tone.is-selected { background: linear-gradient(160deg, #dd551b, #6e2b0e); border-color: #f6cfbe; box-shadow: inset 4px 0 0 #f5f2f022, 0 4px 0 #2a2633, 0 0 20px #ed956f26; }
+body .tomo-experience .tomo-tone:nth-child(2).is-selected { background: linear-gradient(160deg, #e46028, #803210); border-color: #f6cfbe; box-shadow: inset 4px 0 0 #f5f2f022, 0 4px 0 #2a2632, 0 0 20px #ee977126; }
+body .tomo-experience .tomo-tone:nth-child(3).is-selected { background: linear-gradient(160deg, #df561c, #742d0e); border-color: #f3c3ae; box-shadow: inset 4px 0 0 #f5f2f022, 0 4px 0 #292531, 0 0 20px #ed9f7e26; }
+body .tomo-experience .tomo-tone > span { border-width: 2px; outline: 1px dashed #f4c5b180; outline-offset: 3px; width: 39px; height: 39px; }
+body .tomo-experience .tomo-choice { border-radius: 9px 26px 26px 9px; border-left-width: 6px; padding-right: 20px; }.tomo-experience .tomo-choice-icon { border-radius: 50%; }.tomo-experience .tomo-choice-check { transform: rotate(-8deg); }
+body .tomo-experience .tomo-primary { position: relative; isolation: isolate; border: 0; border-radius: 0; background: transparent; box-shadow: none; padding: 15px 30px 19px; }
+body .tomo-experience .tomo-primary::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(120deg, #e46027, #d5521a); clip-path: polygon(16px 0, calc(100% - 16px) 0, calc(100% - 9px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 9px) calc(100% - 8px), calc(100% - 16px) 100%, 16px 100%, 9px calc(100% - 8px), 0 calc(100% - 8px), 0 8px, 9px 8px); box-shadow: inset 0 3px 0 #f5ccbb, inset 0 -7px 0 #873411, inset 3px 0 0 #ed946e, inset -3px 0 0 #ed9169; transition: filter .15s; }
+body .tomo-experience .tomo-primary:hover:not(:disabled), body .tomo-experience .tomo-primary:active:not(:disabled) { background: transparent; box-shadow: none; }body .tomo-experience .tomo-primary:hover::before { filter: brightness(1.18); }
+body .tomo-experience .tomo-outline-button { border-radius: 25px 7px 25px 7px; border-bottom-width: 4px; }
+body .tomo-experience .tomo-text-button { border-radius: 4px 13px 4px 13px; border-bottom-width: 3px; }
+body .tomo-experience .tomo-form-footer { border: 2px dashed #ec8e66; border-radius: 35px 8px 35px 8px; background-image: radial-gradient(#f6d2c225 .8px, transparent 1px); background-size: 13px 13px; }
+body .tomo-experience .arcade-mode { border-radius: 22px 6px 22px 6px; border-left-width: 5px; }.tomo-experience .mode-icon { border-radius: 50%; }
+body .tomo-experience .arcade-machine { border-radius: 40px 12px 40px 12px; }
+body .tomo-experience .tomo-header :is(.tomo-chip-3d, .tomo-icon-button, .tomo-settings-button) { border-radius: 18px 5px 18px 5px; border-bottom-width: 3px; }.tomo-experience .tomo-header .tomo-icon-button { border-radius: 50%; width: 42px; min-height: 42px; padding: 4px; }
+body .tomo-experience .tomo-match-summary { border-radius: 40px 8px 40px 8px; border-top-width: 5px; background-image: radial-gradient(ellipse at 0 50%, #e2571c25, transparent 50%); }
+body .tomo-experience .tomo-metrics { border-radius: 4px 23px 4px 23px; border-left-width: 5px; }
+body .tomo-experience .tomo-profiles { border-radius: 32px 7px 32px 7px; }
+body .tomo-experience .tomo-profile-tabs button { border-radius: 0 0 20px 0; border-bottom-width: 5px; }
+body .tomo-experience .tomo-reading-tags span { border-radius: 0 12px 0 12px; border-left-width: 4px; }
+body .tomo-experience .tomo-growth-grid > div { border-radius: 28px 4px 28px 4px; border-top-width: 5px; }
+body .tomo-experience .tomo-letter { border-radius: 4px 34px 4px 34px; border: 3px double #f0b094; position: relative; }.tomo-experience .tomo-letter-heading > span { border: 2px solid #ea8357; border-radius: 50%; width: 48px; height: 48px; display: grid; place-items: center; background: #9e3d14; color: #f3c1ac; }
+body .tomo-experience .arcade-settings { border-radius: 28px 7px 28px 7px; border-width: 3px; }.tomo-experience .arcade-settings-note { border-radius: 3px 20px 3px 20px; border-left-width: 5px; }.tomo-experience .arcade-close { border-radius: 50%; width: 34px; height: 34px; }.tomo-experience .arcade-settings :is(input, select) { border-radius: 4px 15px 4px 15px; }
+@media(max-width: 700px) { body .tomo-experience .tomo-person { padding: 22px 24px 29px; }body .tomo-experience .tomo-person + .tomo-people-link + .tomo-person { border: 0; padding-top: 22px; }.tomo-experience .tomo-tone-group { gap: 10px; }body .tomo-experience .tomo-tone { min-height: 145px; padding-top: 22px; }.tomo-experience .tomo-tone small { font-size: 9px; }.tomo-experience .tomo-primary { padding-inline: 24px; }.tomo-experience .tomo-header .tomo-icon-button { width: 34px; min-height: 36px; }.tomo-experience .arcade-mode-picker { gap: 10px; } }
+/* Solar flare accents, with Nomo retaining its turquoise identity. */
+body .tomo-experience .arcade-stage:not(.stage-ice) { background: radial-gradient(ellipse at 50% 65%, #e2571c 0%, #933912 32%, #2a2633 58%, #16141a 88%); }
+body .tomo-experience .tomo-primary::before { background: linear-gradient(120deg, #eb865b, #e5652f); box-shadow: inset 0 3px 0 #f4c8b5, inset 0 -7px 0 #963a13, inset 3px 0 0 #efa98c, inset -3px 0 0 #ed946e; }
+body .tomo-experience .tomo-primary { color: #1b1920; text-shadow: none; }
+body .tomo-experience .tomo-person { --spell-paper: #2d2836; --spell-line: #ec8f67; }body .tomo-experience .tomo-person:nth-child(3) { --spell-paper: #282430; --spell-line: #ed926b; }
+body .tomo-experience .arcade-mode.nomo-mode { background: #193d3b; border-color: #4d8f82; color: #e8fff1; box-shadow: 0 3px 0 #102724; }
+body .tomo-experience .arcade-mode.nomo-mode.mode-active { background: #245653; border-color: #83d4af; color: #f0ffe8; box-shadow: 0 3px 0 #357a68; }
+body .tomo-experience .nomo-mode .mode-icon { background: #23514b; color: #d5ffaf; border-color: #609b87; }
+/* Cosmic orange carries the identity; gold is a small solar highlight. */
+.tomo-experience, body.dark .tomo-experience { --tomo-bg: #141019; --tomo-paper: #241c25; --tomo-ink: #fff5ef; --tomo-muted: #cbb6b3; --tomo-accent: #ff9b68; --tomo-line: #855042; --tomo-tint: #542b2d; --control-soft: #2c202d; --aura-gold: #ffd784; }
+body.dark .tomo-experience { --tomo-bg: #0e0b12; --tomo-paper: #1e1721; --control-soft: #281b29; --tomo-muted: #cdb9bb; }
+body .tomo-experience .tomo-main { background-image: radial-gradient(ellipse at 12% 12%, #ff6a2420, transparent 43%), radial-gradient(ellipse at 93% 52%, #a738c31b, transparent 45%), radial-gradient(#ffb88730 .8px, transparent 1px), radial-gradient(#ccb7ef24 1px, transparent 1.5px); }
+body .tomo-experience .arcade-hero h1 { color: #fff4ef; text-shadow: 0 3px 0 #7e332b, 0 0 35px #ff6b2420; }
+body .tomo-experience .arcade-machine { border-color: #d47c58; box-shadow: 0 6px 0 #743a34, 0 10px 0 #171019, 0 0 40px #ff62241a; }
+body .tomo-experience .arcade-machine-top { background: #512932; border-bottom-color: #b75d46; color: #ffeae1; }
+body .tomo-experience .arcade-stage:not(.stage-ice) { background: radial-gradient(ellipse at 50% 68%, #e86426 0%, #a33729 30%, #4c2035 59%, #1e1529 90%); }
+body .tomo-experience .arcade-stage:not(.stage-ice) .arcade-character { border-color: #ffe1a4; outline-color: #ff925b; box-shadow: 0 0 0 11px #9e3a28, 0 0 0 14px #ee8050, 0 0 0 18px #f2603026, 0 0 45px 15px #ff622438; }
+body .tomo-experience .arcade-stage:not(.stage-ice) .stage-name { background: #3e2534; color: #ffdc9c; border-color: #e7a26e; }
+body .tomo-experience .arcade-mode:not(.nomo-mode) { background: #322431; border-color: #8c565b; color: #ffefeb; }body .tomo-experience .arcade-mode.mode-active:not(.nomo-mode) { background: #873e34; border-color: #ffad7e; box-shadow: 0 3px 0 #a74c36; }
+body .tomo-experience .tomo-primary::before { background: linear-gradient(120deg, #ff9b54, #ff7038); box-shadow: inset 0 3px 0 #ffd3a5, inset 0 -7px 0 #9c3925, inset 3px 0 0 #ffbb83, inset -3px 0 0 #fc8b5c; }body .tomo-experience .tomo-primary { color: #33140e; }
+body .tomo-experience .tomo-person { --spell-paper: #38232d; --spell-line: #e48a65; }body .tomo-experience .tomo-person:nth-child(3) { --spell-paper: #2c2438; --spell-line: #d09283; }
+body .tomo-experience .arcade-form-bar { background: linear-gradient(90deg, #613135, #a24532, #613135); border-bottom-color: #dd865f; }
+body .tomo-experience .tomo-profile-tabs button:nth-child(2)[aria-selected=true] { background: #4d314e; border-bottom-color: #cb8c9b; }
+body .tomo-experience .tomo-letter { background: #332332; border-color: #ac6a6a; }.tomo-experience .tomo-letter-signature { color: #ffb78b; }
+/* Vibe bottles carry their own color and respond together to selection. */
+body .tomo-experience .tomo-tone[data-vibe=sweet] { --vibe-accent: #ff9bc4; --vibe-bright: #ffd3e6; --vibe-fill: #a82f70; --vibe-deep: #4b193b; --vibe-shadow: #e75a9d40; --vibe-idle: #30202e; }
+body .tomo-experience .tomo-tone[data-vibe=playful] { --vibe-accent: #ffac55; --vibe-bright: #ffe19b; --vibe-fill: #c45316; --vibe-deep: #542218; --vibe-shadow: #ff842c45; --vibe-idle: #32231e; }
+body .tomo-experience .tomo-tone[data-vibe=mystic] { --vibe-accent: #c59aff; --vibe-bright: #efe0ff; --vibe-fill: #7942c5; --vibe-deep: #30204f; --vibe-shadow: #a95bff45; --vibe-idle: #282135; }
+body .tomo-experience .tomo-tone[data-vibe] { background: var(--vibe-idle); border-color: color-mix(in srgb, var(--vibe-accent) 55%, #251827); color: var(--vibe-bright); box-shadow: inset 4px 0 0 #ffffff08, 0 4px 0 #150d1c; transition: background .2s, border-color .2s, box-shadow .2s, transform .15s; }
+body .tomo-experience .tomo-tone[data-vibe]::before { background: color-mix(in srgb, var(--vibe-accent) 60%, #30202f); border-color: var(--vibe-accent); border-bottom-color: var(--vibe-deep); box-shadow: inset 0 3px 0 #ffffff22; transition: background .2s, border-color .2s; }
+body .tomo-experience .tomo-tone[data-vibe] > span { background: var(--vibe-deep); color: var(--vibe-accent); border-color: color-mix(in srgb, var(--vibe-accent) 70%, #241926); outline-color: color-mix(in srgb, var(--vibe-accent) 45%, transparent); transition: background .2s, color .2s, border-color .2s; }
+body .tomo-experience .tomo-tone[data-vibe] small { color: color-mix(in srgb, var(--vibe-bright) 75%, #a99aa7); }
+body .tomo-experience .tomo-tone[data-vibe]:hover:not(:disabled) { border-color: var(--vibe-accent); box-shadow: inset 4px 0 0 #ffffff12, 0 4px 0 var(--vibe-deep), 0 0 15px var(--vibe-shadow); }
+body .tomo-experience .tomo-tone[data-vibe].is-selected { background: linear-gradient(160deg, var(--vibe-fill), var(--vibe-deep)); border-color: var(--vibe-accent); color: var(--vibe-bright); box-shadow: inset 4px 0 0 #ffffff24, 0 4px 0 var(--vibe-deep), 0 0 24px var(--vibe-shadow); }
+body .tomo-experience .tomo-tone[data-vibe].is-selected::before { background: var(--vibe-accent); border-color: var(--vibe-bright); }
+body .tomo-experience .tomo-tone[data-vibe].is-selected > span { background: var(--vibe-accent); color: var(--vibe-deep); border-color: var(--vibe-bright); outline-color: var(--vibe-accent); box-shadow: 0 0 13px var(--vibe-shadow); }
+body .tomo-experience .tomo-tone[data-vibe]:focus-visible { outline-color: var(--vibe-accent); }
+@media (prefers-reduced-motion: reduce) { body .tomo-experience .tomo-tone[data-vibe], body .tomo-experience .tomo-tone[data-vibe]::before, body .tomo-experience .tomo-tone[data-vibe] > span { transition: none; } }
+.tomo-experience .player-avatar { display: block; width: 52px; height: 52px; flex-shrink: 0; filter: drop-shadow(0 3px 0 #140b1d66); }
+.tomo-experience .tomo-profile-tabs .player-avatar { width: 44px; height: 44px; }
+@media(max-width: 700px) { .tomo-experience .tomo-profile-tabs .player-avatar { width: 34px; height: 34px; } }
+/* Relationship modes stay in the same solar family: orange and ember coral. */
+body .tomo-experience .tomo-choice[data-connection=friends] { --connection-accent: #ffb16d; --connection-fill: #a74720; --connection-deep: #46241e; --connection-bright: #ffe7ce; --connection-glow: #ff8b3433; }
+body .tomo-experience .tomo-choice[data-connection=couple] { --connection-accent: #ff987b; --connection-fill: #a83d35; --connection-deep: #47202a; --connection-bright: #ffe4da; --connection-glow: #ff6b5133; }
+body .tomo-experience .tomo-choice[data-connection] { background: color-mix(in srgb, var(--connection-deep) 50%, #241d27); border-color: color-mix(in srgb, var(--connection-accent) 55%, #32242a); color: var(--connection-bright); box-shadow: 0 4px 0 #170e19; transition: background .2s, border-color .2s, box-shadow .2s, transform .15s; }
+body .tomo-experience .tomo-choice[data-connection] .tomo-choice-icon { background: var(--connection-deep); color: var(--connection-accent); border-color: color-mix(in srgb, var(--connection-accent) 65%, #32242a); transition: background .2s, color .2s, border-color .2s; }
+body .tomo-experience .tomo-choice[data-connection] .tomo-choice-check { background: #231a24; border-color: color-mix(in srgb, var(--connection-accent) 65%, #32242a); transition: background .2s, border-color .2s; }
+body .tomo-experience .tomo-choice[data-connection] small { color: color-mix(in srgb, var(--connection-bright) 75%, #a99b9c); }
+body .tomo-experience .tomo-choice[data-connection]:hover:not(:disabled) { border-color: var(--connection-accent); box-shadow: 0 4px 0 var(--connection-deep), 0 0 15px var(--connection-glow); }
+body .tomo-experience .tomo-choice[data-connection].is-selected { background: linear-gradient(110deg, var(--connection-fill), var(--connection-deep)); border-color: var(--connection-accent); box-shadow: 0 4px 0 var(--connection-deep), 0 0 18px var(--connection-glow); }
+body .tomo-experience .tomo-choice[data-connection].is-selected .tomo-choice-icon { background: var(--connection-accent); color: var(--connection-deep); border-color: var(--connection-bright); }
+body .tomo-experience .tomo-choice[data-connection].is-selected .tomo-choice-check { background: var(--connection-accent); color: var(--connection-deep); border-color: var(--connection-bright); }
+body .tomo-experience .tomo-choice[data-connection]:focus-visible { outline-color: var(--connection-accent); }
+body .tomo-experience .tomo-letter-heading > .arcade-character { width: 52px; height: 52px; flex-shrink: 0; margin: 0; border: 2px solid #ffd3a5; border-radius: 50%; outline: 2px solid #c66e47; outline-offset: 2px; box-shadow: 0 3px 0 #29151f; }
+@media(prefers-reduced-motion: reduce) { body .tomo-experience .tomo-choice[data-connection], body .tomo-experience .tomo-choice[data-connection] :is(.tomo-choice-icon, .tomo-choice-check) { transition: none; } }
+/* Generated Tomo portraits preserve the original character in context-specific poses. */
+.tomo-experience .tomo-portrait { display: block; flex-shrink: 0; object-fit: contain; border-radius: 50%; background: #37212b; border: 2px solid #db936b; padding: 3px; box-shadow: 0 3px 0 #1b101b, 0 0 0 2px #6c403344; }
+body .tomo-experience .tomo-brand > .tomo-portrait { width: 46px; height: 46px; }
+body .tomo-experience .tomo-letter-heading > .tomo-portrait { width: 68px; height: 68px; border: 2px solid #ecad83; border-radius: 50%; outline: 1px solid #a86149; outline-offset: 3px; }
+@media(max-width: 700px) { body .tomo-experience .tomo-brand > .tomo-portrait { width: 34px; height: 34px; padding: 2px; }body .tomo-experience .tomo-letter-heading > .tomo-portrait { width: 58px; height: 58px; }.tomo-experience .tomo-letter-heading > span { display: none; }.tomo-experience .tomo-letter-heading { gap: 12px; }.tomo-experience .tomo-letter-heading p { font-size: 21px; } }
+.tomo-experience .tomo-reading-origin { margin: -8px 0 23px; padding: 12px 16px; background: var(--control-soft); border: 1px solid var(--tomo-line); border-radius: 4px 15px 4px 15px; }
+.tomo-experience .tomo-reading-origin > span { font-size: 12px; font-weight: 700; color: var(--tomo-accent); }
+.tomo-experience .tomo-reading-origin p { font-size: 11px; line-height: 1.7; margin-top: 6px; color: var(--tomo-muted); }
+.tomo-experience .arcade-model-help { font-size: 11px; color: var(--tomo-muted); line-height: 1.7; margin: -11px 0 17px; }
+.tomo-experience .tomo-cancel-reading { display: flex; margin: 0 auto 24px; }

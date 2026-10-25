@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import confetti from 'canvas-confetti';
+import GameTicketFrame from './GameTicketFrame';
 
 const Results = ({ players, selections, myUsername }) => {
   const navigate = useNavigate();
@@ -9,16 +10,9 @@ const Results = ({ players, selections, myUsername }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [copied, setCopied] = useState(false);
 
-  if (!players || !Array.isArray(players) || players.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h2 className="text-2xl font-extrabold text-slate-400">Loading Results...</h2>
-      </div>
-    );
-  }
-
-  const p1 = players[0] || { username: 'Player 1', score: 0, answers: [] };
-  const p2 = players[1] || { username: 'Player 2', score: 0, answers: [] };
+  const safePlayers = Array.isArray(players) ? players : [];
+  const p1 = safePlayers[0] || { username: 'Player 1', score: 0, answers: [] };
+  const p2 = safePlayers[1] || { username: 'Player 2', score: 0, answers: [] };
 
   const totalScore = (p1.score || 0) + (p2.score || 0);
   const resonanceScore = Math.min(100, Math.max(0, Math.round((totalScore / 20) * 100)));
@@ -28,6 +22,10 @@ const Results = ({ players, selections, myUsername }) => {
 
   // Animate compatibility score
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setAnimatedScore(resonanceScore);
+      return;
+    }
     const startTime = performance.now();
     const duration = 900;
     let animId = 0;
@@ -49,6 +47,7 @@ const Results = ({ players, selections, myUsername }) => {
 
   // Confetti effect with cool ice blue tones
   useEffect(() => {
+    if (!safePlayers.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     confetti({
       particleCount: 120,
       spread: 70,
@@ -87,7 +86,7 @@ const Results = ({ players, selections, myUsername }) => {
       isCancelled = true;
       if (frameId) cancelAnimationFrame(frameId);
     };
-  }, []);
+  }, [safePlayers.length]);
 
   const getChemistryData = () => {
     if (resonanceScore >= 85) {
@@ -159,15 +158,20 @@ const Results = ({ players, selections, myUsername }) => {
   const p1GuessesOnP2 = buildBreakdown(p1, p2);
   const p2GuessesOnP1 = buildBreakdown(p2, p1);
 
+  if (!safePlayers.length) {
+    return <p role="status" className="text-center py-12">Loading Results...</p>;
+  }
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 text-center pb-12">
+    <div data-arcade-panel="results" className="w-full max-w-2xl mx-auto space-y-6 text-center pb-12">
       {/* Soul Resonance Gauge Card */}
       <motion.div 
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
-        className="nomo-card-ice rounded-[36px] p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col items-center gap-4"
+        className="nomo-card-ice nomo-ticket nomo-reward-ticket p-7 sm:p-10 relative flex flex-col items-center gap-4"
       >
+        <GameTicketFrame />
         <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full text-sky-900 dark:text-sky-200 bg-sky-100 dark:bg-sky-900/60 border border-sky-300 dark:border-sky-700 shadow-sm">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
           <span>Friendship Chemistry Results</span>
@@ -282,6 +286,7 @@ const Results = ({ players, selections, myUsername }) => {
           <div className="flex p-1 bg-sky-50 dark:bg-slate-800 rounded-2xl gap-1.5 text-xs font-black border border-sky-100 dark:border-slate-700">
             <button
               type="button"
+              aria-pressed={activeTab === 'p1'}
               onClick={() => setActiveTab('p1')}
               className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 'p1'
@@ -293,6 +298,7 @@ const Results = ({ players, selections, myUsername }) => {
             </button>
             <button
               type="button"
+              aria-pressed={activeTab === 'p2'}
               onClick={() => setActiveTab('p2')}
               className={`px-3.5 py-1.5 rounded-xl transition-all cursor-pointer ${
                 activeTab === 'p2'

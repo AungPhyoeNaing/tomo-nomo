@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
 import JoinGame from './components/JoinGame';
 import GameRoom from './components/GameRoom';
-import BackgroundElements from './components/BackgroundElements';
-import NomoFrostCursor from './components/NomoFrostCursor';
 import AudioController from '../components/AudioController';
+import { readStorage, writeStorage } from '../utils/storage';
 import './index.css';
+import '../arcade.css';
+import '../arcade-controls.css';
+import './nomo-arcade.css';
 
 const nomoWavingVideo = '/nomo-main.mp4';
 
@@ -14,7 +16,7 @@ function NomoApp() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    const savedTheme = localStorage.getItem('tomo_theme');
+    const savedTheme = readStorage('tomo_theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setTheme('dark');
       document.body.classList.add('dark');
@@ -24,7 +26,7 @@ function NomoApp() {
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('tomo_theme', newTheme);
+    writeStorage('tomo_theme', newTheme);
     if (newTheme === 'dark') {
       document.body.classList.add('dark');
     } else {
@@ -34,8 +36,6 @@ function NomoApp() {
 
   return (
     <div className="nomo-scroll-wrapper w-full text-slate-800 dark:text-slate-100 font-['Quicksand',sans-serif] relative">
-      <BackgroundElements />
-      <NomoFrostCursor />
       
       {/* Top Glass Navigation with Clean Ice Blue Styling */}
       <nav className="glass-nav fixed top-0 left-0 right-0 z-40 px-4 sm:px-6 py-3 flex items-center justify-between shadow-sm border-b border-sky-200/60 dark:border-sky-900/60">
@@ -56,7 +56,7 @@ function NomoApp() {
               Nomo
             </span>
             <span className="text-[10px] font-bold text-sky-500/80 dark:text-sky-300/80 uppercase tracking-wider hidden sm:block">
-              Friendship Chemistry Quiz
+              The bestie challenge
             </span>
           </div>
         </Link>
@@ -86,14 +86,14 @@ function NomoApp() {
             to="/" 
             className="px-3.5 py-1.5 rounded-full bg-sky-50 hover:bg-sky-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-sky-200 dark:border-slate-600 text-sky-600 dark:text-sky-300 text-xs font-bold transition-all shadow-sm flex items-center gap-1.5"
           >
-            <span>Tomo Destiny Matcher</span>
+            <span>Back to arcade</span>
             <span className="text-[10px] text-sky-400">↗</span>
           </Link>
         </div>
       </nav>
 
       {/* Main Content Area: padding-top ensures nav clearance, pb-28 ensures sticky bars never overlap */}
-      <main className="w-full max-w-4xl mx-auto px-4 pt-20 pb-28 min-h-[calc(100vh-80px)] flex flex-col items-center relative z-10">
+      <main className="w-full max-w-4xl mx-auto px-4 pt-20 pb-28 min-h-[calc(100vh-80px)] flex flex-col items-center relative">
         <Routes>
           <Route path="/" element={<JoinGame />} />
           <Route path="/game/:roomId" element={<GameRoom />} />

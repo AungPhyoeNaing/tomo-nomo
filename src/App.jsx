@@ -1,53 +1,71 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, MotionConfig } from 'framer-motion';
 import HeroSection from './components/HeroSection';
 import InputSection from './components/InputSection';
 import MatchResult from './components/MatchResult';
 import ApiKeyModal from './components/ApiKeyModal';
-import TomoBackgroundParticles from './components/TomoBackgroundParticles';
-import TomoCosmicCursor from './components/TomoCosmicCursor';
+import TomoPortrait from './components/TomoPortrait';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from './utils/astrology';
 import { fetchTomoDestinyReading, generateDeepProceduralReading } from './utils/gemini';
 import { TOMO_GEMINI_KEYS } from './config/geminiKeys';
+import { createReadingResult, isValidBirthDate, normalizePersonName } from './utils/reading';
+import { TOMO_MODELS, DEFAULT_TOMO_MODEL } from './utils/tomoPrompt';
+import { readStorage, writeStorage, removeStorage } from './utils/storage';
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import AudioController from './components/AudioController';
+import './tomo.css';
+import './arcade.css';
+import './arcade-controls.css';
+import './tomo-aura.css';
 
 const NomoApp = React.lazy(() => import('./nomo/App'));
 
 function TomoApp() {
   const [theme, setTheme] = useState('light');
   const [activePage, setActivePage] = useState('page-hero');
-  const [scrollProgress, setScrollProgress] = useState(0);
 
   // App State
   const [relType, setRelType] = useState('Friends');
   const [mood, setMood] = useState('Sweet');
   const [slotKeys, setSlotKeys] = useState(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem('tomo_gemini_keys') || '{}');
-      const legacyKey = localStorage.getItem('tomo_api_key') || '';
+      const stored = JSON.parse(readStorage('tomo_gemini_keys', '{}'));
+      const legacyKey = readStorage('tomo_api_key');
       return {
-        'key-1': stored['key-1'] || legacyKey,
-        'key-2': stored['key-2'] || ''
+        'key-1': typeof stored?.['key-1'] === 'string' ? stored['key-1'] : legacyKey,
+        'key-2': typeof stored?.['key-2'] === 'string' ? stored['key-2'] : ''
       };
     } catch {
       return {
-        'key-1': localStorage.getItem('tomo_api_key') || '',
+        'key-1': readStorage('tomo_api_key'),
         'key-2': ''
       };
     }
   });
   const [activeApiKeyId, setActiveApiKeyId] = useState(() => {
-    const savedId = localStorage.getItem('tomo_active_gemini_key');
+    const savedId = readStorage('tomo_active_gemini_key');
     return TOMO_GEMINI_KEYS.some(key => key.id === savedId) ? savedId : TOMO_GEMINI_KEYS[0].id;
   });
   const [isApiModalOpen, setIsApiModalOpen] = useState(false);
+  const [readingModel, setReadingModel] = useState(() => {
+    const saved = readStorage('tomo_reading_model');
+    return TOMO_MODELS.some(model => model.id === saved) ? saved : DEFAULT_TOMO_MODEL;
+  });
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const requestIdRef = useRef(0);
   const demoTimerRef = useRef(null);
+  const loadingPanelRef = useRef(null);
+  const readingControllerRef = useRef(null);
+
+  useEffect(() => {
+    if (!loading) return;
+    const previousFocus = document.activeElement;
+    loadingPanelRef.current?.focus();
+    return () => previousFocus?.focus({ preventScroll: true });
+  }, [loading]);
 
   // Person 1 State
   const [p1Name, setP1Name] = useState('သူရိန်');
@@ -60,11 +78,11 @@ function TomoApp() {
   // Results State
   const [result, setResult] = useState(null);
 
-  const apiKey = slotKeys[activeApiKeyId] || import.meta.env.VITE_GEMINI_API_KEY || '';
+  const apiKey = slotKeys[activeApiKeyId] || '';
 
   // Theme Init
   useEffect(() => {
-    const savedTheme = localStorage.getItem('tomo_theme');
+    const savedTheme = readStorage('tomo_theme');
     if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
       setTheme('dark');
       document.body.classList.add('dark');
@@ -73,13 +91,14 @@ function TomoApp() {
 
   useEffect(() => () => {
     requestIdRef.current += 1;
+    readingControllerRef.current?.abort();
     if (demoTimerRef.current) clearTimeout(demoTimerRef.current);
   }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(newTheme);
-    localStorage.setItem('tomo_theme', newTheme);
+    writeStorage('tomo_theme', newTheme);
     if (newTheme === 'dark') {
       document.body.classList.add('dark');
     } else {
@@ -91,13 +110,15 @@ function TomoApp() {
     const value = newKey.trim();
     const nextSlotKeys = { ...slotKeys, [activeApiKeyId]: value };
     setSlotKeys(nextSlotKeys);
-    localStorage.setItem('tomo_gemini_keys', JSON.stringify(nextSlotKeys));
+    const saved = writeStorage('tomo_gemini_keys', JSON.stringify(nextSlotKeys));
+    if (saved) removeStorage('tomo_api_key');
+    else setToastMessage('Browser storage is unavailable. This key will work until you reload this page.');
   };
 
   const handleSelectApiKey = (event) => {
     const keyId = event.target.value;
     setActiveApiKeyId(keyId);
-    localStorage.setItem('tomo_active_gemini_key', keyId);
+    writeStorage('tomo_active_gemini_key', keyId);
   };
 
   const progressBarRef = useRef(null);
@@ -144,8 +165,9 @@ function TomoApp() {
   const onCalculate = async (useDemo = false) => {
     if (loading) return;
 
-    const todayISO = new Date().toISOString().split('T')[0];
-    const hasValidInputs = p1Name.trim() && p2Name.trim() && p1Dob && p2Dob && p1Dob <= todayISO && p2Dob <= todayISO;
+    const firstName = normalizePersonName(p1Name);
+    const secondName = normalizePersonName(p2Name);
+    const hasValidInputs = firstName && secondName && firstName.length <= 80 && secondName.length <= 80 && isValidBirthDate(p1Dob) && isValidBirthDate(p2Dob);
     if (!hasValidInputs) {
       setInputError('Please enter both names and valid birthdates before calculating.');
       jumpToPage('page-inputs');
@@ -159,199 +181,84 @@ function TomoApp() {
     }
 
     const requestId = ++requestIdRef.current;
+    readingControllerRef.current = new AbortController();
     setLoading(true);
-    const p1Secret = calculateSecretMetrics(p1Name, p1Dob);
-    const p2Secret = calculateSecretMetrics(p2Name, p2Dob);
+    const p1Secret = calculateSecretMetrics(firstName, p1Dob);
+    const p2Secret = calculateSecretMetrics(secondName, p2Dob);
     const algorithmicScore = calculateAlgorithmicScore(p1Secret, p2Secret, relType);
+    const inputs = { p1Name: firstName, p2Name: secondName, p1Dob, p2Dob, relType, mood };
 
     if (useDemo) {
       demoTimerRef.current = setTimeout(() => {
         if (requestId !== requestIdRef.current) return;
         const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
-        setResult({ ...tailoredReading, p1Secret, p2Secret });
+        setResult(createReadingResult(tailoredReading, inputs, p1Secret, p2Secret));
         setLoading(false);
-        jumpToPage('page-gauge');
-      }, 1500);
+        requestAnimationFrame(() => jumpToPage('page-gauge'));
+      }, 0);
       return;
     }
 
     try {
-      const data = await fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore, apiKey);
+      const data = await fetchTomoDestinyReading(firstName, p1Secret, secondName, p2Secret, relType, mood, algorithmicScore, apiKey, { model: readingModel, signal: readingControllerRef.current.signal });
       if (requestId !== requestIdRef.current) return;
-      setResult({ ...data, p1Secret, p2Secret });
+      setResult(createReadingResult(data, inputs, p1Secret, p2Secret));
       setLoading(false);
-      jumpToPage('page-gauge');
+      requestAnimationFrame(() => jumpToPage('page-gauge'));
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
-      console.error(err);
-      setToastMessage(`API Notice: ${err.message || 'Gemini error'}. Showing Deep Procedural Reading!`);
+      if (err.name === 'AbortError') { setLoading(false); return; }
+      setToastMessage(`AI reading unavailable: ${err.message || 'Gemini error'}. Showing the built-in story instead.`);
       setTimeout(() => setToastMessage(''), 5000);
       const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
-      setResult({ ...tailoredReading, p1Secret, p2Secret });
+      setResult(createReadingResult(tailoredReading, inputs, p1Secret, p2Secret, { fallback: true, reason: err.code || 'AI_UNAVAILABLE' }));
       setLoading(false);
-      jumpToPage('page-gauge');
+      requestAnimationFrame(() => jumpToPage('page-gauge'));
     }
   };
 
+  const cancelReading = () => {
+    requestIdRef.current += 1;
+    readingControllerRef.current?.abort();
+    if (demoTimerRef.current) clearTimeout(demoTimerRef.current);
+    setLoading(false);
+  };
+
+  const sections = [
+    ['page-hero', '⌂ Arcade'], ['page-inputs', '☺ Player setup'],
+    ...(result ? [['page-gauge', '✦ Your score'], ['page-readings', 'Your profiles'], ['page-synergy', 'Together']] : [])
+  ];
+
   return (
-    <>
-      <div 
-        ref={progressBarRef} 
-        id="topProgressBar" 
-        className="fixed top-0 left-0 h-1 bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 z-50 pointer-events-none transition-[width] duration-75 ease-out" 
-        style={{ width: '0%' }}
-      />
-
-      {/* Toast Notification Banner */}
-      {toastMessage && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          className="fixed top-16 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-xl flex items-center gap-2 border border-amber-300"
-        >
-          <span>✨</span>
-          <span>{toastMessage}</span>
-          <button type="button" onClick={() => setToastMessage('')} className="ml-2 hover:opacity-80 font-black cursor-pointer">✕</button>
-        </motion.div>
-      )}
-
-      {/* GPU-Accelerated Tomo Cosmic Background Atmosphere */}
-      <TomoBackgroundParticles />
-
-      {/* GPU-Accelerated Tomo Cosmic Stardust & Celestial Halo Cursor */}
-      <TomoCosmicCursor />
-
-      <nav className="glass-nav fixed top-0 left-0 right-0 z-40 px-2.5 sm:px-6 py-2 sm:py-3.5 flex items-center justify-between shadow-sm border-b border-red-200/40 dark:border-slate-800">
-        <div className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => jumpToPage('page-hero')}>
-          <video src="/tomo-main.mp4" autoPlay loop muted playsInline className="w-7 h-7 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-red-400 shadow-sm animate-pulse" />
-          <span className="font-extrabold text-red-600 text-sm sm:text-lg font-['Fredoka'] tracking-tight">
-            <span className="xs:hidden">Tomo</span>
-            <span className="hidden xs:inline sm:hidden">Tomo Destiny</span>
-            <span className="hidden sm:inline">Tomo's Destiny Matcher</span>
-          </span>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2.5">
+    <div className="tomo-experience">
+      <div ref={progressBarRef} className="tomo-scroll-progress" aria-hidden="true" />
+      <a href="#page-inputs" className="tomo-skip-link" tabIndex={loading || isApiModalOpen ? -1 : undefined}>Skip to your details</a>
+      <header className="tomo-header" inert={loading || isApiModalOpen ? '' : undefined}>
+        <button type="button" className="tomo-brand" onClick={() => jumpToPage('page-hero')} aria-label="Tomo home"><TomoPortrait pose="wave" /><strong>tomo + nomo</strong><small>A place to play & connect</small></button>
+        <div className="tomo-header-actions">
+          <Link to="/nomo" className="tomo-nomo-link">2P challenge <span aria-hidden="true">↗</span></Link>
           <AudioController track="tomo" />
-          <select
-            value={activeApiKeyId}
-            onChange={handleSelectApiKey}
-            aria-label="Select Tomo Gemini API key"
-            className="max-w-[82px] sm:max-w-[118px] rounded-full border border-red-200 bg-white/80 px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-[9px] sm:text-[10px] font-extrabold text-red-700 shadow-sm outline-none dark:border-slate-700 dark:bg-slate-900/90 dark:text-red-300 cursor-pointer"
-          >
-            {TOMO_GEMINI_KEYS.map(key => <option key={key.id} value={key.id}>{key.label}</option>)}
-          </select>
-          <button 
-            type="button" 
-            onClick={toggleTheme} 
-            className="tomo-chip-3d p-1.5 sm:px-3 sm:py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1.5 cursor-pointer transition-all"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Cosmic Dark Mode'}
-            aria-label="Toggle color mode"
-          >
-            {theme === 'dark' ? (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ) : (
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
-            <span className="hidden md:inline">{theme === 'dark' ? 'Light' : 'Cosmic'}</span>
-          </button>
-          
-          {/* API Key Modal Trigger from Navbar */}
-          <button 
-            type="button" 
-            onClick={() => setIsApiModalOpen(true)}
-            className="tomo-chip-3d p-1.5 sm:px-3 sm:py-1 rounded-full text-xs font-extrabold text-red-700 dark:text-red-300 flex items-center gap-1 sm:gap-1.5 cursor-pointer hover:scale-105 transition-all shadow-sm"
-            title="Configure Gemini API Key"
-            aria-label="Configure Gemini API Key"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
-            <span className="hidden sm:inline">{apiKey ? 'Key Set' : 'Set Key'}</span>
-            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 ${apiKey ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
-          </button>
-
-          {/* Switch to Nomo Quiz Button */}
-          <Link 
-            to="/nomo" 
-            className="px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-sky-100 to-cyan-100 hover:from-sky-200 hover:to-cyan-200 dark:from-sky-950/80 dark:to-cyan-950/80 border border-sky-300 dark:border-sky-700 text-sky-700 dark:text-sky-300 text-[11px] sm:text-xs font-extrabold transition-all shadow-sm flex items-center gap-1 cursor-pointer hover:scale-105"
-            title="Switch to Nomo Friendship Chemistry Quiz"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-            <span className="hidden xs:inline">Nomo</span>
-            <span className="xs:hidden font-black">Nomo</span>
-            <span className="text-[10px] text-sky-500 font-black">➔</span>
-          </Link>
+          <button type="button" className="tomo-icon-button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}>{theme === 'dark' ? '☀' : '☾'}</button>
+          <button type="button" className="tomo-settings-button" onClick={() => setIsApiModalOpen(true)}><span className={apiKey ? 'tomo-key-dot is-ready' : 'tomo-key-dot'} aria-hidden="true" />AI settings</button>
         </div>
-      </nav>
-
-      {/* Floating Side Navigation Dots (Hidden on Mobile to avoid content blockage) */}
-      <div className="hidden md:flex fixed right-4 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-3 p-2 bg-white/70 dark:bg-slate-900/80 backdrop-blur-md rounded-full border border-red-200/60 dark:border-slate-700 shadow-lg">
-        {['page-hero', 'page-inputs', 'page-gauge', 'page-readings', 'page-synergy'].map((pageId, idx) => (
-          <button 
-            key={pageId} 
-            type="button" 
-            onClick={() => jumpToPage(pageId)} 
-            className={`side-nav-dot ${activePage === pageId ? 'active' : ''}`}
-            title={`Page ${idx + 1}`}
-          />
-        ))}
-      </div>
-
-      {/* Loading Modal */}
-      {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-red-950/60 dark:bg-black/70 backdrop-blur-md p-4 sm:p-6 text-center">
-          <div className="tomo-card rounded-full p-2.5 sm:p-3 shadow-2xl mb-4 sm:mb-6 border-4 border-red-300 flex items-center justify-center tomo-pulse">
-            <video src="/tomo-calculating.mp4" autoPlay loop muted playsInline className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover shadow-inner border-2 border-red-400/40" />
-          </div>
-          <h3 className="text-lg sm:text-2xl font-bold text-white font-['Fredoka'] drop-shadow-md mb-2">
-            ခေတ္တလေးစောင့်ပေးပါနော်
-          </h3>
-          <p className="text-xs sm:text-sm text-red-100 font-semibold max-w-sm sm:max-w-md drop-shadow px-2">
-           တိုမို က နှစ်ယောက်လုံးရဲ့ အကြောင်းကို သေချာ တွက်ပေးနေပြီနော်...
-          </p>
-        </div>
-      )}
-
-      {/* Pop-up API Key Modal */}
-      <ApiKeyModal 
-        isOpen={isApiModalOpen} 
-        onClose={() => setIsApiModalOpen(false)} 
-        apiKey={apiKey} 
-        onSaveKey={handleSaveApiKey} 
-      />
-
-      <div className="scroll-container relative z-10" onScroll={handleScroll}>
+      </header>
+      <nav inert={loading || isApiModalOpen ? '' : undefined} className={`tomo-section-nav ${result ? 'has-results' : ''}`} aria-label="Reading sections">{sections.map(([id, label]) => <button type="button" key={id} onClick={() => jumpToPage(id)} aria-current={activePage === id ? 'location' : undefined}>{label}</button>)}</nav>
+      {toastMessage && <div className="tomo-toast" role="status"><span>{toastMessage}</span><button type="button" onClick={() => setToastMessage('')} aria-label="Dismiss notification">×</button></div>}
+      {loading && <div className="tomo-loading" role="dialog" aria-modal="true" aria-labelledby="loading-title"><div ref={loadingPanelRef} tabIndex={-1} className="tomo-loading-panel" role="status"><video src="/tomo-calculating.mp4" autoPlay loop muted playsInline aria-hidden="true" /><h2 id="loading-title">Building your duo’s story…</h2><p lang="my">တိုမိုက နှစ်ယောက်လုံးအတွက် ဖတ်ရှုချက်လေး ပြင်ဆင်နေပြီနော်။</p><button type="button" className="tomo-outline-button tomo-cancel-reading" onClick={cancelReading}>Cancel reading</button><span className="tomo-loading-dots" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</span></div></div>}
+      <ApiKeyModal modelOptions={TOMO_MODELS} readingModel={readingModel} onSelectModel={event => { setReadingModel(event.target.value); writeStorage('tomo_reading_model', event.target.value); }} isOpen={isApiModalOpen} onClose={() => setIsApiModalOpen(false)} apiKey={apiKey} onSaveKey={handleSaveApiKey} keyOptions={TOMO_GEMINI_KEYS} activeKeyId={activeApiKeyId} onSelectKey={handleSelectApiKey} />
+      <main inert={loading || isApiModalOpen ? '' : undefined} className="scroll-container tomo-main" onScroll={handleScroll} aria-busy={loading}>
         <HeroSection jumpToPage={jumpToPage} />
-        <InputSection 
-          p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob}
-          p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob}
-          relType={relType} setRelType={setRelType}
-          mood={mood} setMood={setMood}
-          loading={loading} inputError={inputError}
-          onCalculate={() => onCalculate(false)}
-          onDemo={() => onCalculate(true)}
-        />
-        {result && (
-          <MatchResult 
-            result={result} 
-            p1Name={p1Name} p2Name={p2Name}
-            relType={relType}
-            mood={mood}
-            jumpToPage={jumpToPage}
-          />
-        )}
-      </div>
-    </>
+        <InputSection p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob} p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob} relType={relType} setRelType={setRelType} mood={mood} setMood={setMood} loading={loading} inputError={inputError} onCalculate={() => onCalculate(false)} onDemo={() => onCalculate(true)} />
+        {result && <MatchResult result={result} p1Name={result.inputs.p1Name} p2Name={result.inputs.p2Name} relType={result.inputs.relType} mood={result.inputs.mood} jumpToPage={jumpToPage} />}
+        {!result && <footer className="tomo-footer">Good company. Unexpected discoveries. <span>tomo + nomo · Made for your kind of two.</span></footer>}
+      </main>
+    </div>
   );
 }
 
 export default function App() {
   return (
+    <MotionConfig reducedMotion="user">
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TomoApp />} />
@@ -370,5 +277,6 @@ export default function App() {
         />
       </Routes>
     </BrowserRouter>
+    </MotionConfig>
   );
 }

@@ -12,6 +12,7 @@ export function useInteractiveParticles(containerRef) {
   const particlesRef = useRef([]);
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const container = containerRef.current;
     if (!container) return;
 

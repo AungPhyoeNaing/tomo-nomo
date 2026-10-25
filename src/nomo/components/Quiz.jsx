@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import socket from '../socket';
 import { motion, AnimatePresence } from 'framer-motion';
+import GameTicketFrame from './GameTicketFrame';
 
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
-const Quiz = ({ roomId, data, onFinish }) => {
+const Quiz = ({ roomId, data }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const advanceTimer = useRef(null);
 
   const { opponentName = 'your friend', questionsToAnswer = [] } = data || {};
 
@@ -15,28 +18,43 @@ const Quiz = ({ roomId, data, onFinish }) => {
   const totalQuestions = safeQuestions.length || 10;
   const currentQ = safeQuestions[currentIndex];
 
+  useEffect(() => () => clearTimeout(advanceTimer.current), []);
+  useEffect(() => {
+    const submit = () => {
+      if (completed && socket.connected) socket.emit('submit_answers', { roomId, answers });
+    };
+    submit();
+    socket.on('room_session', submit);
+    return () => socket.off('room_session', submit);
+  }, [completed, roomId, answers]);
+
   const handleSelectOption = (option) => {
-    if (selectedOption !== null || !currentQ) return; // Prevent double clicking
+    if (selectedOption !== null || !currentQ || completed || !socket.connected) return;
     setSelectedOption(option);
 
     const newAnswers = [...answers, { questionId: currentQ.id, selectedOption: option }];
     setAnswers(newAnswers);
 
-    setTimeout(() => {
+    advanceTimer.current = setTimeout(() => {
       setSelectedOption(null);
       if (currentIndex < totalQuestions - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        socket.emit('submit_answers', {
-          roomId,
-          answers: newAnswers
-        });
-        if (typeof onFinish === 'function') {
-          onFinish();
-        }
+        setCompleted(true);
       }
     }, 280);
   };
+
+  if (completed) {
+    return (
+      <div className="nomo-card rounded-[32px] p-8 text-center space-y-4 max-w-md mx-auto">
+        <p role="status">Your answers are ready. Waiting for the server to confirm…</p>
+        <button type="button" className="nomo-button-3d-primary px-5 py-3 rounded-2xl" onClick={() => {
+          if (socket.connected) socket.emit('submit_answers', { roomId, answers });
+        }}>Retry submission</button>
+      </div>
+    );
+  }
 
   if (!currentQ) {
     return (
@@ -50,7 +68,7 @@ const Quiz = ({ roomId, data, onFinish }) => {
   const options = Array.isArray(currentQ.options) ? currentQ.options : [];
 
   return (
-    <div className="w-full max-w-xl mx-auto space-y-6">
+    <div data-arcade-panel="quiz" className="w-full max-w-xl mx-auto space-y-6">
       {/* Top Opponent Header */}
       <div className="flex flex-col items-center gap-2.5 text-center">
         <motion.div 
@@ -99,8 +117,9 @@ const Quiz = ({ roomId, data, onFinish }) => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: -15 }}
           transition={{ duration: 0.25, ease: "easeOut" }}
-          className="nomo-card rounded-[32px] p-6 sm:p-8 shadow-2xl relative overflow-hidden text-left space-y-6"
+          className="nomo-card nomo-ticket p-6 sm:p-8 relative text-left space-y-6"
         >
+          <GameTicketFrame />
           {/* Question Header */}
           <div className="space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-sky-100/90 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 text-[11px] font-black tracking-wider uppercase border border-sky-200 dark:border-sky-800 shadow-sm">
@@ -124,6 +143,8 @@ const Quiz = ({ roomId, data, onFinish }) => {
                   whileHover={{ scale: 1.015, y: -1 }}
                   whileTap={{ scale: 0.985 }}
                   type="button"
+                  aria-pressed={isSelected}
+                  disabled={selectedOption !== null}
                   onClick={() => handleSelectOption(opt)}
                   className={`w-full p-4 rounded-2xl font-extrabold text-sm sm:text-base text-left flex items-start justify-between gap-3.5 transition-all cursor-pointer shadow-sm ${
                     isSelected 

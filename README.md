@@ -2,12 +2,14 @@
 
 An advanced, interactive single-page web application created for a university project showcase.
 
+Tomo is a playful astrology-inspired story game, not a validated personality test or relationship-probability calculator. The main reveal uses built-in templates; optional Gemini readings require your key. Results show the source, model/cache status, and approximate chart limitations. See [the engine and Burmese-output audit](docs/TOMO_AUDIT.md) for findings, fixes, and evaluation steps.
+
 The application allows users to analyze relationships in two modes: **Friends 👯‍♂️** (platonic loyalty & fun) or **Couple ❤️** (romantic chemistry & emotional connection).
 
-Under the hood, pure JavaScript silently calculates **5 Ultra-Precise Astrological & Numerological metrics** for both individuals:
+Under the hood, pure JavaScript silently calculates **5 symbolic astrological and numerological influences** for both individuals:
 1. **Western Solar Zodiac Sign** (Month & Day)
 2. **Mahabote Day of the Week** (Sunday-Saturday based on exact birthdate)
-3. **True Chinese 12 Zodiac Animal** (Year - shifting precisely on Feb 4th)
+3. **Chinese 12 Zodiac Animal** (approximate solar-year convention using February 4)
 4. **Chinese 5 Elemental Energy** (Based on the last digit of the True Chinese Year)
 5. **Name Numerology (Destiny Number)** (Pythagorean alphabet system reduced to single digit 1-9).
 
@@ -22,8 +24,8 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
 
 2. **5-Metric Silent Astrology & Numerology Engine (Pure JS)**:
    - **Western Solar Zodiac Sign**
-   - **True 7-House Burmese Mahabote Engine** (Calculates Myanmar Era planetary house: *Bhanga, Athan, Hsi-za, Puti, Chowda, Yaza, Marana*)
-   - **True Chinese 12 Zodiac Animal** (Shifting on Feb 4th)
+   - **Simplified 7-House Burmese Mahabote Engine** (Calculates Myanmar Era planetary house: *Bhanga, Athan, Hsi-za, Puti, Chowda, Yaza, Marana*)
+   - **Chinese 12 Zodiac Animal** (fixed February 4 solar-year convention)
    - **Chinese 5 Elemental Energy**
    - **Pythagorean Name Numerology** (with Unicode fallback for Burmese script)
 
@@ -33,9 +35,9 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
 4. **Gemini 3.1 Flash Lite "Tomo" Persona**:
    - Model: `gemini-3.1-flash-lite`
    - **Structured JSON Mode**: `responseMimeType: "application/json"` with strict `responseSchema`.
-   - Generates long, shockingly accurate, multi-paragraph Burmese responses covering deep character readings, dynamic insights, strengths, challenges, and secret destiny advice.
+   - Generates astrology-inspired Burmese entertainment stories covering deep character readings, dynamic insights, strengths, challenges, and secret destiny advice.
 
-5. **4-Second Cute Loading Animation & Score Count-Up**:
+5. **Cancellable AI Loading & Score Count-Up**:
    - Animated Tomo avatar overlay with text (*"Tomo က နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားတွေကို အသေးစိတ် လေ့လာနေပါတယ်နော်..."*).
    - Animated score count-up gauge.
 
@@ -66,7 +68,7 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
 
 ## Project installation and running - serving guide for OpenCode AI agents
 
-This project has a Vite React client and a separate Socket.IO server for the Nomo multiplayer mode. Use Node.js 18 or newer.
+This project has a Vite React client and a separate Socket.IO server for the Nomo multiplayer mode. Use Node.js 22 or newer.
 
 ### Installation
 
@@ -128,6 +130,7 @@ After changing code, run:
 ```bash
 npm run build
 npm run lint
+npm test
 node --check server/index.js
 ```
 
@@ -135,4 +138,21 @@ Keep long-running client/server processes in separate terminals or managed backg
 
 ### Configuration and offline behavior
 
-Tomo includes two selectable client-side Gemini key slots in the top navigation. Select a slot, open the API Key dialog, and enter the key you want to store in that slot. Values are kept in the browser's local storage. The local demo/procedural reading does not require Gemini or Internet access. Nomo multiplayer does not use Gemini; it requires only the local Socket.IO server.
+Open AI settings in Tomo’s header to choose between two saved Gemini key slots and enter your own key. Values are kept in the browser's local storage; when storage is blocked, the key works for the current page session. Clearing a migrated key also removes the old stored key. Build-time `VITE_GEMINI_API_KEY` is no longer used, so deployment secrets cannot accidentally enter the JavaScript bundle through that setting. Keys entered in the browser remain visible to that browser and are sent directly to Gemini.
+
+The local demo/procedural reading does not require Gemini or Internet access. Google Fonts may fall back to system fonts offline. Nomo multiplayer does not use Gemini; it requires the Socket.IO server.
+
+Nomo reconnects using a private player token held in the tab's session storage. A refresh or Wi-Fi interruption can resume the same player within two minutes. Submitted selections and completed quizzes restore their waiting screens; an unfinished quiz can be restarted after a full page refresh. If browser storage is disabled, reconnection works in the current page but a full refresh loses the token. Player tokens and answers are excluded from room broadcasts; answers are revealed after both players finish. Explicitly leaving resets the match for the remaining player.
+
+For static hosting such as Vercel, deploy `server/` to a host that supports a persistent Node process and Socket.IO. Set `VITE_NOMO_SERVER_URL` to that backend's HTTPS origin before building the frontend. On the backend, set `CLIENT_ORIGIN` to the frontend origin (or comma-separated allowed origins). Without `VITE_NOMO_SERVER_URL`, production connects to the same origin; Vercel's SPA rewrite alone does not run the multiplayer server.
+
+Rooms remain in memory and are lost on server restart. Use one server instance; multiple replicas require shared room storage and a Socket.IO adapter. Idle rooms expire after 45 minutes and results after 10 minutes.
+
+The test suite includes real Socket.IO integration tests and requires permission to connect to a local loopback test server. Run `npm test` from the root after installing both client and server dependencies; `npm test --prefix server` runs only the multiplayer tests. Gemini failure tests use mocked responses and do not call the paid API.
+
+
+### Tomo AI writing and quality controls
+
+AI settings keep Gemini 3.1 Flash-Lite as the default and offer Gemini 3.8 Flash for comparison. The prompt requests natural spoken Burmese with short structured sections, and application checks reject wrong-language fields, malformed profiles, repeated list items, and romantic wording in Friends mode. There is at most one quality repair; auth/quota/truncation errors do not trigger a repair. A single overall 60-second deadline and Cancel button bound the request. Actual Burmese quality requires native-speaker evaluation; no live/billed model benchmark is included.
+
+AI requests use header authentication and derived chart summaries instead of raw birthdates. Validated results are cached only in memory for 10 minutes, with eight entries maximum and isolation by hashed key, model, and prompt input/version. Readings are not written to local storage. PNG exports wrap measured Burmese graphemes and identify the score as symbolic.

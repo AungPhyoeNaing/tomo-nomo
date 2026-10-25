@@ -1,17 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { calculateDetailedMetricsBreakdown, getScoreResonanceTier } from '../utils/astrology';
 import confetti from 'canvas-confetti';
+import PlayerAvatar from './PlayerAvatar';
+import TomoPortrait from './TomoPortrait';
+import { wrapCanvasText } from '../utils/canvasText';
+
+function ReadingText({ text }) {
+  return <div className="tomo-reading-text" lang="my">{String(text || '').split(/\n\s*\n/).filter(Boolean).map((paragraph, index) => {
+    const headed = paragraph.match(/^\s*\[([^\]]+)\]\s*\n([\s\S]+)$/);
+    return headed ? <section key={index}><h3>{headed[1]}</h3><p>{headed[2]}</p></section> : <p key={index}>{paragraph}</p>;
+  })}</div>;
+}
 
 function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportedCard, setExportedCard] = useState(null);
+  const [exportError, setExportError] = useState('');
   const navigate = useNavigate();
+  const [profileIndex, setProfileIndex] = useState(0);
+  const profileTabs = useRef([]);
 
   useEffect(() => {
+    setExportedCard(null);
+    setExportError('');
     const numericScore = Number(result.chemistry_score);
     const targetScore = Math.min(100, Math.max(0, Number.isFinite(numericScore) ? Math.round(numericScore) : 85));
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setAnimatedScore(targetScore);
+      return;
+    }
     const startTime = performance.now();
     const duration = 900;
     let animId = 0;
@@ -29,7 +49,8 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
     };
 
     animId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animId);
+    const celebration = setTimeout(() => confetti({ particleCount: 65, spread: 65, origin: { y: 0.6 }, colors: ['#be98ed', '#f4adc4', '#ffe69a', '#9dceb5'], disableForReducedMotion: true }), 450);
+    return () => { cancelAnimationFrame(animId); clearTimeout(celebration); };
   }, [result]);
 
   const circumference = 283;
@@ -40,14 +61,17 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
   const p2 = result.p2Secret || {};
   const resonanceTier = getScoreResonanceTier(Number(result.chemistry_score) || 85);
 
-  const handleDownloadCard = () => {
+  const handleDownloadCard = async () => {
+    if (isExporting) return;
     setIsExporting(true);
+    setExportError('');
     try {
+      if (document.fonts) await Promise.all([document.fonts.load('20px "Padauk"').catch(() => []), document.fonts.load('40px "Fredoka"').catch(() => [])]);
       const canvas = document.createElement('canvas');
       canvas.width = 1200;
       canvas.height = 1600;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) throw new Error('Canvas is unavailable.');
 
       // Background Deep Radial & Linear Gradient
       const bgGrad = ctx.createLinearGradient(0, 0, 1200, 1600);
@@ -90,7 +114,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
 
       ctx.fillStyle = '#fef08a';
       ctx.font = 'bold 40px "Fredoka", "Padauk", sans-serif';
-      ctx.fillText(`${p1Name}   ✨   ${p2Name}`, 600, 250);
+      wrapCanvasText(ctx, `${p1Name}   ✨   ${p2Name}`, 920, 2).lines.forEach((line, index) => ctx.fillText(line, 600, 228 + index * 42));
 
       // Score Circular Gauge
       const centerX = 600;
@@ -121,13 +145,13 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
       ctx.fillText(`${scoreVal}%`, centerX, centerY + 24);
       ctx.fillStyle = '#fca5a5';
       ctx.font = 'bold 18px "Quicksand", sans-serif';
-      ctx.fillText('MATCH RESONANCE', centerX, centerY + 62);
+      ctx.fillText('SYMBOLIC GAME SCORE', centerX, centerY + 62);
 
       // Relationship Title
       ctx.fillStyle = '#fde047';
       ctx.font = 'bold 28px "Padauk", "Quicksand", sans-serif';
       const relTitle = result.relationship_title || "တစ်ယောက်ရဲ့ အဆိုးကို တစ်ယောက်က အေးဆေး ညှိပေးနိုင်တဲ့ အံဝင်ခွင်ကျ ရင်းနှီးမှု";
-      ctx.fillText(relTitle, 600, 625);
+      wrapCanvasText(ctx, relTitle, 1000, 2).lines.forEach((line, index) => ctx.fillText(line, 600, 609 + index * 34));
 
       // 5-Metric Breakdown Box
       ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
@@ -164,6 +188,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         ctx.textAlign = 'left';
 
         // Bar background
+        ctx.beginPath();
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         if (ctx.roundRect) {
           ctx.roundRect(140, barY + 8, 920, 12, 6);
@@ -173,6 +198,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         ctx.fill();
 
         // Bar fill
+        ctx.beginPath();
         ctx.fillStyle = '#f43f5e';
         const fillWidth = (m.score / 100) * 920;
         if (ctx.roundRect) {
@@ -204,361 +230,81 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'normal 20px "Padauk", "Quicksand", sans-serif';
       const adviceText = (result.tomo_secret_advice || '').replace(/[\r\n]+/g, ' ');
-      const words = adviceText.split(' ');
-      let currentLine = '';
-      let lineY = 1165;
-      for (const w of words) {
-        if ((currentLine + ' ' + w).length > 56) {
-          ctx.fillText(currentLine, 140, lineY);
-          lineY += 36;
-          currentLine = w;
-          if (lineY > 1410) break;
-        } else {
-          currentLine = currentLine ? currentLine + ' ' + w : w;
-        }
-      }
-      if (currentLine && lineY <= 1410) {
-        ctx.fillText(currentLine, 140, lineY);
-      }
+      wrapCanvasText(ctx, adviceText, 920, 7).lines.forEach((line, index) => ctx.fillText(line, 140, 1165 + index * 36));
 
       // Footer stamp
       ctx.fillStyle = '#94a3b8';
       ctx.font = 'bold 18px "Quicksand", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText("🌸 Handcrafted with Love • Tomo's Destiny Matcher 💖", 600, 1520);
+      ctx.fillText("Astrology-inspired game · Not a personality assessment", 600, 1520);
 
       // Download
       const link = document.createElement('a');
       link.download = `Tomo_Destiny_Reading_${p1Name}_${p2Name}.png`;
       link.href = canvas.toDataURL('image/png');
+      setExportedCard({ url: link.href, filename: link.download });
+      document.body.appendChild(link);
       link.click();
+      link.remove();
 
-      confetti({
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) confetti({
         particleCount: 50,
         spread: 60,
         origin: { y: 0.7 }
       });
     } catch (e) {
       console.error('Failed to export destiny card:', e);
+      setExportError('Your card could not be created. Please try again.');
     } finally {
       setIsExporting(false);
     }
   };
 
+  const profile = profileIndex === 0 ? p1 : p2;
+  const names = [p1Name, p2Name];
+  const metricNames = ['Western astrology', 'Myanmar Mahabote', 'Chinese zodiac', 'Five elements', 'Numerology'];
+
   return (
     <>
-      {/* PAGE 1: MATCH GAUGE & METRIC BREAKDOWNS */}
-      <section id="page-gauge" className="page-section">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, staggerChildren: 0.15 }}
-          viewport={{ once: true, margin: "-50px" }}
-          className="max-w-3xl mx-auto w-full space-y-4 sm:space-y-5 px-1 sm:px-2"
-        >
-          <div className="tomo-card-gold rounded-2xl sm:rounded-[36px] p-4 sm:p-8 text-center flex flex-col items-center gap-3.5 sm:gap-4 relative overflow-hidden shadow-2xl">
-            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
-              <div className={`text-[10px] sm:text-xs font-extrabold uppercase tracking-wider sm:tracking-widest px-3 sm:px-4 py-1 sm:py-1.5 rounded-full shadow-sm ${
-                relType === 'Couple' 
-                  ? 'text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-600/60' 
-                  : 'text-rose-900 dark:text-rose-200 bg-rose-100 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-600/60'
-              }`}>
-                {relType === 'Couple' ? '💖 Romantic Couple Mode' : '🌟 Best Friends Destiny Mode'}
-              </div>
-              <div className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider sm:tracking-widest px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-full bg-rose-50 dark:bg-slate-800 text-rose-700 dark:text-rose-200 border border-rose-300 dark:border-slate-700 shadow-sm">
-                {mood === 'Playful' ? '😜 Playful Tone' : (mood === 'Mystic' ? '🔮 Mystic Tone' : '🌸 Sweet Tone')}
-              </div>
-            </div>
-            
-            {/* Score Ring */}
-            <div className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90 filter drop-shadow-md" viewBox="0 0 100 100">
-                <defs>
-                  <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#f59e0b" />
-                    <stop offset="50%" stopColor="#ec4899" />
-                    <stop offset="100%" stopColor="#ef4444" />
-                  </linearGradient>
-                </defs>
-                <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="8" className="text-red-100/60 dark:text-slate-800/90" fill="transparent" />
-                <circle 
-                  cx="50" cy="50" r="45" 
-                  stroke="url(#scoreGradient)" 
-                  strokeWidth="8" 
-                  className="transition-all duration-300 ease-out" 
-                  strokeDasharray="283" 
-                  strokeDashoffset={offset} 
-                  strokeLinecap="round" 
-                  fill="transparent" 
-                />
-              </svg>
-              <div className="absolute flex flex-col items-center">
-                <span className="text-3xl sm:text-4xl md:text-5xl font-black text-orange-600 dark:text-amber-400 font-['Fredoka']">{animatedScore}%</span>
-                <span className="text-[9px] sm:text-[10px] text-red-500 dark:text-rose-300 font-extrabold uppercase tracking-wider">Match Resonance</span>
-              </div>
-            </div>
-
-            {/* Resonance Tier Badge */}
-            <div className="px-3 sm:px-4 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-gradient-to-r from-amber-500/10 via-rose-500/10 to-indigo-500/10 border border-amber-300/80 dark:border-amber-600/60 text-amber-900 dark:text-amber-200 shadow-sm inline-flex items-center gap-1.5">
-              <span>✨</span>
-              <span>{resonanceTier.levelMm}</span>
-            </div>
-
-            <h3 className="text-base sm:text-2xl md:text-3xl font-extrabold text-red-700 dark:text-rose-200 font-['Fredoka'] max-w-xl leading-snug px-1">
-              {result.relationship_title || "တစ်ယောက်ရဲ့ အဆိုးကို တစ်ယောက်က အေးဆေး ညှိပေးနိုင်တဲ့ အံဝင်ခွင်ကျ ရင်းနှီးမှု"}
-            </h3>
-
-            {/* 5-Metric Breakdown Bars */}
-            <div className="w-full max-w-lg grid gap-2 sm:gap-2.5 pt-2.5 sm:pt-3 border-t border-orange-200/60 dark:border-slate-700/80 text-left">
-              {breakdown.map((metric, idx) => (
-                <div key={idx} className="flex flex-col gap-0.5 sm:gap-1">
-                  <div className="flex justify-between text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">
-                    <span className="truncate pr-2">{metric.label}</span>
-                    <span className="text-red-600 dark:text-rose-400 font-black shrink-0">{metric.score}%</span>
-                  </div>
-                  <div className="w-full bg-red-100/80 dark:bg-slate-800 rounded-full h-1.5 sm:h-2 overflow-hidden">
-                    <div className={`h-full rounded-full bg-gradient-to-r ${metric.color} transition-all duration-1000`} style={{ width: `${metric.score}%` }}></div>
-                  </div>
-                </div>
-              ))}
-            </div>
+      <section id="page-gauge" className="page-section tomo-result" aria-labelledby="match-heading">
+        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">✦ Duo story unlocked!</p><h2 id="match-heading">{p1Name} <span className="tomo-name-amp">&</span> {p2Name}</h2></div><div className="tomo-reading-tags"><span>{relType === 'Couple' ? '♡ Couple' : '✳ Friends'}</span><span>{mood} voice</span></div></div>
+        <div className="tomo-reading-origin"><span>{result.readingInfo?.source === 'gemini' ? `Gemini AI · ${result.readingInfo.model}${result.readingInfo.cached ? ' · cached' : ''}` : result.readingInfo?.fallback ? 'Built-in fallback · AI did not complete' : 'Built-in story · no AI used'}</span><p>Astrology-inspired entertainment, not a measured personality or relationship probability. Birth time is not supplied; chart details are approximate.</p></div>
+        <div className="tomo-match-summary">
+          <div className="tomo-score-ring" role="img" aria-label={String(result.chemistry_score) + ' out of 100 symbolic game score'}>
+            <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-line)" strokeWidth="5" /><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-accent)" strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" /></svg>
+            <div><strong>{animatedScore}<small>%</small></strong><span>Symbolic game score</span></div>
           </div>
-
-          <div className="flex flex-col xs:flex-row items-center justify-center gap-2.5 sm:gap-3 pt-1 w-full">
-            <button 
-              type="button"
-              disabled={isExporting}
-              onClick={handleDownloadCard} 
-              className="tomo-button-3d-secondary w-full xs:w-auto px-5 sm:px-6 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-black text-rose-600 dark:text-rose-300 inline-flex items-center justify-center gap-2 cursor-pointer shadow-md hover:scale-105 active:scale-95 transition-all min-h-[44px]"
-            >
-              <span>{isExporting ? '⏳ Generating Card...' : '📸 Download Destiny Card (PNG)'}</span>
-            </button>
-
-            <button 
-              type="button"
-              onClick={() => jumpToPage('page-readings')} 
-              className="tomo-chip-3d w-full xs:w-auto px-5 sm:px-7 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-black text-red-700 dark:text-red-300 inline-flex items-center justify-center gap-2 cursor-pointer shadow-md min-h-[44px]"
-            >
-              <span>အသေးစိတ် စရိုက်လက္ခဏာ ဖတ်ရှုမည် (Continue) ➔</span>
-            </button>
-          </div>
-        </motion.div>
+          <div className="tomo-match-story"><p className="tomo-section-kicker" lang="my">{resonanceTier.levelMm}</p><h3 lang="my">{result.relationship_title}</h3><p>A little insight into your shared rhythm, your differences, and the ways you can grow together.</p><button type="button" onClick={() => jumpToPage('page-readings')} className="tomo-text-button">Read your profiles <span aria-hidden="true">↓</span></button></div>
+        </div>
+        <details className="tomo-metrics"><summary>What shapes your reading?<span>Explore the five influences</span></summary><div className="tomo-metric-grid">{breakdown.map((metric, index) => <div key={metricNames[index]}><p><span>{metricNames[index]}</span><strong>{metric.score}%</strong></p><div className="tomo-metric-track"><div style={{width: metric.score + '%'}} /></div></div>)}</div></details>
+        <div className="tomo-result-actions"><button type="button" disabled={isExporting} onClick={handleDownloadCard} className="tomo-outline-button">{isExporting ? 'Preparing your card…' : 'Save your destiny card'} <span aria-hidden="true">↧</span></button><button type="button" onClick={() => jumpToPage('page-inputs')} className="tomo-text-button">Edit your details</button></div>
+        {exportedCard && <p className="tomo-export-status" role="status">Your card is ready. <a href={exportedCard.url} download={exportedCard.filename}>Download PNG</a></p>}
+        {exportError && <p className="tomo-form-error" role="alert">{exportError}</p>}
       </section>
-
-      {/* PAGE 2: TOMO'S IN-DEPTH CHARACTER PROFILES */}
-      <section id="page-readings" className="page-section">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.96 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          viewport={{ once: true, margin: "-50px" }}
-          className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6 px-1 sm:px-2"
-        >
-          <div className="text-center space-y-1 sm:space-y-1.5">
-            <h2 className="text-xl sm:text-3xl md:text-4xl font-extrabold text-red-600 dark:text-red-400 font-['Fredoka']">
-              Tomo's Deep Character Profiles
-            </h2>
-            <p className="text-[11px] sm:text-sm text-red-600 dark:text-red-300 font-bold max-w-xl mx-auto px-2">
-              စိတ်နေသဘောထား၊ အတွင်းစိတ်ခံစားချက်နှင့် လူမှုဆက်ဆံရေး အသေးစိတ် သုံးသပ်ချက်
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
-            {/* Person 1 Profile Card */}
-            <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-xl text-left flex flex-col justify-between">
-              <div className="space-y-2.5 sm:space-y-3">
-                <div className="flex items-center gap-2.5 sm:gap-3 border-b border-red-200 dark:border-slate-700 pb-2.5 sm:pb-3">
-                  <img src="/icon_3d_p1.jpg" alt="P1" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shadow-sm ring-2 ring-red-300 shrink-0" />
-                  <div>
-                    <span className="font-extrabold text-red-600 dark:text-red-400 text-base sm:text-lg font-['Fredoka'] block leading-tight">
-                      {p1Name} ရဲ့ အတွင်းစိတ်နှင့် စရိုက်
-                    </span>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-                      Personal Soul Insight
-                    </span>
-                  </div>
-                </div>
-
-                {/* Celestial & Numerology Badges */}
-                <div className="flex flex-wrap gap-1 sm:gap-1.5 py-0.5 sm:py-1">
-                  {p1.western && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 shadow-sm">
-                      ☀️ Sun: {p1.western}
-                    </span>
-                  )}
-                  {p1.moonSign && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 shadow-sm">
-                      🌙 Moon: {p1.moonSign}
-                    </span>
-                  )}
-                  {p1.venusSign && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border border-pink-300 shadow-sm">
-                      💖 Venus: {p1.venusSign}
-                    </span>
-                  )}
-                  {p1.lifePathNumber && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 shadow-sm">
-                      🔢 Life Path: #{p1.lifePathNumber}
-                    </span>
-                  )}
-                </div>
-
-                {/* Reading Body */}
-                <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal space-y-2.5 sm:space-y-3 max-h-[340px] sm:max-h-[420px] overflow-y-auto pr-1.5 sm:pr-2 whitespace-pre-wrap overscroll-contain">
-                  {result.tomo_deep_reading_p1}
-                </div>
-              </div>
-            </div>
-
-            {/* Person 2 Profile Card */}
-            <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-xl text-left flex flex-col justify-between">
-              <div className="space-y-2.5 sm:space-y-3">
-                <div className="flex items-center gap-2.5 sm:gap-3 border-b border-orange-200 dark:border-slate-700 pb-2.5 sm:pb-3">
-                  <img src="/icon_3d_p2.jpg" alt="P2" className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover shadow-sm ring-2 ring-orange-300 shrink-0" />
-                  <div>
-                    <span className="font-extrabold text-orange-600 dark:text-orange-400 text-base sm:text-lg font-['Fredoka'] block leading-tight">
-                      {p2Name} ရဲ့ အတွင်းစိတ်နှင့် စရိုက်
-                    </span>
-                    <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-                      Personal Soul Insight
-                    </span>
-                  </div>
-                </div>
-
-                {/* Celestial & Numerology Badges */}
-                <div className="flex flex-wrap gap-1 sm:gap-1.5 py-0.5 sm:py-1">
-                  {p2.western && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-300 shadow-sm">
-                      ☀️ Sun: {p2.western}
-                    </span>
-                  )}
-                  {p2.moonSign && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-300 shadow-sm">
-                      🌙 Moon: {p2.moonSign}
-                    </span>
-                  )}
-                  {p2.venusSign && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-pink-100 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border border-pink-300 shadow-sm">
-                      💖 Venus: {p2.venusSign}
-                    </span>
-                  )}
-                  {p2.lifePathNumber && (
-                    <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 shadow-sm">
-                      🔢 Life Path: #{p2.lifePathNumber}
-                    </span>
-                  )}
-                </div>
-
-                {/* Reading Body */}
-                <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal space-y-2.5 sm:space-y-3 max-h-[340px] sm:max-h-[420px] overflow-y-auto pr-1.5 sm:pr-2 whitespace-pre-wrap overscroll-contain">
-                  {result.tomo_deep_reading_p2}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center pt-2">
-            <button onClick={() => jumpToPage('page-synergy')} className="tomo-chip-3d w-full xs:w-auto px-5 sm:px-7 py-3 sm:py-3.5 rounded-full text-xs sm:text-sm font-black text-red-700 dark:text-red-300 inline-flex items-center justify-center gap-2 cursor-pointer shadow-md min-h-[44px]">
-              <span>ဓာတ်ပေါင်းစပ်မှုနှင့် လျှို့ဝှက်အကြံပြုချက် ဖတ်ရှုမည် (Dynamic Synergy) ➔</span>
-            </button>
-          </div>
-        </motion.div>
+      <section id="page-readings" className="page-section" aria-labelledby="profiles-heading">
+        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Behind the connection</p><h2 id="profiles-heading">A little more about you.</h2></div><p lang="my">နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားကို တစ်ယောက်ချင်း ဖတ်ကြည့်ရအောင်။</p></div>
+        <div className="tomo-profiles">
+          <div className="tomo-profile-tabs" role="tablist" aria-label="Choose a person's profile">{names.map((name, index) => <button type="button" key={index} ref={element => { profileTabs.current[index] = element; }} id={'profile-tab-' + index} role="tab" aria-selected={profileIndex === index} aria-controls="profile-panel" tabIndex={profileIndex === index ? 0 : -1} onClick={() => setProfileIndex(index)} onKeyDown={event => {
+            let next;
+            if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') next = 1 - index;
+            else if (event.key === 'Home') next = 0;
+            else if (event.key === 'End') next = 1;
+            else return;
+            event.preventDefault(); setProfileIndex(next); profileTabs.current[next]?.focus();
+          }}><PlayerAvatar number={index + 1} /><span>{name}<small>{index === 0 ? 'First person' : 'Second person'}</small></span><span className="tomo-profile-tab-mark" aria-hidden="true">{profileIndex === index ? '✦' : '↗'}</span></button>)}</div>
+          <article id="profile-panel" role="tabpanel" aria-labelledby={'profile-tab-' + profileIndex} tabIndex={0} className="tomo-profile-panel">
+            <ReadingText text={profileIndex === 0 ? result.tomo_deep_reading_p1 : result.tomo_deep_reading_p2} />
+            <details className="tomo-chart-notes"><summary>Birth chart notes</summary><div>{[['Sun', profile.western], ['Moon', profile.moonSign], ['Venus', profile.venusSign], ['Life path', profile.lifePathNumber]].filter(([, value]) => value).map(([label, value]) => <span key={label}>{label}<strong>{value}</strong></span>)}</div></details>
+          </article>
+        </div>
       </section>
-
-      {/* PAGE 3: DYNAMIC SYNERGY & SECRET ADVICE */}
-      <section id="page-synergy" className="page-section">
-        <motion.div 
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, staggerChildren: 0.2 }}
-          viewport={{ once: true, margin: "-50px" }}
-          className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6 px-1 sm:px-2"
-        >
-          {/* Dynamic Synergy Overview */}
-          <div className="tomo-card-rose rounded-2xl sm:rounded-[32px] p-4 sm:p-7 space-y-2.5 sm:space-y-3 shadow-xl text-left">
-            <h4 className="font-extrabold text-rose-600 dark:text-rose-300 text-sm sm:text-lg flex items-center gap-2 sm:gap-2.5 font-['Fredoka']">
-              <img src="/icon_3d_heart.jpg" alt="Heart" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover shadow-sm shrink-0" />
-              <span>နှစ်ယောက်ကြားက ဓာတ်ပေါင်းစပ်မှုနှင့် ရင်းနှီးမှု အခြေအနေ (Dynamic Synergy)</span>
-            </h4>
-            <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-normal whitespace-pre-wrap space-y-2">
-              {result.tomo_dynamic_insight}
-            </div>
-          </div>
-
-          {/* Strengths & Challenges Grid */}
-          <div className="grid md:grid-cols-2 gap-4 sm:gap-6 text-left">
-            {/* Strengths */}
-            <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 space-y-2.5 sm:space-y-3.5 border-2 border-red-200 dark:border-slate-700 shadow-lg">
-              <div className="flex items-center gap-2 sm:gap-2.5 border-b border-red-200 dark:border-slate-700 pb-2 sm:pb-2.5">
-                <img src="/icon_3d_p2.jpg" alt="Strength" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover shadow-sm shrink-0" />
-                <h4 className="font-extrabold text-red-600 dark:text-red-400 text-sm sm:text-base font-['Fredoka']">
-                  နှစ်ယောက်သား၏ အဓိက အားသာချက်များ (Core Strengths)
-                </h4>
-              </div>
-              <ul className="space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
-                {result.tomo_strengths?.map((str, i) => (
-                  <li key={i} className="flex gap-2 sm:gap-2.5 text-slate-800 dark:text-slate-200 leading-snug">
-                    <span className="text-red-500 font-bold shrink-0">✨</span>
-                    <span>{str}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Challenges */}
-            <div className="tomo-card rounded-2xl sm:rounded-[32px] p-4 sm:p-6 space-y-2.5 sm:space-y-3.5 border-2 border-orange-200 dark:border-slate-700 shadow-lg">
-              <div className="flex items-center gap-2 sm:gap-2.5 border-b border-orange-200 dark:border-slate-700 pb-2 sm:pb-2.5">
-                <img src="/icon_3d_p1.jpg" alt="Challenge" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover shadow-sm shrink-0" />
-                <h4 className="font-extrabold text-orange-600 dark:text-orange-400 text-sm sm:text-base font-['Fredoka']">
-                  အချင်းချင်း ညှိယူရမည့် အချက်များ (Growth Areas)
-                </h4>
-              </div>
-              <ul className="space-y-2 sm:space-y-2.5 text-xs sm:text-sm">
-                {result.tomo_challenges?.map((chl, i) => (
-                  <li key={i} className="flex gap-2 sm:gap-2.5 text-slate-800 dark:text-slate-200 leading-snug">
-                    <span className="text-orange-500 font-bold shrink-0">🌸</span>
-                    <span>{chl}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Tomo's Secret Advice */}
-          <div className="tomo-card-gold rounded-2xl sm:rounded-[32px] p-4 sm:p-7 space-y-2.5 sm:space-y-3 border-2 border-orange-400/60 shadow-xl text-left">
-            <h4 className="font-extrabold text-orange-800 dark:text-orange-300 text-sm sm:text-lg flex items-center gap-2 sm:gap-2.5 font-['Fredoka']">
-              <img src="/icon_3d_crown.jpg" alt="Crown" className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover shadow-sm shrink-0" />
-              <span>Tomo ရဲ့ အထူးလျှို့ဝှက် လမ်းညွှန်ချက် (Secret Guidance)</span>
-            </h4>
-            <div className="text-xs sm:text-sm text-slate-900 dark:text-orange-100 leading-relaxed font-semibold whitespace-pre-wrap space-y-2">
-              {result.tomo_secret_advice}
-            </div>
-          </div>
-
-          {/* Action Navigation */}
-          <div className="flex flex-col xs:flex-row flex-wrap items-center justify-center gap-2.5 sm:gap-3.5 pt-2 w-full">
-            <button 
-              type="button"
-              disabled={isExporting}
-              onClick={handleDownloadCard} 
-              className="tomo-button-3d-secondary w-full xs:w-auto px-6 sm:px-7 py-3 sm:py-3.5 rounded-2xl text-xs sm:text-sm font-black text-rose-600 dark:text-rose-300 inline-flex items-center justify-center gap-2 cursor-pointer shadow-md hover:scale-105 active:scale-95 transition-all min-h-[46px]"
-            >
-              <span>{isExporting ? '⏳ Generating Card...' : '📸 Download Destiny Card (PNG)'}</span>
-            </button>
-
-            <button onClick={() => navigate('/nomo')} className="tomo-button-3d-primary w-full xs:w-auto px-6 sm:px-8 py-3 sm:py-3.5 text-white font-extrabold rounded-2xl text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg hover:scale-105 active:scale-95 transition-all min-h-[46px]" style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)' }}>
-              <span>🎮 Play Nomo Friendship Quiz! ➔</span>
-            </button>
-
-            <button onClick={() => jumpToPage('page-hero')} className="tomo-chip-3d w-full xs:w-auto px-5 sm:px-6 py-3 sm:py-3.5 rounded-2xl text-xs font-black text-slate-700 dark:text-slate-300 inline-flex items-center justify-center gap-1.5 cursor-pointer shadow-sm min-h-[46px]">
-              <span>↑ Return to Top</span>
-            </button>
-          </div>
-
-          <footer className="text-center text-[11px] sm:text-xs text-red-500 font-bold pt-3 sm:pt-4 border-t border-red-200/40 dark:border-slate-800">
-            <p>🌸 Handcrafted with Love for Tomo's Destiny Showcase 💖</p>
-          </footer>
-        </motion.div>
+      <section id="page-synergy" className="page-section" aria-labelledby="together-heading">
+        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">The space between you</p><h2 id="together-heading">Better, together.</h2></div><p>What feels easy. What takes a little care.</p></div>
+        <article className="tomo-dynamic"><ReadingText text={result.tomo_dynamic_insight} /></article>
+        <div className="tomo-growth-grid"><section><h3><span aria-hidden="true">✳</span> Where you shine</h3><ul lang="my">{result.tomo_strengths.map((text, index) => <li key={index}>{text}</li>)}</ul></section><section><h3><span aria-hidden="true">✧</span> Room to grow</h3><ul lang="my">{result.tomo_challenges.map((text, index) => <li key={index}>{text}</li>)}</ul></section></div>
+        <article className="tomo-letter"><div className="tomo-letter-heading"><TomoPortrait pose="note" /><div><p>A note from Tomo</p><small>A little something to take with you.</small></div><span aria-hidden="true">♡</span></div><ReadingText text={result.tomo_secret_advice} /><p className="tomo-letter-signature">with love, Tomo ✳</p></article>
+        <div className="tomo-ending"><div><h3>Keep a little piece of this.</h3><p>Save your card, share it, and start a conversation.</p></div><button type="button" disabled={isExporting} onClick={handleDownloadCard} className="tomo-primary">{isExporting ? 'Preparing…' : 'Save our card'} <span aria-hidden="true">↧</span></button></div>
+        <footer className="tomo-footer"><button type="button" className="tomo-text-button" onClick={() => navigate('/nomo')}>How well do you know each other? Play Nomo ↗</button><button type="button" className="tomo-text-button" onClick={() => jumpToPage('page-inputs')}>Start another reading</button></footer>
       </section>
     </>
   );

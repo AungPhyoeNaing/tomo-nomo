@@ -97,7 +97,7 @@ const AudioController = ({ track = 'tomo', className = '' }) => {
 
       {/* Volume Hover/Touch Flyout */}
       {showVolume && (
-        <div className="absolute right-0 top-full mt-2 z-50 p-2.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl flex items-center gap-2 min-w-[160px] sm:min-w-[170px] text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+        <div className="arcade-volume-popover absolute right-0 top-full mt-2 z-50 p-2.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl flex items-center gap-2 min-w-[160px] sm:min-w-[170px] text-xs animate-in fade-in slide-in-from-top-1 duration-150">
           <button 
             type="button" 
             onClick={() => audioManager.toggleMute()}

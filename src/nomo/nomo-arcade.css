@@ -1,0 +1,109 @@
+/* Nomo's co-op arcade: cobalt cabinets, electric aqua, citrus tokens. */
+.nomo-scroll-wrapper {
+  --game-edge: #164b87; --game-shadow: #79b8c9; --game-paper: #f7fff1;
+  --game-soft: #d6f5ef; --game-ink: #123d66; --game-muted: #416b7c;
+  --game-selected: #dbfa7b; --nomo-cobalt: #264bc7; --nomo-aqua: #28d9d0;
+  --ticket-edge: #2466b2; --ticket-fill: #f5fff4; --ticket-inlay: #76bbc9;
+  background-color: #c9f6ee !important;
+  background-image: radial-gradient(#24879935 1px, transparent 1.3px), linear-gradient(135deg, #dbfbf0, #b7eef2) !important;
+  background-size: 24px 24px, 100% 100% !important;
+}
+body .nomo-scroll-wrapper .glass-nav { background: #164c94; border-bottom: 3px solid #49e4d1; box-shadow: 0 3px 0 #134078; }
+body .nomo-scroll-wrapper .glass-nav > a:first-child span { color: #f0ffec; }.nomo-scroll-wrapper .glass-nav > a:first-child video { border-color: #a9f376; box-shadow: 0 0 0 3px #3a80ad; }
+body .nomo-scroll-wrapper .glass-nav :is(button, a:not(:first-child)) { border-color: #10366b; border-bottom-width: 4px; background-color: #a5eddb; color: #123d66; box-shadow: none; border-radius: 15px 4px 15px 4px; }
+body .nomo-scroll-wrapper .glass-nav > div > a { background: #ffdc60; color: #3e4520; }
+body .nomo-scroll-wrapper .nomo-arcade-hero { color: #174c85; }
+body .nomo-scroll-wrapper .nomo-arcade-hero h1 { color: #214bc0; text-shadow: 0 3px 0 #efffef, 0 5px 0 #78bec9; font-weight: 600; }
+body .nomo-scroll-wrapper .arcade-welcome { color: #285f78; }.nomo-scroll-wrapper .arcade-online { background: #147c77; box-shadow: 0 0 0 3px #147c771a; }
+body .nomo-scroll-wrapper .nomo-duo-scene { width: min(600px, 100%); height: 244px; background: #27cbd1; border: 3px solid #215ba3; border-radius: 35px 8px 35px 8px; margin-top: 22px; margin-bottom: 13px; isolation: isolate; box-shadow: 0 6px 0 #5aafbc; }
+body .nomo-scroll-wrapper .nomo-duo-scene::before { display: none; }.nomo-scroll-wrapper .nomo-duo-scene .arcade-scenery { border-radius: 31px 5px 31px 5px; overflow: hidden; }
+body .nomo-scroll-wrapper .nomo-duo-scene .arcade-character { width: 170px; height: 170px; margin-top: 29px; border: 4px solid #edffc5; outline: 3px solid #1b5895; outline-offset: 4px; box-shadow: 0 0 0 11px #d6f96e, 0 0 0 14px #1b5895, 0 7px 0 14px #124a7126; }
+body .nomo-scroll-wrapper .nomo-scene-bubble { top: 19px; right: 24px; border: 2px solid #215ba3; border-radius: 18px 18px 18px 2px; background: #fff3aa; color: #284970; box-shadow: 3px 3px 0 #215ba32b; font-size: 12px; }
+body .nomo-scroll-wrapper .nomo-game-rules { gap: 17px; margin-bottom: 22px; }.nomo-scroll-wrapper .nomo-game-rules > span { color: #1e5976; }.nomo-scroll-wrapper .nomo-game-rules b { width: 30px; height: 30px; border-radius: 50%; background: #ffdf71; border: 2px solid #476c90; outline: 2px solid #ffefad; outline-offset: 2px; color: #254f7d; box-shadow: 0 3px 0 #6797a3; }
+/* Physical push-buttons with stepped cabinet edges; focus rings remain unclipped. */
+body .nomo-scroll-wrapper .nomo-button-3d-primary,
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-button-3d-primary {
+  position: relative; isolation: isolate; border: 0; border-radius: 0; background: transparent; color: #f6ffde;
+  box-shadow: none; text-shadow: 0 1px 0 #183d84; padding: 16px 29px 21px;
+}
+body .nomo-scroll-wrapper .nomo-button-3d-primary::before,
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-button-3d-primary::before {
+  display: block; content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(120deg, #2456c6, #177da8);
+  clip-path: polygon(11px 0, calc(100% - 11px) 0, calc(100% - 11px) 5px, 100% 5px, 100% calc(100% - 10px), calc(100% - 7px) calc(100% - 10px), calc(100% - 7px) 100%, 7px 100%, 7px calc(100% - 10px), 0 calc(100% - 10px), 0 5px, 11px 5px);
+  box-shadow: inset 0 3px 0 #89e9ff, inset 0 -7px 0 #173777, inset 3px 0 0 #4e9de0, inset -3px 0 0 #368dcc;
+}
+body .nomo-scroll-wrapper .nomo-button-3d-primary:hover:not(:disabled), body .nomo-scroll-wrapper [data-arcade-panel] .nomo-button-3d-primary:hover:not(:disabled) { background: transparent; box-shadow: none; }.nomo-scroll-wrapper .nomo-button-3d-primary:hover::before { filter: brightness(1.13); }
+body .nomo-scroll-wrapper .nomo-button-3d-primary:active:not(:disabled), body .nomo-scroll-wrapper [data-arcade-panel] .nomo-button-3d-primary:active:not(:disabled) { box-shadow: none; transform: translateY(3px); }
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-button-3d-secondary { background: #ffe16d; color: #35461a; border: 2px solid #af912b; border-bottom-width: 5px; border-radius: 22px 5px 22px 5px; box-shadow: 0 2px 0 #d2bd62; }
+body .nomo-scroll-wrapper [data-arcade-panel] button { border-color: #5d94bc; border-radius: 17px 4px 17px 4px; border-bottom-width: 4px; box-shadow: none; color: var(--game-ink); }
+body .nomo-scroll-wrapper [data-arcade-panel] button[aria-pressed=true] { background: #d8f976; border-color: #5b8529; box-shadow: 0 3px 0 #69953c; color: #2c4814; }
+body .nomo-scroll-wrapper [data-arcade-panel] button[aria-pressed=true]:hover { background: #e2ff93; }
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-chip-3d { background: #ffdf73; border-color: #ab9035; border-radius: 24px 5px 24px 5px; box-shadow: none; color: #4d4a1a; }
+/* Scalable illustrated ticket silhouettes; inner controls keep rectangular hit areas. */
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-ticket,
+body .nomo-scroll-wrapper .nomo-ticket[data-arcade-panel] {
+  background: transparent; border: 0; border-radius: 0; box-shadow: none;
+  isolation: isolate; position: relative; overflow: visible; backdrop-filter: none;
+}
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-ticket:hover,
+body .nomo-scroll-wrapper .nomo-ticket[data-arcade-panel]:hover { background: transparent; border: 0; box-shadow: none; }
+.nomo-ticket-frame { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: visible; }
+.nomo-ticket-shadow { fill: #3173a3; stroke: #3173a3; stroke-width: 2px; }.nomo-ticket-paper { fill: var(--ticket-fill); stroke: var(--ticket-edge); stroke-width: 2.5px; }.nomo-ticket-inlay { fill: none; stroke: var(--ticket-inlay); stroke-width: 1px; }
+body .nomo-scroll-wrapper .nomo-lobby-ticket { padding: 34px 38px 43px; scroll-margin-top: 85px; }
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:first-of-type { border-bottom: 2px dashed #79b6c4; padding-bottom: 19px; }.nomo-scroll-wrapper [data-arcade-panel=lobby] > div:first-of-type > div:first-child { border-radius: 50%; background: #2d62c6; border: 2px solid #82cce2; box-shadow: 0 3px 0 #164a87; }
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:nth-of-type(2) { background: #d6eeed; border: 2px solid #84b5c5; padding: 7px; border-radius: 27px 7px 27px 7px; gap: 9px; }
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:nth-of-type(2) button { border-radius: 22px 4px 22px 4px; font: 500 17px 'Fredoka', sans-serif; background: var(--game-paper); min-height: 49px; }
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:nth-of-type(2) button[aria-pressed=true] { background: #c9f263; border-color: #6b9231; box-shadow: 0 3px 0 #6b9231; }
+body .nomo-scroll-wrapper [data-arcade-panel] label { color: var(--game-ink); font-size: 12px; font-weight: 700; }
+body .nomo-scroll-wrapper [data-arcade-panel] :is(input:not([type=range]), select) { background: var(--game-paper); border: 2px solid #568eb5; border-bottom: 4px solid #568eb5; border-radius: 4px 16px 4px 16px; color: var(--game-ink); box-shadow: inset 0 3px 0 #b3dfe733; min-height: 51px; }
+body .nomo-scroll-wrapper [data-arcade-panel] input:focus { border-color: #2a61b4; outline: 3px solid #89c9df; outline-offset: 2px; }
+body .nomo-scroll-wrapper #nomo-room-code { background: #eaffac; border-style: dashed; border-bottom-style: solid; font-size: 19px; letter-spacing: 2px; color: #355414; }
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-card:not(.nomo-ticket), body .nomo-scroll-wrapper [data-arcade-panel] .nomo-card-ice:not(.nomo-ticket) { background: var(--game-paper); border: 2px solid #3f82b4; border-radius: 30px 5px 30px 5px; box-shadow: 0 5px 0 #7ab6c5; }
+body .nomo-scroll-wrapper [data-arcade-panel=room] > div:nth-child(2) { background: var(--game-paper); border-radius: 23px 5px 23px 5px; border-color: #508bb8; }
+body .nomo-scroll-wrapper [data-chosen=true] { --ticket-fill: #edffd0; --ticket-edge: #688f32; --ticket-inlay: #accf69; }.nomo-scroll-wrapper [data-chosen=true] .nomo-ticket-shadow { fill: #739947; stroke: #739947; }
+body .nomo-scroll-wrapper [data-arcade-panel] button[data-filled] { width: 100%; min-height: 47px; border-radius: 50%; border-width: 2px; border-bottom-width: 5px; background: #e4f2f4; border-color: #90b5c9; color: #517d94; }
+body .nomo-scroll-wrapper [data-arcade-panel] button[data-filled=true] { background: #d2f56f; border-color: #6a9533; color: #354f17; box-shadow: 0 0 0 2px #f0ffbf; }
+body .nomo-scroll-wrapper [data-arcade-panel] [data-chosen] > div:first-of-type > div:first-child > div > span:first-child { border-radius: 50%; border: 1.5px solid #5489b4; background: #ffdc6c; color: #34526c; }
+body .nomo-scroll-wrapper [data-arcade-panel] .fixed.bottom-0 { background: #164c94; border-color: #63d6ce; box-shadow: 0 -4px 0 #4384b3; }.nomo-scroll-wrapper [data-arcade-panel] .fixed.bottom-0 :is(.text-slate-500, .text-slate-800) { color: #e3ffef; }
+body .nomo-scroll-wrapper [data-arcade-panel=quiz] > div:first-child > div:first-child { background: #d7f7ed; border: 2px solid #508bb8; border-radius: 23px 6px 23px 6px; box-shadow: 0 3px 0 #8dbdc8; }
+body .nomo-scroll-wrapper [data-arcade-panel=quiz] button[aria-pressed] { border-radius: 7px 25px 25px 7px; border-left-width: 6px; border-bottom-width: 4px; min-height: 68px; }
+body .nomo-scroll-wrapper [data-arcade-panel=quiz] button[aria-pressed] > div > span:first-child { width: 34px; height: 34px; border-radius: 50%; border: 2px solid #6086ab; background: #ffdf73; color: #244d7a; box-shadow: 0 3px 0 #a2b5a6; }
+body .nomo-scroll-wrapper [data-arcade-panel=quiz] button[aria-pressed=true] { border-color: #68932f; background: #d6f97e; color: #264818; }
+body .nomo-scroll-wrapper .nomo-reward-ticket { --ticket-edge: #6c9638; --ticket-fill: #f7ffe8; --ticket-inlay: #b4d78c; padding-block: 36px 42px; }.nomo-scroll-wrapper .nomo-reward-ticket .nomo-ticket-shadow { fill: #639048; stroke: #639048; }
+body .nomo-scroll-wrapper [data-arcade-panel=results] > .grid > .nomo-card { border-radius: 40% 40% 12% 12% / 16% 16% 7% 7%; border-top-width: 6px; background: #edfac8; border-color: #759636; box-shadow: 0 5px 0 #accc72; }
+body .nomo-scroll-wrapper [data-arcade-panel=results] > .grid > .nomo-card > div:first-of-type { border-radius: 50%; border: 3px solid #e4fdb8; outline: 2px solid #7fa43d; outline-offset: 2px; background: #b9df73; color: #355a24; }
+body .nomo-scroll-wrapper [data-arcade-panel=results] button[aria-pressed] { border-radius: 20px 5px 20px 5px; }.nomo-scroll-wrapper [data-arcade-panel=results] .nomo-card > div > div:has(> button[aria-pressed]) { background: #dcefe9; border-color: #84b3bc; }
+body .nomo-scroll-wrapper [role=alert] { border: 2px solid #d3a43d; border-left-width: 6px; background: #fff0bc; color: #724d18; border-radius: 3px 19px 3px 19px; box-shadow: 0 3px 0 #daca92; }
+body .nomo-scroll-wrapper :is(button, a, input, select, [tabindex]):focus-visible { outline: 3px solid #d38a11; outline-offset: 5px; }
+/* Night mode keeps the same saturated cabinet and citrus rewards. */
+body.dark .nomo-scroll-wrapper { --game-paper: #143856; --game-soft: #204d68; --game-ink: #e4fff3; --game-muted: #b0d3df; --game-selected: #4f7231; --ticket-fill: #143856; --ticket-edge: #64bbd6; --ticket-inlay: #306b90; background-color: #09283f !important; background-image: radial-gradient(#6bd9d333 1px, transparent 1.3px), linear-gradient(135deg, #0c3044, #122852) !important; }
+body.dark .nomo-scroll-wrapper .nomo-arcade-hero h1 { color: #d1fa8c; text-shadow: 0 3px 0 #244c6c, 0 5px 0 #0b1e36; }body.dark .nomo-scroll-wrapper .arcade-welcome, body.dark .nomo-scroll-wrapper .nomo-game-rules > span { color: #c4e7e5; }
+body.dark .nomo-scroll-wrapper .nomo-duo-scene { background: #087b98; border-color: #6dc6de; box-shadow: 0 6px 0 #114767; }.nomo-scroll-wrapper .nomo-duo-scene .arcade-scenery { opacity: .9; }
+body.dark .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:nth-of-type(2) { background: #0c293f; border-color: #4a8da8; }body.dark .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:nth-of-type(2) button[aria-pressed=true], body.dark .nomo-scroll-wrapper [data-arcade-panel] button[aria-pressed=true] { background: #517832; color: #edffd0; border-color: #a6d75f; }
+body.dark .nomo-scroll-wrapper #nomo-room-code { background: #2d4a29; color: #ddffb6; border-color: #87b65e; }
+body.dark .nomo-scroll-wrapper [data-chosen=true] { --ticket-fill: #294d32; --ticket-edge: #94be5b; --ticket-inlay: #5c8247; }
+body.dark .nomo-scroll-wrapper [data-arcade-panel] .nomo-card:not(.nomo-ticket), body.dark .nomo-scroll-wrapper [data-arcade-panel] .nomo-card-ice:not(.nomo-ticket) { box-shadow: 0 5px 0 #081b2c; border-color: #477b9d; }
+body.dark .nomo-scroll-wrapper .nomo-reward-ticket { --ticket-fill: #274633; --ticket-edge: #9acb61; --ticket-inlay: #55814d; }
+body.dark .nomo-scroll-wrapper [data-arcade-panel=results] > .grid > .nomo-card { background: #2f4f32; border-color: #8ab35b; box-shadow: 0 5px 0 #182b24; }body.dark .nomo-scroll-wrapper [data-arcade-panel=quiz] > div:first-child > div:first-child { background: #19455c; color: #e1fff2; }
+body.dark .nomo-scroll-wrapper [data-arcade-panel] button[data-filled=false] { background: #1c4058; color: #bbd9e2; border-color: #477b9d; }body.dark .nomo-scroll-wrapper [data-arcade-panel] button[data-filled=true] { background: #a4d252; color: #203e13; }
+@media(max-width: 700px) { body .nomo-scroll-wrapper .nomo-lobby-ticket { padding: 29px 27px 38px; }body .nomo-scroll-wrapper .nomo-duo-scene { height: 230px; }.nomo-scroll-wrapper .nomo-scene-bubble { right: 12px; max-width: 125px; font-size: 10px; }body .nomo-scroll-wrapper .nomo-duo-scene .arcade-character { width: 155px; height: 155px; margin-top: 31px; }.nomo-scroll-wrapper .nomo-game-rules { gap: 12px; }.nomo-scroll-wrapper .nomo-game-rules > span { font-size: 9px; }.nomo-scroll-wrapper .nomo-game-rules b { width: 25px; height: 25px; }.nomo-scroll-wrapper [data-chosen] { padding: 22px; } }
+@media(max-width: 380px) { body .nomo-scroll-wrapper .nomo-lobby-ticket { padding-inline: 23px; }.nomo-scroll-wrapper .nomo-game-rules { gap: 8px; }.nomo-scroll-wrapper .nomo-game-rules > span { font-size: 8px; gap: 5px; }body .nomo-scroll-wrapper .nomo-scene-bubble { right: 7px; top: 12px; font-size: 9px; padding: 7px; } }
+/* Keep header and mode-switch styles independent of the decorative SVG child. */
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] > div:first-of-type { background: transparent; border: 0; border-bottom: 2px dashed #79b6c4; padding: 0 0 19px; border-radius: 0; box-shadow: none; }
+body .nomo-scroll-wrapper [data-arcade-panel=lobby] form button[type=button] { padding: 5px 9px; border-radius: 15px 4px 15px 4px; border-bottom-width: 3px; }
+body .nomo-scroll-wrapper [data-arcade-panel] .nomo-ticket > .nomo-ticket-frame + * { margin-top: 0; }
+@media(min-width: 701px) and (max-height: 850px) {
+  body .nomo-scroll-wrapper .nomo-arcade-hero { padding-top: 13px; }
+  body .nomo-scroll-wrapper .nomo-arcade-hero h1 { font-size: 53px; margin-top: 15px; }
+  body .nomo-scroll-wrapper .nomo-arcade-hero > p:not(.arcade-welcome) { margin-top: 11px; }
+  body .nomo-scroll-wrapper .nomo-duo-scene { height: 215px; margin-top: 16px; margin-bottom: 10px; }
+  body .nomo-scroll-wrapper .nomo-duo-scene .arcade-character { width: 149px; height: 149px; margin-top: 25px; }
+  body .nomo-scroll-wrapper .nomo-game-rules { margin-bottom: 17px; }
+}
+body .nomo-scroll-wrapper [data-arcade-panel=room] .sticky { top: 82px; }
+.nomo-scroll-wrapper *::-webkit-scrollbar { height: 5px; width: 6px; }.nomo-scroll-wrapper *::-webkit-scrollbar-track { background: #d2eee9; border-radius: 5px; }.nomo-scroll-wrapper *::-webkit-scrollbar-thumb { background: #438fc0; border-radius: 5px; }
+body.dark .nomo-scroll-wrapper *::-webkit-scrollbar-track { background: #193f58; }body.dark .nomo-scroll-wrapper *::-webkit-scrollbar-thumb { background: #58a9c9; }
+body .nomo-scroll-wrapper [data-arcade-panel] .fixed.inset-0 button[aria-pressed] { border-radius: 7px 24px 24px 7px; border-left-width: 5px; }
+body .nomo-scroll-wrapper [data-arcade-panel] .fixed.inset-0 button[aria-pressed] > div > span:first-child { border-radius: 50%; background: #ffdf73; color: #244d7a; border: 1.5px solid #6b93aa; box-shadow: 0 2px 0 #9eaf9a; }
+body .nomo-scroll-wrapper [data-arcade-panel] .fixed.inset-0 .nomo-card-ice { border-top: 6px solid #39b6c6; }

@@ -434,17 +434,16 @@ export function getWesternSynergyScore(p1, p2) {
     else if (moonAspect.score < 70) score -= 3;
   } else if (p1.moonElement && p2.moonElement) {
     if (p1.moonElement === p2.moonElement) score += 2;
-    else if ((p1.moonElement === 'Fire' && p2.moonElement === 'Air') || (p1.moonElement === 'Earth' && p2.moonElement === 'Water')) score += 2;
-    else if ((p1.moonElement === 'Fire' && p2.moonElement === 'Water') || (p1.moonElement === 'Earth' && p2.moonElement === 'Air')) score -= 2;
+    else if (matchesPair(p1.moonElement, p2.moonElement, [['Fire', 'Air'], ['Earth', 'Water']])) score += 2;
+    else if (matchesPair(p1.moonElement, p2.moonElement, [['Fire', 'Water'], ['Earth', 'Air']])) score -= 2;
   }
 
   // 3. Venus-Mars Chemistry Alignment
-  const venusMarsAngle = getAngularDistance(p1.venusLon, p2.marsLon);
-  const venusMarsAspect = getAspectScore(venusMarsAngle);
-  if (venusMarsAspect) {
-    if (venusMarsAspect.harmonic) score += 3;
-    else if (venusMarsAspect.score < 70) score -= 2;
-  }
+  const chemistryAdjustments = [[p1.venusLon, p2.marsLon], [p2.venusLon, p1.marsLon]].map(([venus, mars]) => {
+    const aspect = getAspectScore(getAngularDistance(venus, mars));
+    return aspect?.harmonic ? 3 : aspect && aspect.score < 70 ? -2 : 0;
+  });
+  score += (chemistryAdjustments[0] + chemistryAdjustments[1]) / 2;
 
   // Modality balance
   if (p1.westernModality !== p2.westernModality) score += 2;
@@ -515,11 +514,11 @@ export function getChineseAnimalSynergyScore(p1, p2) {
   const isChong = liuChongConflicts.some(p => (p[0] === a1 && p[1] === a2) || (p[0] === a2 && p[1] === a1));
   const isHarm = liuHaiHarms.some(p => (p[0] === a1 && p[1] === a2) || (p[0] === a2 && p[1] === a1));
 
+  if (a1 && a1 === a2) return 85; // Same animal is not a distinct trine pairing.
   if (isTrine) return 98; // San He Trine
   if (isLiuHe) return 95; // Liu He Secret Friend
   if (isChong) return 52; // Liu Chong Direct Clash
   if (isHarm) return 58; // Liu Hai Mutual Harm
-  if (a1 === a2) return 85; // Same Animal
   return 78;
 }
 
@@ -550,6 +549,9 @@ export function getFiveElementsSynergyScore(p1, p2) {
 }
 
 // 5. Dual Numerology (Life Path & Destiny) Sub-score (16% weight)
+const matchesPair = (first, second, pairs) => pairs.some(([a, b]) => (first === a && second === b) || (first === b && second === a));
+const HARMONIC_LIFE_PATH_PAIRS = [[1, 5], [1, 7], [2, 4], [2, 8], [3, 6], [3, 9]];
+
 export function getNumerologySynergyScore(p1, p2) {
   const t1 = p1.destinyTriad || 'mind';
   const t2 = p2.destinyTriad || 'mind';
@@ -563,9 +565,7 @@ export function getNumerologySynergyScore(p1, p2) {
   // Life Path Harmonic Synergies
   if (lp1 === lp2) score = 92;
   else if (
-    (lp1 === 1 && (lp2 === 5 || lp2 === 7)) ||
-    (lp1 === 2 && (lp2 === 4 || lp2 === 8)) ||
-    (lp1 === 3 && (lp2 === 6 || lp2 === 9)) ||
+    matchesPair(lp1, lp2, HARMONIC_LIFE_PATH_PAIRS) ||
     (lp1 === 11 || lp2 === 11 || lp1 === 22 || lp2 === 22 || lp1 === 33 || lp2 === 33)
   ) {
     score = 96;
@@ -677,7 +677,7 @@ export function getCrossSystemSynthesisReport(p1, p2, relType) {
     ['Rat', 'Ox'], ['Tiger', 'Pig'], ['Rabbit', 'Dog'],
     ['Dragon', 'Rooster'], ['Snake', 'Monkey'], ['Horse', 'Goat']
   ];
-  const isTrine = sanHeTrines.some(t => t.includes(p1.animal) && t.includes(p2.animal));
+  const isTrine = p1.animal !== p2.animal && sanHeTrines.some(t => t.includes(p1.animal) && t.includes(p2.animal));
   const isLiuHe = liuHePairs.some(p => (p[0] === p1.animal && p[1] === p2.animal) || (p[0] === p2.animal && p[1] === p1.animal));
   const chineseDynamic = isTrine 
     ? 'San He Triad Harmony (၃ ရာသီ သဟဇာတ မိတ်)' 
@@ -696,7 +696,7 @@ export function getCrossSystemSynthesisReport(p1, p2, relType) {
   // 5. Dual Numerology Life Path & Destiny
   const lp1 = p1.lifePathNumber || 1;
   const lp2 = p2.lifePathNumber || 1;
-  const isHarmonicLp = lp1 === lp2 || (lp1 === 1 && (lp2 === 5 || lp2 === 7)) || (lp1 === 2 && (lp2 === 4 || lp2 === 8)) || (lp1 === 3 && (lp2 === 6 || lp2 === 9)) || (lp1 >= 11 || lp2 >= 11);
+  const isHarmonicLp = lp1 === lp2 || matchesPair(lp1, lp2, HARMONIC_LIFE_PATH_PAIRS) || (lp1 >= 11 || lp2 >= 11);
   const numerologyDynamic = isHarmonicLp 
     ? 'Harmonic Life Purpose Triad (ဘဝခရီး ရည်မှန်းချက်ချင်း တစ်ထပ်တည်းကျခြင်း)' 
     : 'Diverse Life Lessons & Individual Growth (မတူညီသော ဘဝသင်ခန်းစာများကို အပြန်အလှန် သင်ယူခြင်း)';

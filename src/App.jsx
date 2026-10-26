@@ -3,13 +3,11 @@ import { motion, MotionConfig } from 'framer-motion';
 import HeroSection from './components/HeroSection';
 import InputSection from './components/InputSection';
 import MatchResult from './components/MatchResult';
-import ApiKeyModal from './components/ApiKeyModal';
 import TomoPortrait from './components/TomoPortrait';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from './utils/astrology';
-import { fetchTomoDestinyReading, generateDeepProceduralReading } from './utils/gemini';
-import { TOMO_GEMINI_KEYS } from './config/geminiKeys';
+import { generateDeepProceduralReading } from './utils/gemini';
+import { requestTomoReading } from './utils/readingClient';
 import { createReadingResult, isValidBirthDate, normalizePersonName } from './utils/reading';
-import { TOMO_MODELS, DEFAULT_TOMO_MODEL } from './utils/tomoPrompt';
 import { readStorage, writeStorage, removeStorage } from './utils/storage';
 
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
@@ -28,30 +26,6 @@ function TomoApp() {
   // App State
   const [relType, setRelType] = useState('Friends');
   const [mood, setMood] = useState('Sweet');
-  const [slotKeys, setSlotKeys] = useState(() => {
-    try {
-      const stored = JSON.parse(readStorage('tomo_gemini_keys', '{}'));
-      const legacyKey = readStorage('tomo_api_key');
-      return {
-        'key-1': typeof stored?.['key-1'] === 'string' ? stored['key-1'] : legacyKey,
-        'key-2': typeof stored?.['key-2'] === 'string' ? stored['key-2'] : ''
-      };
-    } catch {
-      return {
-        'key-1': readStorage('tomo_api_key'),
-        'key-2': ''
-      };
-    }
-  });
-  const [activeApiKeyId, setActiveApiKeyId] = useState(() => {
-    const savedId = readStorage('tomo_active_gemini_key');
-    return TOMO_GEMINI_KEYS.some(key => key.id === savedId) ? savedId : TOMO_GEMINI_KEYS[0].id;
-  });
-  const [isApiModalOpen, setIsApiModalOpen] = useState(false);
-  const [readingModel, setReadingModel] = useState(() => {
-    const saved = readStorage('tomo_reading_model');
-    return TOMO_MODELS.some(model => model.id === saved) ? saved : DEFAULT_TOMO_MODEL;
-  });
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
@@ -78,7 +52,11 @@ function TomoApp() {
   // Results State
   const [result, setResult] = useState(null);
 
-  const apiKey = slotKeys[activeApiKeyId] || '';
+
+  // Remove credentials left by the previous browser-key setup.
+  useEffect(() => {
+    ['tomo_gemini_keys', 'tomo_api_key', 'tomo_active_gemini_key', 'tomo_reading_model'].forEach(removeStorage);
+  }, []);
 
   // Theme Init
   useEffect(() => {
@@ -104,21 +82,6 @@ function TomoApp() {
     } else {
       document.body.classList.remove('dark');
     }
-  };
-
-  const handleSaveApiKey = (newKey) => {
-    const value = newKey.trim();
-    const nextSlotKeys = { ...slotKeys, [activeApiKeyId]: value };
-    setSlotKeys(nextSlotKeys);
-    const saved = writeStorage('tomo_gemini_keys', JSON.stringify(nextSlotKeys));
-    if (saved) removeStorage('tomo_api_key');
-    else setToastMessage('Browser storage is unavailable. This key will work until you reload this page.');
-  };
-
-  const handleSelectApiKey = (event) => {
-    const keyId = event.target.value;
-    setActiveApiKeyId(keyId);
-    writeStorage('tomo_active_gemini_key', keyId);
   };
 
   const progressBarRef = useRef(null);
@@ -175,11 +138,6 @@ function TomoApp() {
     }
     setInputError('');
 
-    if (!useDemo && !apiKey) {
-      setIsApiModalOpen(true);
-      return;
-    }
-
     const requestId = ++requestIdRef.current;
     readingControllerRef.current = new AbortController();
     setLoading(true);
@@ -200,7 +158,7 @@ function TomoApp() {
     }
 
     try {
-      const data = await fetchTomoDestinyReading(firstName, p1Secret, secondName, p2Secret, relType, mood, algorithmicScore, apiKey, { model: readingModel, signal: readingControllerRef.current.signal });
+      const data = await requestTomoReading({ p1Name: firstName, p1Dob, p2Name: secondName, p2Dob, relType, mood }, { signal: readingControllerRef.current.signal });
       if (requestId !== requestIdRef.current) return;
       setResult(createReadingResult(data, inputs, p1Secret, p2Secret));
       setLoading(false);
@@ -232,21 +190,19 @@ function TomoApp() {
   return (
     <div className="tomo-experience">
       <div ref={progressBarRef} className="tomo-scroll-progress" aria-hidden="true" />
-      <a href="#page-inputs" className="tomo-skip-link" tabIndex={loading || isApiModalOpen ? -1 : undefined}>Skip to your details</a>
-      <header className="tomo-header" inert={loading || isApiModalOpen ? '' : undefined}>
+      <a href="#page-inputs" className="tomo-skip-link" tabIndex={loading ? -1 : undefined}>Skip to your details</a>
+      <header className="tomo-header" inert={loading ? '' : undefined}>
         <button type="button" className="tomo-brand" onClick={() => jumpToPage('page-hero')} aria-label="Tomo home"><TomoPortrait pose="wave" /><strong>tomo + nomo</strong><small>A place to play & connect</small></button>
         <div className="tomo-header-actions">
           <Link to="/nomo" className="tomo-nomo-link">2P challenge <span aria-hidden="true">↗</span></Link>
           <AudioController track="tomo" />
           <button type="button" className="tomo-icon-button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}>{theme === 'dark' ? '☀' : '☾'}</button>
-          <button type="button" className="tomo-settings-button" onClick={() => setIsApiModalOpen(true)}><span className={apiKey ? 'tomo-key-dot is-ready' : 'tomo-key-dot'} aria-hidden="true" />AI settings</button>
         </div>
       </header>
-      <nav inert={loading || isApiModalOpen ? '' : undefined} className={`tomo-section-nav ${result ? 'has-results' : ''}`} aria-label="Reading sections">{sections.map(([id, label]) => <button type="button" key={id} onClick={() => jumpToPage(id)} aria-current={activePage === id ? 'location' : undefined}>{label}</button>)}</nav>
+      <nav inert={loading ? '' : undefined} className={`tomo-section-nav ${result ? 'has-results' : ''}`} aria-label="Reading sections">{sections.map(([id, label]) => <button type="button" key={id} onClick={() => jumpToPage(id)} aria-current={activePage === id ? 'location' : undefined}>{label}</button>)}</nav>
       {toastMessage && <div className="tomo-toast" role="status"><span>{toastMessage}</span><button type="button" onClick={() => setToastMessage('')} aria-label="Dismiss notification">×</button></div>}
       {loading && <div className="tomo-loading" role="dialog" aria-modal="true" aria-labelledby="loading-title"><div ref={loadingPanelRef} tabIndex={-1} className="tomo-loading-panel" role="status"><video src="/tomo-calculating.mp4" autoPlay loop muted playsInline aria-hidden="true" /><h2 id="loading-title">Building your duo’s story…</h2><p lang="my">တိုမိုက နှစ်ယောက်လုံးအတွက် ဖတ်ရှုချက်လေး ပြင်ဆင်နေပြီနော်။</p><button type="button" className="tomo-outline-button tomo-cancel-reading" onClick={cancelReading}>Cancel reading</button><span className="tomo-loading-dots" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</span></div></div>}
-      <ApiKeyModal modelOptions={TOMO_MODELS} readingModel={readingModel} onSelectModel={event => { setReadingModel(event.target.value); writeStorage('tomo_reading_model', event.target.value); }} isOpen={isApiModalOpen} onClose={() => setIsApiModalOpen(false)} apiKey={apiKey} onSaveKey={handleSaveApiKey} keyOptions={TOMO_GEMINI_KEYS} activeKeyId={activeApiKeyId} onSelectKey={handleSelectApiKey} />
-      <main inert={loading || isApiModalOpen ? '' : undefined} className="scroll-container tomo-main" onScroll={handleScroll} aria-busy={loading}>
+      <main inert={loading ? '' : undefined} className="scroll-container tomo-main" onScroll={handleScroll} aria-busy={loading}>
         <HeroSection jumpToPage={jumpToPage} />
         <InputSection p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob} p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob} relType={relType} setRelType={setRelType} mood={mood} setMood={setMood} loading={loading} inputError={inputError} onCalculate={() => onCalculate(false)} onDemo={() => onCalculate(true)} />
         {result && <MatchResult result={result} p1Name={result.inputs.p1Name} p2Name={result.inputs.p2Name} relType={result.inputs.relType} mood={result.inputs.mood} jumpToPage={jumpToPage} />}

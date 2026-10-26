@@ -100,6 +100,13 @@ test('auth/quota and truncated responses never trigger a paid repair', async t =
   assert.equal(calls, 2);
 });
 
+test('shared-key production requests stop after one failed quality check', async t => {
+  let calls = 0;
+  mockFetch(t, async () => { calls++; return response({ ...fixture(), tomo_secret_advice: 'English' }); });
+  await assert.rejects(request({ maxAttempts: 1 }), /Burmese/);
+  assert.equal(calls, 1);
+});
+
 test('memory cache isolates key/model changes and returns independent copies', async t => {
   let calls = 0;
   mockFetch(t, async () => { calls++; return response(fixture()); });

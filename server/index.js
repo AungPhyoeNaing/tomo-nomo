@@ -7,6 +7,10 @@ const { attachGame } = require('./game');
 function createGameServer() {
   const app = express();
   const clientBuildPath = path.join(__dirname, '../dist');
+  const readingHandler = import('./reading-handler.mjs').then(module => module.createReadingHandler());
+  app.post('/api/reading', express.json({ limit: '2kb' }), async (req, res, next) => {
+    try { await (await readingHandler)(req, res); } catch (error) { next(error); }
+  });
   app.use(express.static(clientBuildPath));
   const server = http.createServer(app);
   const io = new Server(server, {
@@ -23,6 +27,9 @@ function createGameServer() {
 }
 
 if (require.main === module) {
+  // Local development only; deployment hosts supply their environment directly.
+  try { process.loadEnvFile(path.join(__dirname, '../.env')); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
   const { server } = createGameServer();
   const port = process.env.PORT || 3080;
   server.on('error', error => {

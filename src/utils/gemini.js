@@ -537,7 +537,7 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
   let totalTokens = 0;
   try {
     // At most one repair, only for malformed/poor-language content. Never retry quota/auth errors.
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < (options.maxAttempts === 1 ? 1 : 2); attempt++) {
       if (controller.signal.aborted) throw new DOMException('Reading cancelled.', 'AbortError');
       const requestPayload = attempt === 0 ? payload : {
         ...payload,

@@ -2,7 +2,7 @@
 
 An advanced, interactive single-page web application created for a university project showcase.
 
-Tomo is a playful astrology-inspired story game, not a validated personality test or relationship-probability calculator. The main reveal uses built-in templates; optional Gemini readings require your key. Results show the source, model/cache status, and approximate chart limitations. See [the engine and Burmese-output audit](docs/TOMO_AUDIT.md) for findings, fixes, and evaluation steps.
+Tomo is a playful astrology-inspired story game, not a validated personality test or relationship-probability calculator. The main reveal uses built-in templates; optional Gemini readings use a server-held key; players do not enter keys. Results show the source, model/cache status, and approximate chart limitations. See [the engine and Burmese-output audit](docs/TOMO_AUDIT.md) for findings, fixes, and evaluation steps.
 
 The application allows users to analyze relationships in two modes: **Friends 👯‍♂️** (platonic loyalty & fun) or **Couple ❤️** (romantic chemistry & emotional connection).
 
@@ -45,7 +45,7 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
    - Built-in HTML5 Canvas generator exporting a stylized, shareable reading card (`Tomo_Destiny_Reading.png`).
 
 7. **Offline Presentation Demo Mode (✨ Tomo Demo Reading)** & **LocalStorage API Key**:
-   - LocalStorage persistence for user API key and pre-loaded local JSON data for offline presentation showcases.
+   - Server-held Gemini key and pre-loaded local JSON data for offline presentation showcases.
 
 ---
 
@@ -138,7 +138,20 @@ Keep long-running client/server processes in separate terminals or managed backg
 
 ### Configuration and offline behavior
 
-Open AI settings in Tomo’s header to choose between two saved Gemini key slots and enter your own key. Values are kept in the browser's local storage; when storage is blocked, the key works for the current page session. Clearing a migrated key also removes the old stored key. Build-time `VITE_GEMINI_API_KEY` is no longer used, so deployment secrets cannot accidentally enter the JavaScript bundle through that setting. Keys entered in the browser remain visible to that browser and are sent directly to Gemini.
+Tomo calls the same-origin `/api/reading` endpoint. One `GEMINI_API_KEY` is kept on the server; players do not enter or receive the key. The server fixes the model to Gemini 3.1 Flash-Lite and computes chart data and scores itself. Raw birthdates reach your server but are not included in the Gemini prompt. Existing browser-saved keys are removed when Tomo opens.
+
+#### Vercel setup (one key)
+
+1. In your Vercel project, open **Settings → Environment Variables**.
+2. Add `GEMINI_API_KEY` with your real Google AI Studio key for Production (and Preview if wanted). Mark it sensitive. Never add a `VITE_` prefix.
+3. Redeploy. The `api/reading.js` Vercel Function handles requests alongside the static frontend. No separate multiplayer backend is needed for Tomo readings.
+4. Keep the Google project on the free tier if you want no Gemini API spending. Model availability and quota still depend on that project. Hosting has its own plan limits and terms.
+
+For local development, put `GEMINI_API_KEY=...` in the ignored root `.env` and run both `npm run dev` and `npm start --prefix server`. Vite proxies `/api` to port 3080. The Node entry point loads the root `.env` (Node 22+). If using the Node server to serve production `dist`, set the same environment variable on that host; the endpoint works there too.
+
+The endpoint validates inputs, rejects cross-origin browser requests, returns sanitized errors, and permits one Gemini attempt per reading (no automatic quality repair). Gemini responses use a bounded, memory-only cache for 10 minutes. The default limits are one request per IP every 30 seconds, five requests per minute, 100 requests per rolling 24 hours, and two concurrent readings **per server instance**. Override the minute/day limits with `TOMO_AI_REQUESTS_PER_MINUTE` and `TOMO_AI_REQUESTS_PER_DAY`. These are conservative app defaults, not Google's published quotas.
+
+**Serverless limit:** memory counters and cache reset on restart and are not shared across Vercel instances. These controls reduce casual overuse but do not provide a deployment-wide budget or prevent determined abuse. Google project quotas remain the upstream limit. A strict shared cap requires a durable counter/rate-limit store; none is configured here. Origin checking is an additional browser check, not authentication. AI failure or quota exhaustion automatically shows the built-in reading. No billing or key rotation is enabled.
 
 The local demo/procedural reading does not require Gemini or Internet access. Google Fonts may fall back to system fonts offline. Nomo multiplayer does not use Gemini; it requires the Socket.IO server.
 
@@ -148,11 +161,11 @@ For static hosting such as Vercel, deploy `server/` to a host that supports a pe
 
 Rooms remain in memory and are lost on server restart. Use one server instance; multiple replicas require shared room storage and a Socket.IO adapter. Idle rooms expire after 45 minutes and results after 10 minutes.
 
-The test suite includes real Socket.IO integration tests and requires permission to connect to a local loopback test server. Run `npm test` from the root after installing both client and server dependencies; `npm test --prefix server` runs only the multiplayer tests. Gemini failure tests use mocked responses and do not call the paid API.
+The test suite includes real Socket.IO integration tests and requires permission to connect to a local loopback test server. Run `npm test` from the root after installing both client and server dependencies; `npm test --prefix server` runs only the multiplayer tests. Gemini and reading-endpoint tests use mocked responses and do not call the live API.
 
 
 ### Tomo AI writing and quality controls
 
-AI settings keep Gemini 3.1 Flash-Lite as the default and offer Gemini 3.8 Flash for comparison. The prompt requests natural spoken Burmese with short structured sections, and application checks reject wrong-language fields, malformed profiles, repeated list items, and romantic wording in Friends mode. There is at most one quality repair; auth/quota/truncation errors do not trigger a repair. A single overall 60-second deadline and Cancel button bound the request. Actual Burmese quality requires native-speaker evaluation; no live/billed model benchmark is included.
+The server uses Gemini 3.1 Flash-Lite. The prompt requests natural spoken Burmese with short structured sections, and application checks reject wrong-language fields, malformed profiles, repeated list items, and romantic wording in Friends mode. Each endpoint request makes at most one generation attempt with a 50-second upstream deadline. The browser waits up to 55 seconds and offers Cancel. Actual Burmese quality requires native-speaker evaluation; no live/billed model benchmark is included.
 
 AI requests use header authentication and derived chart summaries instead of raw birthdates. Validated results are cached only in memory for 10 minutes, with eight entries maximum and isolation by hashed key, model, and prompt input/version. Readings are not written to local storage. PNG exports wrap measured Burmese graphemes and identify the score as symbolic.

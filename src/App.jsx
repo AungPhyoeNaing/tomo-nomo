@@ -29,10 +29,23 @@ function TomoApp() {
   const [loading, setLoading] = useState(false);
   const [inputError, setInputError] = useState('');
   const [toastMessage, setToastMessage] = useState('');
+  const [aiRetryUntil, setAiRetryUntil] = useState(0);
+  const [aiRetrySeconds, setAiRetrySeconds] = useState(0);
   const requestIdRef = useRef(0);
   const demoTimerRef = useRef(null);
   const loadingPanelRef = useRef(null);
   const readingControllerRef = useRef(null);
+
+  useEffect(() => {
+    const update = () => setAiRetrySeconds(Math.max(0, Math.ceil((aiRetryUntil - Date.now()) / 1000)));
+    update();
+    if (aiRetryUntil <= Date.now()) return;
+    const timer = setInterval(() => {
+      update();
+      if (aiRetryUntil <= Date.now()) clearInterval(timer);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [aiRetryUntil]);
 
   useEffect(() => {
     if (!loading) return;
@@ -127,6 +140,7 @@ function TomoApp() {
 
   const onCalculate = async (useDemo = false) => {
     if (loading) return;
+    if (!useDemo && aiRetryUntil > Date.now()) return;
 
     const firstName = normalizePersonName(p1Name);
     const secondName = normalizePersonName(p2Name);
@@ -160,13 +174,15 @@ function TomoApp() {
     try {
       const data = await requestTomoReading({ p1Name: firstName, p1Dob, p2Name: secondName, p2Dob, relType, mood }, { signal: readingControllerRef.current.signal });
       if (requestId !== requestIdRef.current) return;
+      setAiRetryUntil(0);
       setResult(createReadingResult(data, inputs, p1Secret, p2Secret));
       setLoading(false);
       requestAnimationFrame(() => jumpToPage('page-gauge'));
     } catch (err) {
       if (requestId !== requestIdRef.current) return;
       if (err.name === 'AbortError') { setLoading(false); return; }
-      setToastMessage(`AI reading unavailable: ${err.message || 'Gemini error'}. Showing the built-in story instead.`);
+      if (err.retryAfterSeconds) setAiRetryUntil(Date.now() + err.retryAfterSeconds * 1000);
+      setToastMessage(`AI reading unavailable: ${(err.message || 'Gemini error').replace(/[.\s]+$/, '')}. Showing the built-in story instead.`);
       setTimeout(() => setToastMessage(''), 5000);
       const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
       setResult(createReadingResult(tailoredReading, inputs, p1Secret, p2Secret, { fallback: true, reason: err.code || 'AI_UNAVAILABLE' }));
@@ -204,7 +220,7 @@ function TomoApp() {
       {loading && <div className="tomo-loading" role="dialog" aria-modal="true" aria-labelledby="loading-title"><div ref={loadingPanelRef} tabIndex={-1} className="tomo-loading-panel" role="status"><video src="/tomo-calculating.mp4" autoPlay loop muted playsInline aria-hidden="true" /><h2 id="loading-title">Building your duo’s story…</h2><p lang="my">တိုမိုက နှစ်ယောက်လုံးအတွက် ဖတ်ရှုချက်လေး ပြင်ဆင်နေပြီနော်။</p><button type="button" className="tomo-outline-button tomo-cancel-reading" onClick={cancelReading}>Cancel reading</button><span className="tomo-loading-dots" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</span></div></div>}
       <main inert={loading ? '' : undefined} className="scroll-container tomo-main" onScroll={handleScroll} aria-busy={loading}>
         <HeroSection jumpToPage={jumpToPage} />
-        <InputSection p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob} p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob} relType={relType} setRelType={setRelType} mood={mood} setMood={setMood} loading={loading} inputError={inputError} onCalculate={() => onCalculate(false)} onDemo={() => onCalculate(true)} />
+        <InputSection p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob} p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob} relType={relType} setRelType={setRelType} mood={mood} setMood={setMood} loading={loading} aiRetrySeconds={aiRetrySeconds} inputError={inputError} onCalculate={() => onCalculate(false)} onDemo={() => onCalculate(true)} />
         {result && <MatchResult result={result} p1Name={result.inputs.p1Name} p2Name={result.inputs.p2Name} relType={result.inputs.relType} mood={result.inputs.mood} jumpToPage={jumpToPage} />}
         {!result && <footer className="tomo-footer">Good company. Unexpected discoveries. <span>tomo + nomo · Made for your kind of two.</span></footer>}
       </main>

@@ -24,7 +24,9 @@ export async function requestTomoReading(inputs, { signal } = {}) {
     }
     if (!response.ok) {
       const error = new Error(data.error || 'AI reading is temporarily unavailable.');
-      error.code = `TOMO_HTTP_${response.status}`;
+      error.code = data.code || `TOMO_HTTP_${response.status}`;
+      const delay = Number(data.retryAfterSeconds || response.headers?.get?.('Retry-After'));
+      if (Number.isFinite(delay) && delay > 0) error.retryAfterSeconds = Math.min(86400, Math.ceil(delay));
       throw error;
     }
     const validated = validateBurmeseReading(validateReading(data, data.chemistry_score),

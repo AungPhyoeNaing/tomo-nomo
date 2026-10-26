@@ -181,6 +181,11 @@ test('auth/quota and truncated responses never trigger a paid repair', async t =
   assert.equal(calls, 2);
 });
 
+test('Gemini quota RetryInfo is propagated without exposing credentials', async t => {
+  mockFetch(t, async () => ({ ok: false, status: 429, json: async () => ({ error: { message: 'Quota exceeded', details: [{ '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '21.5s' }] } }) }));
+  await assert.rejects(request(), { code: 'GEMINI_HTTP_429', retryAfterSeconds: 22 });
+});
+
 test('shared-key production requests stop after one failed quality check', async t => {
   let calls = 0;
   mockFetch(t, async () => { calls++; return response({ ...fixture(), tomo_secret_advice: 'English' }); });

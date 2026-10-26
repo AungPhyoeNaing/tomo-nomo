@@ -88,6 +88,14 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
         const message = String(errorJson.error?.message || `Gemini HTTP ${response.status}`).split(apiKey.trim()).join('[key]').slice(0, 180);
         const error = new Error(message);
         error.code = `GEMINI_HTTP_${response.status}`;
+        const details = errorJson.error?.details || [];
+        const reason = details.find(detail => ['API_KEY_INVALID', 'API_KEY_EXPIRED'].includes(detail.reason))?.reason;
+        if (reason) error.reason = reason;
+        if (response.status === 429) {
+          const retry = details.find(detail => detail['@type']?.endsWith('/google.rpc.RetryInfo'))?.retryDelay;
+          const delay = typeof retry === 'string' && /^\d+(?:\.\d+)?s$/.test(retry) ? Math.ceil(Number(retry.slice(0, -1))) : Number(response.headers?.get?.('Retry-After'));
+          if (Number.isFinite(delay) && delay > 0) error.retryAfterSeconds = Math.min(86400, Math.ceil(delay));
+        }
         throw error;
       }
       const data = await response.json();
@@ -95,7 +103,7 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
       totalTokens += Number(data.usageMetadata?.totalTokenCount) || 0;
       if (data.promptFeedback?.blockReason || (candidate?.finishReason && candidate.finishReason !== 'STOP')) {
         const error = new Error(candidate?.finishReason === 'MAX_TOKENS' ? 'Gemini reached the output limit. Try the built-in reading or another model.' : 'Gemini could not complete this reading.');
-        error.code = 'GEMINI_INCOMPLETE';
+        error.code = candidate?.finishReason === 'MAX_TOKENS' ? 'GEMINI_OUTPUT_LIMIT' : 'GEMINI_INCOMPLETE';
         throw error;
       }
       const jsonText = candidate?.content?.parts?.filter(part => !part.thought && typeof part.text === 'string').map(part => part.text).join('');
@@ -116,7 +124,7 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
     lastQualityError.code = 'GEMINI_QUALITY';
     throw lastQualityError;
   } catch (error) {
-    if (error.name === 'AbortError' && timedOut) throw new Error(`Gemini request timed out after ${timeoutMs / 1000} seconds.`);
+    if (error.name === 'AbortError' && timedOut) throw Object.assign(new Error(`Gemini request timed out after ${timeoutMs / 1000} seconds.`), { code: 'GEMINI_TIMEOUT' });
     throw error;
   } finally {
     clearTimeout(timeoutId);

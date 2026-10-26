@@ -75,14 +75,82 @@ test('invalid methods, origins, input, large bodies and missing keys never call 
 test('cooldown and instance budget bound requests and ignore spoofed forwarding headers', async () => {
   let time = 1000000, calls = 0;
   const handler = createReadingHandler({ env: { ...env, TOMO_AI_REQUESTS_PER_DAY: '2' }, now: () => time, read: async () => { calls++; return {}; } });
-  const send = async () => { const result = res(); await handler(req(), result); return result; };
+  const send = async (body = inputs) => { const result = res(); await handler(req(body), result); return result; };
   assert.equal((await send()).statusCode, 200);
-  assert.equal((await send()).statusCode, 429);
-  const spoof = req(); spoof.headers['x-forwarded-for'] = 'different-ip';
+  const changed = { ...inputs, mood: 'Playful' };
+  const limited = await send(changed);
+  assert.equal(limited.statusCode, 429);
+  assert.equal(limited.body.code, 'APP_COOLDOWN');
+  assert.equal(limited.headers['Retry-After'], '3');
+  const spoof = req(changed); spoof.headers['x-forwarded-for'] = 'different-ip';
   const result = res(); await handler(spoof, result); assert.equal(result.statusCode, 429);
-  time += 31000; assert.equal((await send()).statusCode, 200);
-  time += 31000; assert.equal((await send()).statusCode, 429);
+  time += 3100; assert.equal((await send(changed)).statusCode, 200);
+  time += 3100;
+  const daily = await send({ ...inputs, mood: 'Mystic' });
+  assert.equal(daily.statusCode, 429);
+  assert.equal(daily.body.code, 'APP_DAILY_LIMIT');
+  assert.equal((await send()).statusCode, 200); // cached, even at budget limit
   assert.equal(calls, 2);
+});
+
+test('cached readings bypass cooldown and budgets; duplicate pending requests use one generation', async () => {
+  let finish, calls = 0;
+  const handler = createReadingHandler({ env: { ...env, TOMO_AI_REQUESTS_PER_MINUTE: '1' }, read: () => {
+    calls++;
+    return new Promise(resolve => { finish = resolve; });
+  } });
+  const first = res(), second = res();
+  const a = handler(req(), first);
+  const b = handler(req(), second);
+  assert.equal(calls, 1);
+  finish({ readingInfo: { source: 'gemini', cached: false }, chemistry_score: 72 });
+  await Promise.all([a, b]);
+  assert.equal(first.statusCode, 200);
+  assert.equal(second.statusCode, 200);
+  first.body.chemistry_score = -1;
+  const cached = res(); await handler(req(), cached);
+  assert.equal(cached.statusCode, 200);
+  assert.equal(cached.body.readingInfo.cached, true);
+  assert.equal(cached.body.chemistry_score, 72);
+  assert.equal(calls, 1);
+});
+
+test('failed generations release the visitor cooldown for an immediate manual retry', async () => {
+  let calls = 0;
+  const handler = createReadingHandler({ env, read: async () => {
+    if (++calls === 1) throw Object.assign(new Error('Sensitive upstream text'), { code: 'GEMINI_TIMEOUT' });
+    return { chemistry_score: 72 };
+  } });
+  const first = res(); await handler(req(), first);
+  assert.equal(first.statusCode, 503);
+  assert.equal(first.body.code, 'AI_TIMEOUT');
+  const second = res(); await handler(req(), second);
+  assert.equal(second.statusCode, 200);
+  assert.equal(calls, 2);
+});
+
+test('concurrency limits identify busy server separately from a quota', async () => {
+  const finishes = [];
+  const handler = createReadingHandler({ env, read: () => new Promise(resolve => finishes.push(resolve)) });
+  const a = handler(req(), res());
+  const b = handler(req({ ...inputs, mood: 'Playful' }, { socket: { remoteAddress: '127.0.0.2' } }), res());
+  const blocked = res();
+  await handler(req({ ...inputs, mood: 'Mystic' }, { socket: { remoteAddress: '127.0.0.3' } }), blocked);
+  assert.equal(blocked.statusCode, 503);
+  assert.equal(blocked.body.code, 'APP_BUSY');
+  assert.equal(blocked.body.retryAfterSeconds, 3);
+  for (const finish of finishes) finish({ chemistry_score: 72 });
+  await Promise.all([a, b]);
+});
+
+test('provider quota waits are kept separate from the app cooldown', async () => {
+  const handler = createReadingHandler({ env, read: async () => { throw Object.assign(new Error('server-secret'), { code: 'GEMINI_HTTP_429', retryAfterSeconds: 42 }); } });
+  const result = res(); await handler(req(), result);
+  assert.equal(result.statusCode, 429);
+  assert.equal(result.body.code, 'GEMINI_RATE_LIMIT');
+  assert.equal(result.body.retryAfterSeconds, 42);
+  assert.equal(result.headers['Retry-After'], '42');
+  assert.ok(!JSON.stringify(result.body).includes('server-secret'));
 });
 test('upstream errors are sanitized and quota failures are not retried', async () => {
   for (const code of ['GEMINI_HTTP_429', 'GEMINI_HTTP_400']) {
@@ -130,4 +198,16 @@ test('plain-text host failures and HTML responses never expose parser errors', a
       return true;
     });
   }
+});
+
+test('browser preserves the server retry countdown without automatically retrying Gemini', async t => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls++;
+    return new Response(JSON.stringify({ error: 'Please wait.', code: 'APP_MINUTE_LIMIT', retryAfterSeconds: 27 }), { status: 429, headers: { 'Retry-After': '27' } });
+  };
+  await assert.rejects(requestTomoReading(inputs), { code: 'APP_MINUTE_LIMIT', retryAfterSeconds: 27 });
+  assert.equal(calls, 1);
 });

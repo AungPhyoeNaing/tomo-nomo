@@ -16,7 +16,7 @@ function PersonFields({ number, name, setName, dob, setDob, loading }) {
   );
 }
 
-function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p2Dob, setP2Dob, relType, setRelType, mood, setMood, loading, inputError, onCalculate, onDemo }) {
+function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p2Dob, setP2Dob, relType, setRelType, mood, setMood, loading, aiRetrySeconds = 0, inputError, onCalculate, onDemo }) {
   const readyFields = [Boolean(p1Name.trim()), isValidBirthDate(p1Dob), Boolean(p2Name.trim()), isValidBirthDate(p2Dob)];
   return (
     <section id="page-inputs" className="page-section tomo-details" aria-labelledby="details-heading">
@@ -40,8 +40,9 @@ function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p
             ))}
           </div></fieldset>
         </div>
+        {aiRetrySeconds > 0 && <p role="status" className="tomo-model-help">AI requests can resume in {aiRetrySeconds} seconds. You can read the built-in story while you wait.</p>}
         {inputError && <p role="alert" className="tomo-form-error">{inputError}</p>}
-        <div className="tomo-form-footer"><div><p>Your duo is ready. Are you?</p><small>Unlock your chemistry score, character profiles & duo card.</small></div><div className="tomo-form-actions"><button type="submit" disabled={loading} className="tomo-primary">{loading ? 'Unlocking your story…' : 'Reveal our AI reading'} <span aria-hidden="true">✦</span></button><button type="button" disabled={loading} onClick={onDemo} className="tomo-text-button">Read the built-in story</button></div></div>
+        <div className="tomo-form-footer"><div><p>Your duo is ready. Are you?</p><small>Unlock your chemistry score, character profiles & duo card.</small></div><div className="tomo-form-actions"><button type="submit" disabled={loading || aiRetrySeconds > 0} className="tomo-primary">{loading ? 'Unlocking your story…' : aiRetrySeconds > 0 ? `AI ready in ${aiRetrySeconds}s` : 'Reveal our AI reading'} <span aria-hidden="true">✦</span></button><button type="button" disabled={loading} onClick={onDemo} className="tomo-text-button">Read the built-in story</button></div></div>
         <div className="tomo-form-tools"><span>Play instantly with the built-in reading. AI uses your names and chart details with Google. Birthdates are processed by our server.</span><button type="button" disabled={loading} onClick={() => { setP1Name(''); setP1Dob(''); setP2Name(''); setP2Dob(''); }} className="tomo-text-button">Clear details</button></div>
       </form>
     </section>

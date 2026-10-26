@@ -186,6 +186,61 @@ test('Gemini quota RetryInfo is propagated without exposing credentials', async 
   await assert.rejects(request(), { code: 'GEMINI_HTTP_429', retryAfterSeconds: 22 });
 });
 
+test('production retries a transient provider 503 once within the same request deadline', async t => {
+  let calls = 0, reserved = 0;
+  mockFetch(t, async () => ++calls === 1
+    ? { ok: false, status: 503, json: async () => ({ error: { message: 'Temporarily unavailable' } }) }
+    : response(fixture()));
+  const reading = await request({ maxAttempts: 1, maxTransientRetries: 1, retryDelayMs: 0, reserveRetry: () => { reserved++; return true; } });
+  assert.equal(calls, 2);
+  assert.equal(reserved, 1);
+  assert.equal(reading.readingInfo.requestAttempts, 2);
+  assert.equal(reading.readingInfo.transientRetries, 1);
+  assert.equal(reading.readingInfo.attempts, 1);
+});
+
+test('provider retries are bounded, consume a budget slot and never retry auth or quota failures', async t => {
+  let calls = 0;
+  mockFetch(t, async () => { calls++; return { ok: false, status: 503, json: async () => ({ error: { message: 'Unavailable' } }) }; });
+  await assert.rejects(request({ maxAttempts: 1, maxTransientRetries: 1, retryDelayMs: 0 }), { code: 'GEMINI_HTTP_503' });
+  assert.equal(calls, 2);
+  calls = 0;
+  await assert.rejects(request({ maxTransientRetries: 1, retryDelayMs: 0, reserveRetry: () => false }), { code: 'GEMINI_HTTP_503' });
+  assert.equal(calls, 1);
+  calls = 0;
+  await assert.rejects(request({ timeoutMs: 1000, maxTransientRetries: 1, retryDelayMs: 0 }), { code: 'GEMINI_HTTP_503' });
+  assert.equal(calls, 1);
+  for (const status of [400, 401, 403, 404, 429]) {
+    calls = 0;
+    globalThis.fetch = async () => { calls++; return { ok: false, status, json: async () => ({ error: { message: 'Rejected' } }) }; };
+    await assert.rejects(request({ maxTransientRetries: 1, retryDelayMs: 0 }), { code: `GEMINI_HTTP_${status}` });
+    assert.equal(calls, 1);
+  }
+});
+
+test('transport and unreadable upstream responses have explicit codes and do not repeat POSTs', async t => {
+  let calls = 0;
+  mockFetch(t, async () => { calls++; throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } }); });
+  await assert.rejects(request({ maxTransientRetries: 1 }), { code: 'GEMINI_NETWORK' });
+  assert.equal(calls, 1);
+  globalThis.fetch = async () => new Response('<html>Upstream proxy error</html>', { status: 200 });
+  await assert.rejects(request({ maxTransientRetries: 1 }), { code: 'GEMINI_RESPONSE' });
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ candidates: [] }) });
+  await assert.rejects(request({ maxTransientRetries: 1 }), { code: 'GEMINI_RESPONSE' });
+});
+
+test('user cancellation stops the transient retry wait before another API call', async t => {
+  let calls = 0;
+  const controller = new AbortController();
+  mockFetch(t, async () => {
+    calls++;
+    setTimeout(() => controller.abort(), 20);
+    return { ok: false, status: 503, json: async () => ({ error: { message: 'Unavailable' } }) };
+  });
+  await assert.rejects(request({ signal: controller.signal, maxTransientRetries: 1, retryDelayMs: 500 }), { name: 'AbortError' });
+  assert.equal(calls, 1);
+});
+
 test('shared-key production requests stop after one failed quality check', async t => {
   let calls = 0;
   mockFetch(t, async () => { calls++; return response({ ...fixture(), tomo_secret_advice: 'English' }); });

@@ -152,6 +152,48 @@ test('provider quota waits are kept separate from the app cooldown', async () =>
   assert.equal(result.headers['Retry-After'], '42');
   assert.ok(!JSON.stringify(result.body).includes('server-secret'));
 });
+
+test('provider retry reservations obey the same minute/day request allowance', async () => {
+  for (const limits of [{ TOMO_AI_REQUESTS_PER_MINUTE: '1' }, { TOMO_AI_REQUESTS_PER_DAY: '1' }]) {
+    const handler = createReadingHandler({ env: { ...env, ...limits }, read: async (...args) => {
+      assert.equal(args[8].maxTransientRetries, 1);
+      assert.equal(args[8].reserveRetry(), false);
+      return {};
+    } });
+    const result = res(); await handler(req(), result);
+    assert.equal(result.statusCode, 200);
+  }
+  let time = 1000000;
+  const handler = createReadingHandler({ env: { ...env, TOMO_AI_REQUESTS_PER_MINUTE: '2' }, now: () => time, read: async (...args) => {
+    assert.equal(args[8].reserveRetry(), true);
+    return {};
+  } });
+  const result = res(); await handler(req(), result);
+  time += 4000;
+  const limited = res(); await handler(req({ ...inputs, mood: 'Mystic' }), limited);
+  assert.equal(limited.body.code, 'APP_MINUTE_LIMIT');
+});
+
+test('failure logs distinguish upstream/network errors without personal data or secrets', async t => {
+  const original = console.warn;
+  const logs = [];
+  console.warn = message => logs.push(JSON.parse(message));
+  t.after(() => { console.warn = original; });
+  for (const [code, expected] of [['GEMINI_HTTP_503', 'AI_PROVIDER_UNAVAILABLE'], ['GEMINI_NETWORK', 'AI_NETWORK'], ['GEMINI_RESPONSE', 'AI_PROVIDER_RESPONSE']]) {
+    const handler = createReadingHandler({ env, read: async () => {
+      throw Object.assign(new Error('server-secret Alice Bob private upstream body'), { code, cause: { cause: { code: 'ECONNRESET' } } });
+    } });
+    const result = res(); await handler(req(), result);
+    assert.equal(result.statusCode, 503);
+    assert.equal(result.body.code, expected);
+    assert.ok(result.body.reference);
+    assert.ok(result.body.retryAfterSeconds > 0);
+    assert.ok(!/server-secret|Alice|Bob|private/.test(JSON.stringify(result.body)));
+  }
+  assert.equal(logs.length, 3);
+  assert.equal(logs[1].networkCause, 'ECONNRESET');
+  assert.ok(!/server-secret|Alice|Bob|private/.test(JSON.stringify(logs)));
+});
 test('upstream errors are sanitized and quota failures are not retried', async () => {
   for (const code of ['GEMINI_HTTP_429', 'GEMINI_HTTP_400']) {
     let calls = 0;

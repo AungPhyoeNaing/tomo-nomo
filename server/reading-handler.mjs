@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from '../src/utils/astrology.js';
 import { fetchTomoDestinyReading } from '../src/utils/gemini.js';
 import { isValidBirthDate, normalizePersonName } from '../src/utils/reading.js';
@@ -25,22 +25,26 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
       return res.status(200).json(reading);
     }
     const error = result.error;
+    const fail = (status, message, code, retryAfterSeconds = 0, extra = {}) => sendError(res, status, message, code, retryAfterSeconds, { reference: result.reference, ...extra });
     if (error.code === 'GEMINI_QUALITY') {
-      return sendError(res, 502, 'The AI reading did not meet the language or detail requirements. Please try again.', 'READING_QUALITY', 0, { check: error.message });
+      return fail(502, 'The AI reading did not meet the language or detail requirements. Please try again.', 'READING_QUALITY', 0, { check: error.message });
     }
     if (error.code === 'GEMINI_HTTP_429') {
-      return sendError(res, 429, 'Google Gemini has reached its quota or rate limit. Please wait before trying AI again.', 'GEMINI_RATE_LIMIT', error.retryAfterSeconds || 60);
+      return fail(429, 'Google Gemini has reached its quota or rate limit. Please wait before trying AI again.', 'GEMINI_RATE_LIMIT', error.retryAfterSeconds || 60);
     }
     if (error.reason === 'API_KEY_INVALID' || error.reason === 'API_KEY_EXPIRED' || error.code === 'GEMINI_HTTP_401' || error.code === 'GEMINI_HTTP_403') {
-      return sendError(res, 503, 'The AI service key needs attention from the site owner.', 'AI_KEY_CONFIGURATION');
+      return fail(503, 'The AI service key needs attention from the site owner.', 'AI_KEY_CONFIGURATION');
     }
     if (error.code === 'GEMINI_HTTP_400' || error.code === 'GEMINI_HTTP_404') {
-      return sendError(res, 503, 'Google Gemini rejected the AI request configuration. The site owner needs to check it.', 'AI_REQUEST_CONFIGURATION');
+      return fail(503, 'Google Gemini rejected the AI request configuration. The site owner needs to check it.', 'AI_REQUEST_CONFIGURATION');
     }
-    if (error.code === 'GEMINI_TIMEOUT') return sendError(res, 503, 'Google Gemini took too long to respond. You can try again.', 'AI_TIMEOUT');
-    if (error.code === 'GEMINI_OUTPUT_LIMIT') return sendError(res, 503, 'The AI response was cut short. You can try again.', 'AI_OUTPUT_LIMIT');
-    if (error.code === 'GEMINI_INCOMPLETE') return sendError(res, 503, 'Google Gemini could not complete this reading. You can try again.', 'AI_INCOMPLETE');
-    return sendError(res, 503, 'The AI service is temporarily unavailable. You can try again.', 'AI_UNAVAILABLE');
+    if (/^GEMINI_HTTP_5\d\d$/.test(error.code)) return fail(503, 'Google Gemini is temporarily unavailable. Please try again in a moment.', 'AI_PROVIDER_UNAVAILABLE', error.retryAfterSeconds || 10);
+    if (error.code === 'GEMINI_NETWORK') return fail(503, 'Tomo could not connect to Google Gemini. Please try again shortly.', 'AI_NETWORK', 5);
+    if (error.code === 'GEMINI_RESPONSE') return fail(503, 'Google Gemini returned an unreadable or empty response. You can try again.', 'AI_PROVIDER_RESPONSE', 5);
+    if (error.code === 'GEMINI_TIMEOUT') return fail(503, 'Google Gemini took too long to respond. You can try again.', 'AI_TIMEOUT');
+    if (error.code === 'GEMINI_OUTPUT_LIMIT') return fail(503, 'The AI response was cut short. You can try again.', 'AI_OUTPUT_LIMIT');
+    if (error.code === 'GEMINI_INCOMPLETE') return fail(503, 'Google Gemini could not complete this reading. You can try again.', 'AI_INCOMPLETE');
+    return fail(503, 'Tomo encountered an unexpected reading error. Please try again.', 'AI_UNAVAILABLE');
   };
   return async function readingHandler(req, res) {
     res.setHeader('Cache-Control', 'no-store');
@@ -90,13 +94,29 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
     visitors.set(visitor, time + 3000);
     minute.count++; day.count++; active++;
     const work = (async () => {
+      const reference = randomUUID();
       try {
         const first = calculateSecretMetrics(p1Name, p1Dob), second = calculateSecretMetrics(p2Name, p2Dob);
         const score = calculateAlgorithmicScore(first, second, relType);
         const reading = await read(p1Name, first, p2Name, second, relType, mood, score, env.GEMINI_API_KEY.trim(),
-          { model: DEFAULT_TOMO_MODEL, timeoutMs: 50000, maxAttempts: 1 });
+          { model: DEFAULT_TOMO_MODEL, timeoutMs: 50000, maxAttempts: 1, maxTransientRetries: 1, reserveRetry: () => {
+            const retryTime = now();
+            if (retryTime - minute.start >= 60000) minute = { start: retryTime, count: 0 };
+            if (retryTime - day.start >= 86400000) day = { start: retryTime, count: 0 };
+            if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', 5) || day.count >= positive('TOMO_AI_REQUESTS_PER_DAY', 100)) return false;
+            minute.count++; day.count++;
+            return true;
+          } });
         return { reading };
-      } catch (error) { return { error }; }
+      } catch (error) {
+        const code = /^GEMINI_(HTTP_\d{3}|NETWORK|RESPONSE|TIMEOUT|QUALITY|OUTPUT_LIMIT|INCOMPLETE)$/.test(error.code) ? error.code : 'UNKNOWN';
+        const causeCode = error.cause?.cause?.code || error.cause?.code;
+        const networkCause = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET'].includes(causeCode) ? causeCode : undefined;
+        // Fixed codes and a correlation ID only: no credentials, names,
+        // birthdates, generated text, raw provider messages or stacks.
+        console.warn(JSON.stringify({ event: 'tomo_reading_failed', reference, code, networkCause }));
+        return { error, reference };
+      }
     })();
     pending.set(cacheKey, work);
     try {

@@ -85,6 +85,19 @@ test('expanded checks reject abbreviated sections and generic Couple readings', 
   assert.doesNotThrow(() => validateBurmeseReading(romantic, { relType: 'Couple', expanded: true }));
 });
 
+test('four complete profile blocks tolerate heading spacing and dialogue paragraph breaks', () => {
+  const original = fixture();
+  const reformatted = {
+    ...original,
+    tomo_deep_reading_p1: original.tomo_deep_reading_p1.replace(/\]\n/g, '] '),
+    tomo_deep_reading_p2: original.tomo_deep_reading_p2.replace(/\]\n/g, ']\n\n')
+  };
+  const validated = validateBurmeseReading(reformatted, { relType: 'Friends', expanded: true });
+  assert.equal(validated.tomo_deep_reading_p1, original.tomo_deep_reading_p1);
+  assert.equal(validated.tomo_deep_reading_p2, original.tomo_deep_reading_p2);
+  assert.throws(() => validateBurmeseReading({ ...original, tomo_deep_reading_p1: original.tomo_deep_reading_p1.split('\n\n').slice(0, 3).join('\n\n') }), /four/);
+});
+
 test('each AI prompt explicitly controls voice, relationship scenes and expanded sections', () => {
   const prompts = [];
   for (const relType of ['Friends', 'Couple']) for (const mood of ['Sweet', 'Playful', 'Mystic']) {

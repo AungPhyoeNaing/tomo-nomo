@@ -32,6 +32,19 @@ export function normalizePersonName(value) {
 // Cheap language/shape checks, not a claim to judge Burmese grammar or truth.
 export function validateBurmeseReading(data, { relType, names = [], expanded = false } = {}) {
   const normalized = validateReading(data, data.chemistry_score);
+  for (const key of ['tomo_deep_reading_p1', 'tomo_deep_reading_p2']) {
+    const profile = normalized[key].replace(/\r\n?/g, '\n');
+    const headings = Array.from(profile.matchAll(/\[([^\]\n]{1,100})\]/gu));
+    // Models vary whitespace around headings and dialogue. Canonicalize a
+    // complete four-section profile locally; never spend another API call
+    // repairing harmless formatting or discard otherwise valid long content.
+    if (headings.length === 4 && !profile.slice(0, headings[0].index).trim()) {
+      normalized[key] = headings.map((heading, index) => {
+        const body = profile.slice(heading.index + heading[0].length, headings[index + 1]?.index ?? profile.length).trim().replace(/\n\s*\n/gu, '\n');
+        return `[${heading[1]}]\n${body}`;
+      }).join('\n\n');
+    }
+  }
   if (normalized.relationship_title.length > 220) throw new Error('Reading quality check: shorten the Burmese title.');
   const fields = [normalized.tomo_deep_reading_p1, normalized.tomo_deep_reading_p2,
     normalized.relationship_title, normalized.tomo_dynamic_insight, normalized.tomo_secret_advice,
@@ -60,8 +73,8 @@ export function validateBurmeseReading(data, { relType, names = [], expanded = f
   }
   if (expanded) {
     if ([normalized.tomo_deep_reading_p1, normalized.tomo_deep_reading_p2].some(text => text.length < 1000) ||
-        normalized.tomo_dynamic_insight.length < 750 || normalized.tomo_dynamic_insight.split(/\n\s*\n/u).length !== 3 ||
-        normalized.tomo_secret_advice.length < 500 || normalized.tomo_secret_advice.split(/\n\s*\n/u).length !== 2 ||
+        normalized.tomo_dynamic_insight.length < 750 || normalized.tomo_dynamic_insight.split(/\n\s*\n/u).length < 3 ||
+        normalized.tomo_secret_advice.length < 500 || normalized.tomo_secret_advice.split(/\n\s*\n/u).length < 2 ||
         [...normalized.tomo_strengths, ...normalized.tomo_challenges].some(text => text.length < 180)) {
       throw new Error('Reading quality check: expand every section with distinct examples and actions; use three insight paragraphs and two advice paragraphs.');
     }

@@ -62,7 +62,12 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
       return res.status(200).json(reading);
     } catch (error) {
       // Never expose Google's error body, credentials or user input.
-      if (error.code === 'GEMINI_QUALITY') console.warn('Tomo reading quality check failed:', error.message);
+      if (error.code === 'GEMINI_QUALITY') {
+        console.warn('Tomo reading quality check failed:', error.message);
+        // The check is a fixed validator instruction, never model output or
+        // personal data. Keep it separate from the player-facing message.
+        return res.status(502).json({ error: 'The AI reading did not meet the language or detail requirements. Please try again later.', code: 'READING_QUALITY', check: error.message });
+      }
       if (error.code === 'GEMINI_HTTP_429') { res.setHeader('Retry-After', '60'); return fail(429, 'AI capacity is temporarily full. Please try again later.'); }
       return fail(503, 'AI could not finish this reading. Please try again later.');
     } finally { active--; }

@@ -1,10 +1,13 @@
 // Extended Multi-Section Procedural Music Engine for Tomo & Nomo
 // Features 128-step multi-movement compositions with verses, choruses, bridges, drum fills, and generative passing tones.
 
-class AudioManager {
+export class AudioManager {
   constructor() {
     this.ctx = null;
     this.isPlaying = false;
+    this.isStarting = false;
+    this.autoplayBlocked = false;
+    this.wantsPlayback = true;
     this.isMuted = false;
     this.volume = 0.35;
     this.currentTrack = null; // 'tomo' | 'nomo'
@@ -22,16 +25,18 @@ class AudioManager {
 
     // Load saved preferences
     try {
+      if (typeof localStorage === 'undefined') return;
+      this.wantsPlayback = localStorage.getItem('tomo_audio_enabled') !== 'false';
       const savedMute = localStorage.getItem('tomo_audio_muted');
       if (savedMute !== null) this.isMuted = savedMute === 'true';
       const savedVol = localStorage.getItem('tomo_audio_vol');
-      if (savedVol !== null) this.volume = parseFloat(savedVol) || 0.35;
+      if (savedVol !== null && Number.isFinite(Number(savedVol))) this.volume = Math.max(0, Math.min(1, Number(savedVol)));
     } catch (e) {
       console.warn('Audio storage error', e);
     }
   }
 
-  initContext() {
+  async initContext() {
     if (!this.ctx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (AudioContext) {
@@ -43,8 +48,9 @@ class AudioManager {
       }
     }
     if (this.ctx && this.ctx.state === 'suspended') {
-      this.ctx.resume();
+      await this.ctx.resume();
     }
+    return this.ctx?.state === 'running';
   }
 
   generateNoiseBuffer() {
@@ -66,6 +72,8 @@ class AudioManager {
   notify() {
     const state = {
       isPlaying: this.isPlaying,
+      isStarting: this.isStarting,
+      autoplayBlocked: this.autoplayBlocked,
       isMuted: this.isMuted,
       volume: this.volume,
       currentTrack: this.currentTrack
@@ -119,50 +127,77 @@ class AudioManager {
     }
   }
 
-  play(trackName = 'tomo') {
-    const playRequestId = ++this.playRequestId;
-    this.initContext();
-    this.currentTrack = trackName;
-    this.isPlaying = true;
-    this.notify();
-
-    // Check if custom audio file exists (e.g. /pixeltown-color-parade-main-version-41716-01-53.mp3 or /nomo-bgm.mp3)
-    const customSrc = trackName === 'nomo' 
-      ? '/nomo-bgm.mp3' 
-      : '/pixeltown-color-parade-main-version-41716-01-53.mp3';
-    
-    if (this.audioElement) {
-      this.audioElement.pause();
-      this.audioElement = null;
-    }
-
-    const testAudio = new Audio(customSrc);
-    testAudio.loop = true;
-    testAudio.volume = this.isMuted ? 0 : this.volume;
-
-    testAudio.play().then(() => {
-      if (playRequestId !== this.playRequestId || !this.isPlaying || this.currentTrack !== trackName) {
-        testAudio.pause();
-        return;
+  enableAutoplay(trackName, target = document) {
+    const start = event => {
+      if (event?.target?.closest?.('[data-audio-control]')) return;
+      if (event?.type === 'keydown' && (event.repeat || ['Tab', 'Escape', 'Shift', 'Control', 'Alt', 'Meta'].includes(event.key))) return;
+      if (this.wantsPlayback && !this.isStarting && (!this.isPlaying || this.currentTrack !== trackName)) {
+        void this.play(trackName, { automatic: true });
       }
-      // File exists and is playing!
-      this.audioElement = testAudio;
-      this.stopProcedural();
-    }).catch(() => {
-      if (playRequestId !== this.playRequestId || !this.isPlaying || this.currentTrack !== trackName) return;
-      // Procedural Web Audio Engine
+    };
+    start();
+    target.addEventListener('click', start, true);
+    target.addEventListener('keydown', start, true);
+    return () => {
+      target.removeEventListener('click', start, true);
+      target.removeEventListener('keydown', start, true);
+    };
+  }
+
+  async play(trackName = 'tomo', { automatic = false } = {}) {
+    if (automatic && !this.wantsPlayback) return false;
+    if (!automatic) {
+      this.wantsPlayback = true;
+      try { localStorage.setItem('tomo_audio_enabled', 'true'); } catch {}
+    }
+    const requestId = ++this.playRequestId;
+    this.currentTrack = trackName;
+    this.isStarting = true;
+    this.isPlaying = false;
+    this.autoplayBlocked = false;
+    this.stopProcedural();
+    this.audioElement?.pause();
+    const audio = new Audio(trackName === 'nomo' ? '/tomo-bgm.mp3' : '/pixeltown-color-parade-main-version-41716-01-53.mp3');
+    audio.loop = true;
+    audio.preload = 'auto';
+    audio.volume = this.isMuted ? 0 : this.volume;
+    this.audioElement = audio;
+    this.notify();
+    try {
+      await audio.play();
+      if (requestId !== this.playRequestId) { audio.pause(); return false; }
+      this.isPlaying = true;
+    } catch (error) {
+      audio.pause();
+      if (requestId !== this.playRequestId) return false;
       this.audioElement = null;
-      this.startProcedural(trackName);
-    });
+      if (error.name === 'NotAllowedError') {
+        this.autoplayBlocked = true;
+      } else {
+        // A missing/unsupported file may use the local synth. A blocked file
+        // must wait for a gesture instead of pretending suspended audio plays.
+        try {
+          const running = await this.initContext();
+          if (requestId !== this.playRequestId) return false;
+          if (running) { this.isPlaying = true; this.startProcedural(trackName); }
+          else this.autoplayBlocked = true;
+        } catch { this.autoplayBlocked = true; }
+      }
+    } finally {
+      if (requestId === this.playRequestId) { this.isStarting = false; this.notify(); }
+    }
+    return this.isPlaying;
   }
 
   stop() {
     this.playRequestId += 1;
+    this.wantsPlayback = false;
+    this.isStarting = false;
+    this.autoplayBlocked = false;
     this.isPlaying = false;
-    if (this.audioElement) {
-      this.audioElement.pause();
-      this.audioElement = null;
-    }
+    try { localStorage.setItem('tomo_audio_enabled', 'false'); } catch {}
+    this.audioElement?.pause();
+    this.audioElement = null;
     this.stopProcedural();
     this.notify();
   }

@@ -16,6 +16,7 @@ import './tomo.css';
 import './arcade.css';
 import './arcade-controls.css';
 import './tomo-aura.css';
+import './experience-controls.css';
 
 const NomoApp = React.lazy(() => import('./nomo/App'));
 
@@ -199,8 +200,8 @@ function TomoApp() {
   };
 
   const sections = [
-    ['page-hero', '⌂ Arcade'], ['page-inputs', '☺ Player setup'],
-    ...(result ? [['page-gauge', '✦ Your score'], ['page-readings', 'Your profiles'], ['page-synergy', 'Together']] : [])
+    ['page-hero', '⌂ Arcade'], ['page-inputs', '☺ Setup'],
+    ...(result ? [['page-gauge', '✦ Score'], ['page-readings', 'Profiles'], ['page-synergy', 'Together']] : [])
   ];
 
   return (

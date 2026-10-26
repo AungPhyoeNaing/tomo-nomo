@@ -1,0 +1,95 @@
+/* Shared, touch-sized music controls. No hover gesture is required on phones. */
+.arcade-audio { position: relative; display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; color: #f5c1a6; }
+.arcade-audio > button { display: inline-flex; align-items: center; justify-content: center; min-width: 42px; min-height: 44px; gap: 8px; padding: 9px; border: 1.5px solid #bd663a; border-radius: 12px 4px 12px 4px; background: #5c230b; color: inherit; font: 700 11px 'Quicksand', sans-serif; }
+.arcade-audio.is-nomo { color: #225674; }.arcade-audio.is-nomo > button { border-color: #4b8fa9; background: #d7f1df; }
+body.dark .arcade-audio.is-nomo { color: #d1fae0; }body.dark .arcade-audio.is-nomo > button { background: #234354; }
+.arcade-audio button:focus-visible, .arcade-audio input:focus-visible { outline: 3px solid currentColor; outline-offset: 3px; }
+.arcade-audio-volume { font-size: 19px !important; }
+.arcade-equalizer { display: flex; align-items: center; gap: 3px; height: 20px; }
+.arcade-equalizer i { display: block; width: 3px; height: 5px; border-radius: 3px; background: currentColor; }
+.arcade-equalizer i:nth-child(2) { height: 12px; }.arcade-equalizer i:nth-child(3) { height: 8px; }
+.arcade-equalizer.is-playing i { animation: audio-level .8s ease-in-out infinite alternate; }.arcade-equalizer.is-playing i:nth-child(2) { animation-delay: -.3s; }.arcade-equalizer.is-playing i:nth-child(3) { animation-delay: -.5s; }
+@keyframes audio-level { from { transform: scaleY(.45); } to { transform: scaleY(1.25); } }
+.arcade-audio .arcade-volume-popover { position: absolute; right: 0; top: calc(100% + 10px); z-index: 70; display: flex; align-items: center; gap: 12px; width: 264px; max-width: calc(100vw - 32px); padding: 12px; border: 1px solid #bd663a; border-radius: 14px; background: #211e28; color: #f1edeb; box-shadow: 0 8px 30px #0007; }
+.arcade-audio .arcade-volume-popover button { min-height: 44px; padding: 8px; font-size: 12px; border: 1px solid #bd663a; border-radius: 8px; }
+.arcade-audio .arcade-volume-popover input { min-width: 0; flex: 1; height: 44px; accent-color: #f07841; }
+.arcade-audio .arcade-volume-popover > span { font-size: 11px; min-width: 32px; }
+
+/* Native dialog keeps the card above the app and provides a focus trap. */
+.tomo-card-dialog { color-scheme: dark; width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); margin: auto; padding: 0; border: 1.5px solid #bd663a; border-radius: 24px 7px 24px 7px; background: #211e28; color: #f1edeb; box-shadow: 0 20px 80px #0009; overflow: auto; overscroll-behavior: contain; font-family: 'Quicksand', 'Padauk', sans-serif; }
+.tomo-card-dialog::backdrop { background: #09070dd9; backdrop-filter: blur(5px); }
+.tomo-card-dialog > header { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 20px; }
+.tomo-card-dialog h2 { font: 500 29px/1.2 'Fredoka', sans-serif; }.tomo-card-dialog header p { color: #edb394; font-size: 12px; line-height: 1.6; margin-top: 7px; }
+.tomo-card-dialog header button { flex-shrink: 0; min-width: 44px; min-height: 44px; border: 1px solid #995334; border-radius: 50%; font-size: 25px; }
+.tomo-card-image { margin: 0 20px; max-height: 53dvh; overflow-y: auto; border: 1px solid #8c452e; border-radius: 14px; background: #110f15; }
+.tomo-card-image img { display: block; width: 100%; height: auto; }
+.tomo-card-dialog footer { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 18px 20px 22px; }
+.tomo-card-dialog footer button, .tomo-card-dialog footer a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 11px 16px; border: 1px solid #bd663a; border-radius: 10px; font-size: 13px; font-weight: 700; }
+.tomo-card-dialog footer .card-download { background: #ed9c68; color: #261514; }.tomo-card-dialog footer a { border: 0; text-decoration: underline; text-underline-offset: 3px; }
+.tomo-card-dialog footer p { flex-basis: 100%; color: #c9b7bd; font-size: 11px; line-height: 1.7; }.tomo-card-dialog :is(button,a):focus-visible { outline: 3px solid #ffc9a9; outline-offset: 3px; }
+
+/* Phones: safe-area clearance, fluid grids, readable forms, normal long-text flow. */
+@media (max-width: 700px) {
+  body .tomo-experience { height: 100dvh; background: var(--tomo-bg); }
+  body .tomo-experience .tomo-main { height: calc(100dvh - 74px - env(safe-area-inset-bottom)); padding-top: calc(78px + env(safe-area-inset-top)); padding-bottom: 40px; padding-inline: clamp(12px, 4vw, 24px); scroll-padding-top: calc(84px + env(safe-area-inset-top)); scroll-padding-bottom: 24px; overscroll-behavior-y: contain; }
+  body .tomo-experience .tomo-header { min-height: calc(68px + env(safe-area-inset-top)); padding: calc(9px + env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 9px max(12px, env(safe-area-inset-left)); gap: 8px; }
+  body .tomo-experience .tomo-brand { min-width: 0; gap: 6px; }body .tomo-experience .tomo-brand strong { font-size: clamp(18px, 5.3vw, 24px); letter-spacing: -.5px; }
+  body .tomo-experience .tomo-header-actions { gap: 5px; flex-shrink: 0; }
+  body .tomo-experience .tomo-icon-button { min-height: 44px; min-width: 42px; padding: 4px 9px; }
+  .arcade-audio-label { display: none; }
+  body .tomo-experience .page-section { min-width: 0; padding-block: 32px; }
+  body .tomo-experience :is(.tomo-section-heading, .tomo-reading-text, .tomo-match-story, .tomo-profile-tabs button, .tomo-person, .tomo-form-actions, .tomo-growth-grid > section) { min-width: 0; }
+  body .tomo-experience .tomo-section-heading h2 { font-size: clamp(27px, 8vw, 39px); overflow-wrap: anywhere; }
+  body .tomo-experience .tomo-person { padding: 16px 12px; }
+  body .tomo-experience .tomo-person :is(input, select), body .nomo-scroll-wrapper :is(input:not([type=range]), select) { min-width: 0; width: 100%; max-width: 100%; font-size: 16px; min-height: 50px; }
+  body .tomo-experience .tomo-choice-group { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  body .tomo-experience .tomo-choice { min-width: 0; padding: 14px 10px; gap: 8px; flex-wrap: wrap; }
+  body .tomo-experience .tomo-choice small { font-size: 11px; line-height: 1.6; }
+  body .tomo-experience .tomo-choice-check { margin-left: auto; }
+  body .tomo-experience .tomo-tone-group { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  body .tomo-experience .tomo-tone { min-width: 0; padding: 14px 5px; min-height: 132px; font-size: 16px; }
+  body .tomo-experience .tomo-tone small { font-size: 10px; line-height: 1.6; }
+  body .tomo-experience .tomo-form-actions { display: flex; flex-direction: column; align-items: stretch; width: 100%; gap: 8px; }
+  body .tomo-experience .tomo-form-actions > button { width: 100%; min-height: 48px; white-space: normal; }
+  body .tomo-experience .tomo-form-tools { flex-direction: column; gap: 10px; font-size: 11px; }
+  body .tomo-experience .tomo-form-tools button { min-height: 44px; }
+  body .tomo-experience .arcade-form-bar { gap: 8px; margin-inline: -14px; padding-inline: 12px; }
+  body .tomo-experience .arcade-form-bar > div { flex-shrink: 0; }.arcade-form-bar > span { min-width: 0; }
+  body .tomo-experience .tomo-reading-tags { flex-wrap: wrap; }
+  body .tomo-experience .tomo-result-actions { flex-direction: column; align-items: stretch; gap: 8px; }
+  body .tomo-experience .tomo-result-actions button { min-height: 48px; white-space: normal; }
+  body .tomo-experience .tomo-profile-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body .tomo-experience .tomo-profile-tabs button { overflow-wrap: anywhere; padding: 14px 10px; }
+  body .tomo-experience .tomo-profile-tabs button > span { min-width: 0; }
+  body .tomo-experience .tomo-profile-panel { padding: 24px 18px; }
+  body .tomo-experience .tomo-reading-text { font-size: 18px; line-height: 2.1; max-width: 100%; }
+  body .tomo-experience .tomo-growth-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
+  body .tomo-experience .tomo-growth-grid li { font-size: 18px; line-height: 2.05; }
+  body .tomo-experience .tomo-letter { padding: 24px 18px; }
+  body .tomo-experience .tomo-letter-heading { flex-wrap: wrap; }.tomo-letter-heading > div { min-width: 0; }
+  body .tomo-experience .tomo-section-nav { width: calc(100% - 24px); max-width: 440px; bottom: calc(10px + env(safe-area-inset-bottom)); gap: 2px; border-radius: 14px; }
+  body .tomo-experience .tomo-section-nav button { flex: 1; min-width: 0; padding: 12px 5px; min-height: 44px; font-size: 11px; }
+  body .tomo-experience .tomo-toast { top: calc(78px + env(safe-area-inset-top)); left: 12px; right: 12px; max-width: none; width: auto; font-size: 12px; line-height: 1.7; }
+  body .tomo-experience .tomo-loading { padding: calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); }
+  body .tomo-experience .tomo-loading-panel { width: 100%; max-height: 90dvh; overflow: auto; padding: 24px 18px; }
+  body .nomo-scroll-wrapper .glass-nav { padding: calc(8px + env(safe-area-inset-top)) 12px 8px; min-height: calc(68px + env(safe-area-inset-top)); gap: 8px; }
+  body .nomo-scroll-wrapper .glass-nav > div { gap: 5px; }
+  body .nomo-scroll-wrapper .glass-nav :is(button, a:not(:first-child)) { min-height: 44px; min-width: 42px; }
+  body .nomo-scroll-wrapper > main { padding-top: calc(86px + env(safe-area-inset-top)); padding-bottom: calc(100px + env(safe-area-inset-bottom)); padding-inline: 12px; }
+  body .nomo-scroll-wrapper .nomo-game-rules { line-height: 1.6; }
+  body .nomo-scroll-wrapper [data-arcade-panel] { min-width: 0; overflow-wrap: anywhere; }
+  body .nomo-scroll-wrapper [data-arcade-panel] .fixed.bottom-0 { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  body .nomo-scroll-wrapper [data-arcade-panel=room] .sticky { top: calc(78px + env(safe-area-inset-top)); }
+  .tomo-card-dialog { width: calc(100vw - 20px); }.tomo-card-dialog > header { padding: 16px; }.tomo-card-dialog h2 { font-size: 26px; }.tomo-card-image { margin-inline: 12px; }.tomo-card-dialog footer { padding: 16px; }.tomo-card-dialog footer button { flex: 1; }.tomo-card-dialog footer a { min-width: 100%; }
+}
+@media (max-width: 380px) {
+  body .tomo-experience .tomo-brand > .tomo-portrait { display: none; }
+  body .tomo-experience .tomo-person legend { gap: 8px; }.tomo-person legend .player-avatar { width: 42px; height: 42px; }
+  body .tomo-experience .tomo-tone small { font-size: 10px; }
+  body .nomo-scroll-wrapper .glass-nav > div > a { font-size: 11px; padding-inline: 9px; }
+  body .nomo-scroll-wrapper .glass-nav > a > .relative { display: none; }
+}
+@media (pointer: coarse) {
+  :is(.tomo-experience, .nomo-scroll-wrapper) :is(button, a, summary) { touch-action: manipulation; }
+}
+@media (prefers-reduced-motion: reduce) { .arcade-equalizer.is-playing i { animation: none; } }

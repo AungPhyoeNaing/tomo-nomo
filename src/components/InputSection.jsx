@@ -21,7 +21,7 @@ function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p
   return (
     <section id="page-inputs" className="page-section tomo-details" aria-labelledby="details-heading">
       <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Tomo · Connection quest</p><h2 id="details-heading">Assemble your duo.</h2></div><p lang="my">နာမည်နဲ့ မွေးနေ့လေးတွေပဲ လိုပါတယ်နော်။</p></div>
-      <form className="tomo-reading-form" onSubmit={event => { event.preventDefault(); onDemo(); }}>
+      <form className="tomo-reading-form" onSubmit={event => { event.preventDefault(); onCalculate(); }}>
         <div className="arcade-form-bar"><span><b aria-hidden="true">☺</b> Duo setup</span><div role="status" aria-label={`${readyFields.filter(Boolean).length} of 4 player details ready`}><span>{readyFields.filter(Boolean).length === 4 ? 'Ready to play' : 'Add your player details'}</span><span className="arcade-ready-meter" aria-hidden="true">{readyFields.map((ready, index) => <i key={index} className={ready ? 'is-ready' : ''} />)}</span></div></div>
         <div className="tomo-people">
           <PersonFields number={1} name={p1Name} setName={setP1Name} dob={p1Dob} setDob={setP1Dob} loading={loading} />
@@ -41,7 +41,7 @@ function InputSection({ p1Name, setP1Name, p1Dob, setP1Dob, p2Name, setP2Name, p
           </div></fieldset>
         </div>
         {inputError && <p role="alert" className="tomo-form-error">{inputError}</p>}
-        <div className="tomo-form-footer"><div><p>Your duo is ready. Are you?</p><small>Unlock your chemistry score, character profiles & duo card.</small></div><div className="tomo-form-actions"><button type="submit" disabled={loading} className="tomo-primary">{loading ? 'Unlocking your story…' : 'Reveal our chemistry'} <span aria-hidden="true">✦</span></button><button type="button" disabled={loading} onClick={onCalculate} className="tomo-text-button">Use an AI reading instead</button></div></div>
+        <div className="tomo-form-footer"><div><p>Your duo is ready. Are you?</p><small>Unlock your chemistry score, character profiles & duo card.</small></div><div className="tomo-form-actions"><button type="submit" disabled={loading} className="tomo-primary">{loading ? 'Unlocking your story…' : 'Reveal our AI reading'} <span aria-hidden="true">✦</span></button><button type="button" disabled={loading} onClick={onDemo} className="tomo-text-button">Read the built-in story</button></div></div>
         <div className="tomo-form-tools"><span>Play instantly with the built-in reading. AI uses your names and chart details with Google. Birthdates are processed by our server.</span><button type="button" disabled={loading} onClick={() => { setP1Name(''); setP1Dob(''); setP2Name(''); setP2Dob(''); }} className="tomo-text-button">Clear details</button></div>
       </form>
     </section>

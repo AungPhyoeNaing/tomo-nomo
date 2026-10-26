@@ -43,6 +43,21 @@ test('server owns the key, model, prompt inputs and score; no client model overr
   assert.equal(calls, 1);
   assert.ok(!JSON.stringify(result.body).includes('server-secret'));
 });
+test('server passes every selected voice and relationship mode to the reading generator', async () => {
+  const seen = new Set();
+  for (const mode of ['Friends', 'Couple']) for (const voice of ['Sweet', 'Playful', 'Mystic']) {
+    const handler = createReadingHandler({ env, read: async (...args) => {
+      assert.equal(args[4], mode);
+      assert.equal(args[5], voice);
+      seen.add(`${args[4]}/${args[5]}`);
+      return {};
+    } });
+    const result = res();
+    await handler(req({ ...inputs, relType: mode, mood: voice }), result);
+    assert.equal(result.statusCode, 200);
+  }
+  assert.equal(seen.size, 6);
+});
 test('invalid methods, origins, input, large bodies and missing keys never call Gemini', async () => {
   const handler = createReadingHandler({ env, read: () => assert.fail('Must not call Gemini') });
   for (const [request, status] of [

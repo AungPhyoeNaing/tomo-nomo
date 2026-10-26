@@ -30,7 +30,7 @@ export function normalizePersonName(value) {
 }
 
 // Cheap language/shape checks, not a claim to judge Burmese grammar or truth.
-export function validateBurmeseReading(data, { relType, names = [] } = {}) {
+export function validateBurmeseReading(data, { relType, names = [], expanded = false } = {}) {
   const normalized = validateReading(data, data.chemistry_score);
   if (normalized.relationship_title.length > 220) throw new Error('Reading quality check: shorten the Burmese title.');
   const fields = [normalized.tomo_deep_reading_p1, normalized.tomo_deep_reading_p2,
@@ -56,6 +56,20 @@ export function validateBurmeseReading(data, { relType, names = [] } = {}) {
   for (const key of ['tomo_strengths', 'tomo_challenges']) {
     if (normalized[key].length !== 3 || new Set(normalized[key].map(text => text.normalize('NFC').trim())).size !== 3) {
       throw new Error('Reading quality check: provide three distinct list items.');
+    }
+  }
+  if (expanded) {
+    if ([normalized.tomo_deep_reading_p1, normalized.tomo_deep_reading_p2].some(text => text.length < 1000) ||
+        normalized.tomo_dynamic_insight.length < 750 || normalized.tomo_dynamic_insight.split(/\n\s*\n/u).length !== 3 ||
+        normalized.tomo_secret_advice.length < 500 || normalized.tomo_secret_advice.split(/\n\s*\n/u).length !== 2 ||
+        [...normalized.tomo_strengths, ...normalized.tomo_challenges].some(text => text.length < 180)) {
+      throw new Error('Reading quality check: expand every section with distinct examples and actions; use three insight paragraphs and two advice paragraphs.');
+    }
+    if (relType === 'Couple') {
+      const romanticContext = /ချစ်သူ|အချစ်ရေး/u;
+      if (![normalized.relationship_title, normalized.tomo_dynamic_insight, normalized.tomo_secret_advice].every(text => romanticContext.test(text))) {
+        throw new Error('Reading quality check: make Couple mode explicitly about romantic partners, with date and affection examples.');
+      }
     }
   }
   return normalized;

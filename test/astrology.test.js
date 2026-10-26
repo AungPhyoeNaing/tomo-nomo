@@ -214,17 +214,14 @@ describe('Astrology & Numerology Engine Tests', () => {
       const playfulCouple = generateDeepProceduralReading('သူရိန်', p1, 'သီရိ', p2, 'Couple', 'Playful', 94);
       const playfulFriend = generateDeepProceduralReading('သူရိန်', p1, 'သီရိ', p2, 'Friends', 'Playful', 94);
 
-      // Verify cute and friendly phrasing in couple mode
-      assert.ok(playfulCouple.tomo_deep_reading_p1.includes('ချစ်စရာ စိတ်ရင်းလေး'));
-      assert.ok(playfulCouple.tomo_deep_reading_p1.includes('ချစ်စနိုး အလွဲလေးတွေ'));
-      assert.ok(playfulCouple.relationship_title.includes('အသည်းကျော်'));
-      assert.ok(playfulCouple.tomo_secret_advice.includes('လက်တွဲသွားကြပါနော်'));
-
-      // Verify cute and friendly phrasing in friend mode
-      assert.ok(playfulFriend.tomo_deep_reading_p1.includes('ရယ်မောပျော်ရွှင်စေသူလေး'));
-      assert.ok(playfulFriend.tomo_deep_reading_p1.includes('အူယားစရာ အလွဲလေးတွေ'));
-      assert.ok(playfulFriend.relationship_title.includes('အသည်းကျော်'));
-      assert.ok(playfulFriend.tomo_secret_advice.includes('တန်ဖိုးထားသွားကြပါနော်'));
+      // Humor comes from situations and activities, rather than repeated pet names.
+      for (const reading of [playfulCouple, playfulFriend]) {
+        assert.match(reading.tomo_deep_reading_p1, /ကစားပွဲ|ပြိုင်ပွဲ/);
+        assert.match(reading.relationship_title, /ရယ်စရာ/);
+        assert.match(reading.tomo_secret_advice, /မဲဖောက်/);
+      }
+      assert.match(playfulCouple.tomo_dynamic_insight, /ချစ်သူ/);
+      assert.match(playfulFriend.tomo_dynamic_insight, /သူငယ်ချင်း/);
     });
   });
 

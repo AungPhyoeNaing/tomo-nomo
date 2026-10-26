@@ -2,7 +2,7 @@
 
 An advanced, interactive single-page web application created for a university project showcase.
 
-Tomo is a playful astrology-inspired story game, not a validated personality test or relationship-probability calculator. The main reveal uses built-in templates; optional Gemini readings use a server-held key; players do not enter keys. Results show the source, model/cache status, and approximate chart limitations. See [the engine and Burmese-output audit](docs/TOMO_AUDIT.md) for findings, fixes, and evaluation steps.
+Tomo is a playful astrology-inspired story game, not a validated personality test or relationship-probability calculator. The main reveal requests a Gemini reading using a server-held key; players do not enter keys. A separate button opens the built-in story, which also serves as the AI fallback. Results show the source, model/cache status, and approximate chart limitations. See [the engine and Burmese-output audit](docs/TOMO_AUDIT.md) for findings, fixes, and evaluation steps.
 
 The application allows users to analyze relationships in two modes: **Friends 👯‍♂️** (platonic loyalty & fun) or **Couple ❤️** (romantic chemistry & emotional connection).
 
@@ -166,6 +166,6 @@ The test suite includes real Socket.IO integration tests and requires permission
 
 ### Tomo AI writing and quality controls
 
-The server uses Gemini 3.1 Flash-Lite. The prompt requests natural spoken Burmese with short structured sections, and application checks reject wrong-language fields, malformed profiles, repeated list items, and romantic wording in Friends mode. Each endpoint request makes at most one generation attempt with a 50-second upstream deadline. The browser waits up to 55 seconds and offers Cancel. Actual Burmese quality requires native-speaker evaluation; no live/billed model benchmark is included.
+The server uses Gemini 3.1 Flash-Lite. The expanded prompt gives Sweet, Playful and Mystic separate writing directions, and Friends/Couple separate situations and relationship needs in every section. It requests four detailed blocks per profile, three shared-insight paragraphs, three substantial strengths and challenges each, and a two-paragraph closing note. Generation is bounded to 16,384 output tokens, and application checks reject wrong-language fields, malformed profiles, repeated list items, and romantic wording in Friends mode. A prompt-version change prevents reuse of older short readings. Length checks reject abbreviated results. Each endpoint request makes at most one generation attempt with a 50-second upstream deadline. The browser waits up to 55 seconds and offers Cancel. Actual Burmese quality requires native-speaker evaluation; no live/billed model benchmark is included.
 
 AI requests use header authentication and derived chart summaries instead of raw birthdates. Validated results are cached only in memory for 10 minutes, with eight entries maximum and isolation by hashed key, model, and prompt input/version. Readings are not written to local storage. PNG exports wrap measured Burmese graphemes and identify the score as symbolic.

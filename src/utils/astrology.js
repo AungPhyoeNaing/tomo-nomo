@@ -1,4 +1,4 @@
-import { Body, GeoVector, Ecliptic, SunPosition } from 'astronomy-engine';
+import { Body, GeoVector, Ecliptic, SunPosition } from '#tomo-astronomy';
 
 // =========================================================
 // 1. WESTERN ZODIAC WITH ELEMENTS & MODALITIES

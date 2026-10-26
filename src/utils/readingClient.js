@@ -11,7 +11,17 @@ export async function requestTomoReading(inputs, { signal } = {}) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(inputs), signal: controller.signal
     });
-    const data = await response.json();
+    // Hosts may return text or HTML when a function crashes or times out.
+    // Never show those raw bodies (or a JSON parser exception) to players.
+    let data;
+    try { data = await response.json(); }
+    catch {
+      const error = new Error(response.ok
+        ? 'The AI server returned an invalid response. Please try again later.'
+        : `The AI server is temporarily unavailable (HTTP ${response.status}). Please try again later.`);
+      error.code = `TOMO_HTTP_${response.status}`;
+      throw error;
+    }
     if (!response.ok) {
       const error = new Error(data.error || 'AI reading is temporarily unavailable.');
       error.code = `TOMO_HTTP_${response.status}`;

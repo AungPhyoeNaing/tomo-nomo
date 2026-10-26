@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createReadingHandler } from '../server/reading-handler.mjs';
 import { requestTomoReading } from '../src/utils/readingClient.js';
+import { execFileSync } from 'node:child_process';
+import readingEndpoint from '../api/reading.js';
 
 const inputs = { p1Name: 'Alice', p1Dob: '1996-06-15', p2Name: 'Bob', p2Dob: '1996-10-08', relType: 'Friends', mood: 'Sweet' };
 const env = { GEMINI_API_KEY: 'server-secret' };
@@ -11,6 +13,18 @@ function req(body = inputs, extra = {}) {
 function res() {
   return { headers: {}, setHeader(key, value) { this.headers[key] = value; }, status(code) { this.statusCode = code; return this; }, json(value) { this.body = value; return this; } };
 }
+test('reading dependencies start without Node automatic module detection', () => {
+  const output = execFileSync(process.execPath, ['--no-experimental-detect-module', '--input-type=module', '-e',
+    "import('./server/reading-handler.mjs').then(m => console.log(typeof m.createReadingHandler))"],
+  { cwd: new URL('..', import.meta.url), encoding: 'utf8' });
+  assert.equal(output.trim(), 'function');
+});
+test('Vercel entry returns JSON for unsupported methods without loading Gemini', async () => {
+  const result = res();
+  await readingEndpoint(req(inputs, { method: 'GET' }), result);
+  assert.equal(result.statusCode, 405);
+  assert.deepEqual(result.body, { error: 'Use POST for readings.' });
+});
 test('server owns the key, model, prompt inputs and score; no client model override', async () => {
   let calls = 0;
   const handler = createReadingHandler({ env, read: async (...args) => {
@@ -75,4 +89,18 @@ test('browser sends only reading inputs to same-origin endpoint and handles unav
     return { ok: false, status: 429, json: async () => ({ error: 'AI is busy.' }) };
   };
   await assert.rejects(requestTomoReading(inputs), { message: 'AI is busy.', code: 'TOMO_HTTP_429' });
+});
+
+test('plain-text host failures and HTML responses never expose parser errors', async t => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  for (const [status, body] of [[500, 'A server error has occurred\nFUNCTION_INVOCATION_FAILED'], [504, '<html>Gateway timeout</html>'], [200, '<html>SPA fallback</html>']]) {
+    globalThis.fetch = async () => new Response(body, { status });
+    await assert.rejects(requestTomoReading(inputs), error => {
+      assert.equal(error.code, `TOMO_HTTP_${status}`);
+      assert.ok(error.message.includes(status === 200 ? 'invalid response' : `HTTP ${status}`));
+      assert.ok(!/Unexpected token|FUNCTION_INVOCATION_FAILED|<html>/.test(error.message));
+      return true;
+    });
+  }
 });

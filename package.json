@@ -3,6 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "imports": {
+    "#tomo-astronomy": {
+      "node": "./lib/astronomy-node.js",
+      "default": "astronomy-engine"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

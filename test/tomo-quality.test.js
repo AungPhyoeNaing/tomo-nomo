@@ -78,6 +78,11 @@ test('expanded checks reject abbreviated sections and generic Couple readings', 
   assert.throws(() => check({ ...reading, tomo_strengths: ['အချင်းချင်း နားလည်ပေးကြည့်နိုင်တယ်။', ...reading.tomo_strengths.slice(1)] }), /expand/);
   assert.throws(() => check({ ...reading, tomo_secret_advice: 'အတူစကားပြောပြီး နားလည်မှု တည်ဆောက်နိုင်တယ်။' }), /expand/);
   assert.throws(() => validateBurmeseReading(reading, { relType: 'Couple', expanded: true }), /romantic partners/);
+  const romantic = generateDeepProceduralReading('Alice', metrics, 'Bob', secondMetrics, 'Couple', 'Mystic', 72);
+  romantic.relationship_title = 'တိတ်ဆိတ်တဲ့ညမှာ အလင်းနှစ်စင်း ဆုံတဲ့လမ်း';
+  romantic.tomo_dynamic_insight = romantic.tomo_dynamic_insight.replaceAll('ချစ်သူ', 'ချစ်ရသူ');
+  romantic.tomo_secret_advice = romantic.tomo_secret_advice.replaceAll('ချစ်သူ', 'ချစ်ရသူ');
+  assert.doesNotThrow(() => validateBurmeseReading(romantic, { relType: 'Couple', expanded: true }));
 });
 
 test('each AI prompt explicitly controls voice, relationship scenes and expanded sections', () => {

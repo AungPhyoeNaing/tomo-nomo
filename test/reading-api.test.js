@@ -94,6 +94,18 @@ test('upstream errors are sanitized and quota failures are not retried', async (
     assert.equal(calls, 1);
   }
 });
+test('quality diagnostics expose only fixed validator instructions', async t => {
+  const warn = console.warn;
+  console.warn = () => {};
+  t.after(() => { console.warn = warn; });
+  const message = 'Reading quality check: keep Friends mode platonic.';
+  const handler = createReadingHandler({ env, read: async () => { throw Object.assign(new Error(message), { code: 'GEMINI_QUALITY' }); } });
+  const result = res(); await handler(req(), result);
+  assert.equal(result.statusCode, 502);
+  assert.equal(result.body.code, 'READING_QUALITY');
+  assert.equal(result.body.check, message);
+  assert.equal(JSON.stringify(result.body).includes(env.GEMINI_API_KEY), false);
+});
 test('browser sends only reading inputs to same-origin endpoint and handles unavailable AI', async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });

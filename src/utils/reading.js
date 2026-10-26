@@ -66,8 +66,10 @@ export function validateBurmeseReading(data, { relType, names = [], expanded = f
       throw new Error('Reading quality check: expand every section with distinct examples and actions; use three insight paragraphs and two advice paragraphs.');
     }
     if (relType === 'Couple') {
-      const romanticContext = /ချစ်သူ|အချစ်ရေး/u;
-      if (![normalized.relationship_title, normalized.tomo_dynamic_insight, normalized.tomo_secret_advice].every(text => romanticContext.test(text))) {
+      const romanticContext = /ချစ်သူ|အချစ်|ချစ်ခြင်း|ချစ်ရသူ|ရင်ခုန်|ရည်းစား|ရိုမန်တစ်/u;
+      let sharedStory = [normalized.relationship_title, normalized.tomo_dynamic_insight, normalized.tomo_secret_advice].join(' ');
+      for (const name of names) if (name) sharedStory = sharedStory.split(name).join('');
+      if (!romanticContext.test(sharedStory)) {
         throw new Error('Reading quality check: make Couple mode explicitly about romantic partners, with date and affection examples.');
       }
     }

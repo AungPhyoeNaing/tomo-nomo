@@ -2,6 +2,7 @@ import { calculateDetailedMetricsBreakdown } from './astrology.js';
 import { validateReading, validateBurmeseReading, normalizePersonName } from './reading.js';
 import { DEFAULT_TOMO_MODEL, TOMO_MODELS, TOMO_PROMPT_VERSION, BURMESE_READING_SYSTEM, buildTomoPrompt, TOMO_RESPONSE_SCHEMA } from './tomoPrompt.js';
 import { generateDeepProceduralReading } from './proceduralReading.js';
+import { READING_TIMEOUT_MS, READING_MAX_REQUESTS } from './readingPolicy.js';
 export { generateDeepProceduralReading };
 
 export const DEMO_RESULT = generateDeepProceduralReading(
@@ -67,18 +68,21 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
   let timedOut = false;
   const cancel = () => controller.abort();
   options.signal?.addEventListener('abort', cancel, { once: true });
-  const timeoutMs = options.timeoutMs ?? 60000;
+  const timeoutMs = options.timeoutMs ?? READING_TIMEOUT_MS;
   const timeoutId = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   let lastQualityError;
   let totalTokens = 0;
   let requestAttempts = 0;
   let transientRetries = 0;
   const deadline = Date.now() + timeoutMs;
+  const maxRequests = options.maxRequests ?? READING_MAX_REQUESTS;
+  // A repair needs enough time for another full response, not just a POST.
+  const minimumRetryTime = () => Math.max(15000, Math.ceil((Date.now() - now) / Math.max(1, requestAttempts) * 1.25));
   const retryTransient = async error => {
     if (!['GEMINI_HTTP_500', 'GEMINI_HTTP_502', 'GEMINI_HTTP_503', 'GEMINI_HTTP_504'].includes(error.code) ||
-        options.maxTransientRetries !== 1 || transientRetries >= 1 || controller.signal.aborted) return false;
-    const delay = error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : (options.retryDelayMs ?? 1000);
-    if (deadline - Date.now() < delay + 15000) return false;
+        options.maxTransientRetries !== 1 || transientRetries >= 1 || requestAttempts >= maxRequests || controller.signal.aborted) return false;
+    const delay = error.retryAfterSeconds ? error.retryAfterSeconds * 1000 : (options.retryDelayMs ?? 750 + Math.random() * 500);
+    if (deadline - Date.now() < delay + minimumRetryTime()) return false;
     // The endpoint reserves a real upstream request from its shared budget.
     // Do not bypass quota controls just because this is an internal retry.
     if (options.reserveRetry && !options.reserveRetry()) return false;
@@ -95,6 +99,8 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
     // At most one repair, only for malformed/poor-language content. Never retry quota/auth errors.
     for (let attempt = 0; attempt < (options.maxAttempts === 1 ? 1 : 2); attempt++) {
       if (controller.signal.aborted) throw new DOMException('Reading cancelled.', 'AbortError');
+      if (attempt > 0 && (requestAttempts >= maxRequests || deadline - Date.now() < minimumRetryTime() ||
+          (options.reserveRetry && !options.reserveRetry()))) break;
       const requestPayload = attempt === 0 ? payload : {
         ...payload,
         contents: [{ role: 'user', parts: [{ text: promptText + '\nRepair instruction: the previous attempt failed this app check: ' + lastQualityError.message + '\nWrite the complete JSON again; check all Burmese fields and the exact four-block/three-item structure.' }] }]
@@ -161,8 +167,12 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
     lastQualityError.code = 'GEMINI_QUALITY';
     throw lastQualityError;
   } catch (error) {
-    if (error.name === 'AbortError' && timedOut) throw Object.assign(new Error(`Gemini request timed out after ${timeoutMs / 1000} seconds.`), { code: 'GEMINI_TIMEOUT' });
-    throw error;
+    const failure = error.name === 'AbortError' && timedOut
+      ? Object.assign(new Error(`Gemini request timed out after ${timeoutMs / 1000} seconds.`), { code: 'GEMINI_TIMEOUT' }) : error;
+    failure.requestAttempts = requestAttempts;
+    failure.transientRetries = transientRetries;
+    failure.durationMs = Date.now() - now;
+    throw failure;
   } finally {
     clearTimeout(timeoutId);
     options.signal?.removeEventListener('abort', cancel);

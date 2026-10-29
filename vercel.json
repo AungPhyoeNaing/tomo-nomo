@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/reading.js": { "maxDuration": 60 }
+    "api/reading.js": { "maxDuration": 90 }
   },
   "rewrites": [
     {

@@ -171,6 +171,50 @@ test('one quality repair is allowed; a second bad result ends the request', asyn
   assert.equal(calls, 2);
 });
 
+test('quality repairs reserve a shared request and stop when quota or time is insufficient', async t => {
+  let calls = 0, reserved = 0;
+  mockFetch(t, async () => {
+    calls++;
+    return response(calls === 1 ? { ...fixture(), tomo_secret_advice: 'English' } : fixture());
+  });
+  const result = await request({ reserveRetry: () => { reserved++; return true; } });
+  assert.equal(result.readingInfo.requestAttempts, 2);
+  assert.equal(reserved, 1);
+  for (const options of [{ reserveRetry: () => false }, { timeoutMs: 1000 }, { maxRequests: 1 }]) {
+    clearTomoReadingCache(); calls = 0;
+    await assert.rejects(request(options), { code: 'GEMINI_QUALITY', requestAttempts: 1 });
+    assert.equal(calls, 1);
+  }
+});
+
+test('a transient retry and a quality repair share a two-request cap', async t => {
+  let calls = 0, reserved = 0;
+  const unavailable = () => ({ ok: false, status: 503, json: async () => ({ error: { message: 'Unavailable' } }) });
+  mockFetch(t, async () => ++calls === 1 ? unavailable() : response({ ...fixture(), tomo_secret_advice: 'English' }));
+  const options = { maxTransientRetries: 1, retryDelayMs: 0, reserveRetry: () => { reserved++; return true; } };
+  await assert.rejects(request(options), { code: 'GEMINI_QUALITY', requestAttempts: 2, transientRetries: 1 });
+  assert.equal(calls, 2);
+  assert.equal(reserved, 1);
+  calls = 0; reserved = 0;
+  globalThis.fetch = async () => ++calls === 1 ? response({ ...fixture(), tomo_secret_advice: 'English' }) : unavailable();
+  await assert.rejects(request(options), { code: 'GEMINI_HTTP_503', requestAttempts: 2, transientRetries: 0 });
+  assert.equal(calls, 2);
+  assert.equal(reserved, 1);
+});
+
+test('a slow first response leaves its quality diagnostic instead of starting a doomed repair', async t => {
+  let time = 1000000, calls = 0, reserved = 0;
+  t.mock.method(Date, 'now', () => time);
+  mockFetch(t, async () => {
+    calls++; time += 40000;
+    return response({ ...fixture(), tomo_secret_advice: 'English' });
+  });
+  await assert.rejects(request({ timeoutMs: 80000, reserveRetry: () => { reserved++; return true; } }),
+    { code: 'GEMINI_QUALITY', requestAttempts: 1, durationMs: 40000 });
+  assert.equal(calls, 1);
+  assert.equal(reserved, 0);
+});
+
 test('auth/quota and truncated responses never trigger a paid repair', async t => {
   let calls = 0;
   mockFetch(t, async () => { calls++; return { ok: false, status: 429, json: async () => ({ error: { message: 'Quota exceeded' } }) }; });

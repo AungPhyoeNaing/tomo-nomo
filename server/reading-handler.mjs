@@ -3,6 +3,7 @@ import { calculateSecretMetrics, calculateAlgorithmicScore } from '../src/utils/
 import { fetchTomoDestinyReading } from '../src/utils/gemini.js';
 import { isValidBirthDate, normalizePersonName } from '../src/utils/reading.js';
 import { DEFAULT_TOMO_MODEL, TOMO_PROMPT_VERSION } from '../src/utils/tomoPrompt.js';
+import { READING_TIMEOUT_MS, READING_MAX_REQUESTS } from '../src/utils/readingPolicy.js';
 
 // These bounds are per running instance. Google project quotas remain the hard
 // upstream limit; serverless instances do not share this memory.
@@ -88,7 +89,7 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
     const ip = env.VERCEL === '1' ? String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim() : req.socket?.remoteAddress || 'unknown';
     const visitor = createHash('sha256').update(ip).digest('hex');
     if (visitors.has(visitor)) return sendError(res, 429, 'Please pause briefly before requesting another AI reading.', 'APP_COOLDOWN', Math.max(1, Math.ceil((visitors.get(visitor) - time) / 1000)));
-    if (visitors.size >= 10000 || active >= 2) return sendError(res, 503, 'Tomo is handling other readings. Please try again shortly.', 'APP_BUSY', 3);
+    if (visitors.size >= 10000 || active >= positive('TOMO_AI_MAX_CONCURRENT', 2)) return sendError(res, 503, 'Tomo is handling other readings. Please try again shortly.', 'APP_BUSY', 3);
     if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', 5)) return sendError(res, 429, 'Tomo has reached its shared request limit for this minute.', 'APP_MINUTE_LIMIT', Math.max(1, Math.ceil((minute.start + 60000 - time) / 1000)));
     if (day.count >= positive('TOMO_AI_REQUESTS_PER_DAY', 100)) return sendError(res, 429, 'Tomo has reached its daily AI allowance. The built-in story is still available.', 'APP_DAILY_LIMIT', Math.max(1, Math.ceil((day.start + 86400000 - time) / 1000)));
     visitors.set(visitor, time + 3000);
@@ -99,7 +100,7 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
         const first = calculateSecretMetrics(p1Name, p1Dob), second = calculateSecretMetrics(p2Name, p2Dob);
         const score = calculateAlgorithmicScore(first, second, relType);
         const reading = await read(p1Name, first, p2Name, second, relType, mood, score, env.GEMINI_API_KEY.trim(),
-          { model: DEFAULT_TOMO_MODEL, timeoutMs: 50000, maxAttempts: 1, maxTransientRetries: 1, reserveRetry: () => {
+          { model: DEFAULT_TOMO_MODEL, timeoutMs: READING_TIMEOUT_MS, maxAttempts: 2, maxRequests: READING_MAX_REQUESTS, maxTransientRetries: 1, reserveRetry: () => {
             const retryTime = now();
             if (retryTime - minute.start >= 60000) minute = { start: retryTime, count: 0 };
             if (retryTime - day.start >= 86400000) day = { start: retryTime, count: 0 };
@@ -114,7 +115,10 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
         const networkCause = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET'].includes(causeCode) ? causeCode : undefined;
         // Fixed codes and a correlation ID only: no credentials, names,
         // birthdates, generated text, raw provider messages or stacks.
-        console.warn(JSON.stringify({ event: 'tomo_reading_failed', reference, code, networkCause }));
+        const reason = ['API_KEY_INVALID', 'API_KEY_EXPIRED'].includes(error.reason) ? error.reason : undefined;
+        const check = code === 'GEMINI_QUALITY' ? error.message : undefined;
+        console.warn(JSON.stringify({ event: 'tomo_reading_failed', reference, code, reason, check, networkCause,
+          durationMs: error.durationMs, requestAttempts: error.requestAttempts, transientRetries: error.transientRetries }));
         return { error, reference };
       }
     })();

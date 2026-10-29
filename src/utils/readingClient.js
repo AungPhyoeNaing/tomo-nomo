@@ -1,11 +1,12 @@
 import { validateReading, validateBurmeseReading } from './reading.js';
+import { READING_CLIENT_TIMEOUT_MS } from './readingPolicy.js';
 
 export async function requestTomoReading(inputs, { signal } = {}) {
   const controller = new AbortController();
   const cancel = () => controller.abort();
   if (signal?.aborted) cancel();
   signal?.addEventListener('abort', cancel, { once: true });
-  const timer = setTimeout(cancel, 55000);
+  const timer = setTimeout(cancel, READING_CLIENT_TIMEOUT_MS);
   try {
     const response = await fetch('/api/reading', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -25,6 +26,7 @@ export async function requestTomoReading(inputs, { signal } = {}) {
     if (!response.ok) {
       const error = new Error(data.error || 'AI reading is temporarily unavailable.');
       error.code = data.code || `TOMO_HTTP_${response.status}`;
+      if (typeof data.reference === 'string' && /^[\da-f-]{36}$/i.test(data.reference)) error.reference = data.reference;
       const delay = Number(data.retryAfterSeconds || response.headers?.get?.('Retry-After'));
       if (Number.isFinite(delay) && delay > 0) error.retryAfterSeconds = Math.min(86400, Math.ceil(delay));
       throw error;
@@ -33,7 +35,7 @@ export async function requestTomoReading(inputs, { signal } = {}) {
       { relType: inputs.relType, names: [inputs.p1Name, inputs.p2Name] });
     return { ...validated, readingInfo: data.readingInfo };
   } catch (error) {
-    if (error.name === 'AbortError' && !signal?.aborted) throw new Error('The AI reading timed out.');
+    if (error.name === 'AbortError' && !signal?.aborted) throw Object.assign(new Error('The AI reading timed out. Please try again.'), { code: 'AI_TIMEOUT' });
     throw error;
   } finally {
     clearTimeout(timer);

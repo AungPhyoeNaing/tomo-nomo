@@ -186,7 +186,9 @@ function TomoApp() {
       setToastMessage(`AI reading unavailable: ${(err.message || 'Gemini error').replace(/[.\s]+$/, '')}. Showing the built-in story instead.`);
       setTimeout(() => setToastMessage(''), 5000);
       const tailoredReading = generateDeepProceduralReading(p1Name, p1Secret, p2Name, p2Secret, relType, mood, algorithmicScore);
-      setResult(createReadingResult(tailoredReading, inputs, p1Secret, p2Secret, { fallback: true, reason: err.code || 'AI_UNAVAILABLE' }));
+      setResult(createReadingResult(tailoredReading, inputs, p1Secret, p2Secret, {
+        fallback: true, reason: err.code || 'AI_UNAVAILABLE', failureMessage: err.message, reference: err.reference
+      }));
       setLoading(false);
       requestAnimationFrame(() => jumpToPage('page-gauge'));
     }

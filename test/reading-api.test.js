@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { createReadingHandler } from '../server/reading-handler.mjs';
 import { requestTomoReading } from '../src/utils/readingClient.js';
 import { execFileSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import readingEndpoint from '../api/reading.js';
+import { READING_TIMEOUT_MS, READING_CLIENT_TIMEOUT_MS, READING_MAX_REQUESTS } from '../src/utils/readingPolicy.js';
+import { clearTomoReadingCache, generateDeepProceduralReading } from '../src/utils/gemini.js';
+import { calculateSecretMetrics } from '../src/utils/astrology.js';
 
 const inputs = { p1Name: 'Alice', p1Dob: '1996-06-15', p2Name: 'Bob', p2Dob: '1996-10-08', relType: 'Friends', mood: 'Sweet' };
 const env = { GEMINI_API_KEY: 'server-secret' };
@@ -31,7 +35,9 @@ test('server owns the key, model, prompt inputs and score; no client model overr
     calls++;
     assert.equal(args[7], 'server-secret');
     assert.equal(args[8].model, 'gemini-3.1-flash-lite');
-    assert.equal(args[8].maxAttempts, 1);
+    assert.equal(args[8].maxAttempts, 2);
+    assert.equal(args[8].maxRequests, READING_MAX_REQUESTS);
+    assert.equal(args[8].timeoutMs, READING_TIMEOUT_MS);
     assert.ok(args[6] >= 0 && args[6] <= 100);
     assert.notEqual(args[6], 1234);
     assert.equal(args[1].western, 'Gemini');
@@ -42,6 +48,32 @@ test('server owns the key, model, prompt inputs and score; no client model overr
   assert.equal(result.statusCode, 200);
   assert.equal(calls, 1);
   assert.ok(!JSON.stringify(result.body).includes('server-secret'));
+});
+
+test('browser and hosting deadlines allow the server to return its own timeout diagnostic', () => {
+  const config = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+  assert.ok(READING_CLIENT_TIMEOUT_MS > READING_TIMEOUT_MS);
+  assert.ok(READING_CLIENT_TIMEOUT_MS < config.functions['api/reading.js'].maxDuration * 1000);
+});
+
+test('invalid and expired keys are configuration failures even when Google returns HTTP 400', async t => {
+  const warn = console.warn;
+  const logs = [];
+  console.warn = message => logs.push(JSON.parse(message));
+  t.after(() => { console.warn = warn; });
+  for (const reason of ['API_KEY_INVALID', 'API_KEY_EXPIRED']) {
+    const handler = createReadingHandler({ env, read: async () => {
+      throw Object.assign(new Error('server-secret'), { code: 'GEMINI_HTTP_400', reason, durationMs: 123, requestAttempts: 1 });
+    } });
+    const result = res();
+    await handler(req(), result);
+    assert.equal(result.body.code, 'AI_KEY_CONFIGURATION');
+    assert.equal(result.body.retryAfterSeconds, undefined);
+    assert.equal(logs.at(-1).reason, reason);
+    assert.equal(logs.at(-1).durationMs, 123);
+    assert.equal(logs.at(-1).requestAttempts, 1);
+    assert.ok(!JSON.stringify(logs).includes('server-secret'));
+  }
 });
 test('server passes every selected voice and relationship mode to the reading generator', async () => {
   const seen = new Set();
@@ -126,6 +158,32 @@ test('failed generations release the visitor cooldown for an immediate manual re
   assert.equal(first.body.code, 'AI_TIMEOUT');
   const second = res(); await handler(req(), second);
   assert.equal(second.statusCode, 200);
+  assert.equal(calls, 2);
+});
+
+test('production repairs a rejected reading once and accounts for both Google requests', async t => {
+  const original = globalThis.fetch;
+  clearTomoReadingCache();
+  t.after(() => { globalThis.fetch = original; clearTomoReadingCache(); });
+  const fixture = generateDeepProceduralReading('Alice', calculateSecretMetrics('Alice', inputs.p1Dob),
+    'Bob', calculateSecretMetrics('Bob', inputs.p2Dob), 'Friends', 'Sweet', 72);
+  let calls = 0;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ candidates: [{ finishReason: 'STOP', content: {
+    parts: [{ text: JSON.stringify(++calls === 1 ? { ...fixture, tomo_secret_advice: 'English' } : fixture) }]
+  } }] }) });
+  let time = 1000000;
+  const handler = createReadingHandler({ env: { ...env, TOMO_AI_REQUESTS_PER_MINUTE: '2' }, now: () => time });
+  const repaired = res(); await handler(req(), repaired);
+  assert.equal(repaired.statusCode, 200);
+  assert.equal(repaired.body.readingInfo.attempts, 2);
+  assert.equal(repaired.body.readingInfo.requestAttempts, 2);
+  assert.equal(calls, 2);
+  time += 4000;
+  const limited = res(); await handler(req({ ...inputs, mood: 'Mystic' }), limited);
+  assert.equal(limited.body.code, 'APP_MINUTE_LIMIT');
+  assert.equal(calls, 2);
+  const cached = res(); await handler(req(), cached);
+  assert.equal(cached.body.readingInfo.cached, true);
   assert.equal(calls, 2);
 });
 
@@ -252,4 +310,14 @@ test('browser preserves the server retry countdown without automatically retryin
   };
   await assert.rejects(requestTomoReading(inputs), { code: 'APP_MINUTE_LIMIT', retryAfterSeconds: 27 });
   assert.equal(calls, 1);
+});
+
+test('browser preserves the support reference for failures without a retry countdown', async t => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const reference = '12345678-1234-4321-9876-123456789abc';
+  globalThis.fetch = async () => new Response(JSON.stringify({
+    error: 'The AI service key needs attention from the site owner.', code: 'AI_KEY_CONFIGURATION', reference
+  }), { status: 503 });
+  await assert.rejects(requestTomoReading(inputs), { code: 'AI_KEY_CONFIGURATION', reference });
 });

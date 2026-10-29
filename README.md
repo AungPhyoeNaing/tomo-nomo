@@ -38,7 +38,7 @@ All 8 metrics + relationship mode are passed silently into the **Google Gemini 3
    - Generates astrology-inspired Burmese entertainment stories covering deep character readings, dynamic insights, strengths, challenges, and secret destiny advice.
 
 5. **Cancellable AI Loading & Score Count-Up**:
-   - Animated Tomo avatar overlay with text (*"Tomo က နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားတွေကို အသေးစိတ် လေ့လာနေပါတယ်နော်..."*).
+   - Existing Tomo mascot beside an SVG letter with gently animated ink lines, replacing the loading MP4. Reduced-motion settings show a still illustration. After 25 seconds, the message reassures users they can keep waiting or cancel; no estimated completion percentage is shown. Keyboard focus stays in the dialog, and Escape cancels the reading.
    - Animated score count-up gauge.
 
 6. **Destiny Card Image Exporter (📸 Download PNG)**:
@@ -85,10 +85,12 @@ The root install provides the Vite client. The second install provides the Expre
 
 ### Development serving
 
-Run the client and multiplayer server in separate terminals:
+For Tomo, set `GEMINI_API_KEY` in the ignored root `.env` and run `npm run dev`. Vite serves `/api/reading` directly using the production reading handler; a separate backend process is not required for AI readings. Restart Vite after changing the key if it has not restarted automatically.
+
+For Nomo multiplayer, also run the Socket.IO server in a separate terminal:
 
 ```bash
-# Terminal 1 - client
+# Terminal 1 - frontend and Tomo AI endpoint
 npm run dev
 
 # Terminal 2 - Nomo Socket.IO server
@@ -147,9 +149,13 @@ Tomo calls the same-origin `/api/reading` endpoint. One `GEMINI_API_KEY` is kept
 3. Redeploy. The `api/reading.js` Vercel Function handles requests alongside the static frontend. No separate multiplayer backend is needed for Tomo readings.
 4. Keep the Google project on the free tier if you want no Gemini API spending. Model availability and quota still depend on that project. Hosting has its own plan limits and terms.
 
-For local development, put `GEMINI_API_KEY=...` in the ignored root `.env` and run both `npm run dev` and `npm start --prefix server`. Vite proxies `/api` to port 3080. The Node entry point loads the root `.env` (Node 22+). If using the Node server to serve production `dist`, set the same environment variable on that host; the endpoint works there too.
+For local development, put `GEMINI_API_KEY=...` in the ignored root `.env` and run `npm run dev`. The Vite development middleware loads server-only environment values and serves the same reading handler directly, without proxying AI requests to port 3080. Missing keys and invalid requests return JSON diagnostics. Run `npm start --prefix server` separately only when using Nomo multiplayer. The Node entry point loads the root `.env` (Node 22+). If using the Node server to serve production `dist`, set the same environment variable on that host; the endpoint works there too.
 
-The endpoint validates inputs, rejects cross-origin browser requests, and returns sanitized errors. Each reading permits at most two Google requests total: the initial generation and either one quality repair (invalid JSON, language, detail or structure) or one retry for a temporary Google HTTP 500/502/503/504. Any additional request uses the same overall deadline, requires enough time for a complete response, and reserves another request from the shared minute/day allowance. Transient retries use a jittered delay and respect Google's retry delay. Authentication, quota, transport failures, blocked/truncated responses and timeouts do not automatically repeat a POST. Gemini responses use a bounded, memory-only cache for 10 minutes. The default limits are a three-second pause between new requests per IP, five upstream requests per minute, 100 upstream requests per rolling 24 hours, and two concurrent generations **per server instance**. Completed cached readings are served before these checks, identical requests in progress share one generation, and failed generations release the IP pause. The UI shows the server-provided retry countdown; upstream Gemini quota errors are identified separately. Override the minute/day limits with `TOMO_AI_REQUESTS_PER_MINUTE` and `TOMO_AI_REQUESTS_PER_DAY`, and concurrency with `TOMO_AI_MAX_CONCURRENT`. These are conservative app defaults, not Google's published quotas.
+The endpoint validates inputs, rejects cross-origin browser requests, and returns sanitized errors. Each reading permits at most two Google requests total: the initial generation and either one quality repair (invalid JSON, language, detail or structure) or one retry for a temporary Google HTTP 500/502/503/504. Any additional request uses the same overall deadline, requires enough time for a complete response, and reserves another request from the shared minute/day allowance. Transient retries use a jittered delay and respect Google's retry delay. Authentication, quota, transport failures, blocked/truncated responses and timeouts do not automatically repeat a POST. Gemini responses use a bounded, memory-only cache for 10 minutes. The default limits are five concurrent generations, ten upstream requests per minute (room for five initial calls plus one repair/retry each), and 100 upstream requests per rolling 24 hours **per server instance**. Completed cached readings are served before these checks, identical requests in progress share one generation, and failures release their own cooldown entries. The UI shows the server-provided retry countdown; upstream Gemini quota errors are identified separately. Override the minute/day limits with `TOMO_AI_REQUESTS_PER_MINUTE` and `TOMO_AI_REQUESTS_PER_DAY`, and concurrency with `TOMO_AI_MAX_CONCURRENT`. Existing deployment environment overrides still take precedence: update old values of 2 concurrent / 5 per minute if they were set explicitly. These are app defaults, not Google's published quotas.
+
+Browsers attach a random session ID, held in session storage when available and otherwise in memory. The server combines it with a hashed IP for a three-second browser cooldown, so five devices on shared Wi-Fi can start distinct readings simultaneously. A separate IP burst limit allows at most five new generations per three seconds even if clients change session IDs; requests without a valid ID retain the IP-only cooldown. Session IDs are not authentication and contain no reading inputs. A sixth simultaneous generation receives `APP_BUSY` (or `APP_COOLDOWN` if that network has already used its burst); there is no queue.
+
+When Google returns HTTP 429, the instance pauses new uncached generations and new retry reservations until Google's retry delay expires (60 seconds when absent). Cached results and identical requests already in progress remain available. Already-sent Google requests continue. This reduces repeated quota errors; it cannot discover your project's RPM/input-token/day allowance or guarantee that five requests fit it. Set app limits to your project's active model quota in AI Studio. No extra keys, automatic key rotation, or billing changes are used.
 
 When diagnosing failures, check the code and support reference returned by `/api/reading`. `APP_MINUTE_LIMIT`, `APP_DAILY_LIMIT`, `APP_COOLDOWN` and `APP_BUSY` originate in Tomo and will not appear as exhausted quotas in AI Studio. `GEMINI_RATE_LIMIT` identifies an actual Google 429. `AI_KEY_CONFIGURATION` means the server key needs checking, including invalid/expired keys rejected with HTTP 400. Replace that key in the host's environment and redeploy (or update the local `.env` and restart the server). Failure logs include the reference, fixed provider code, key reason, validation check, duration and attempt counts when available; they exclude credentials, names, birthdates and generated text. The fallback result keeps the failure explanation and support reference visible after the toast disappears.
 

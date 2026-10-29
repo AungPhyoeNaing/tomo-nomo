@@ -3,17 +3,19 @@ import { calculateSecretMetrics, calculateAlgorithmicScore } from '../src/utils/
 import { fetchTomoDestinyReading } from '../src/utils/gemini.js';
 import { isValidBirthDate, normalizePersonName } from '../src/utils/reading.js';
 import { DEFAULT_TOMO_MODEL, TOMO_PROMPT_VERSION } from '../src/utils/tomoPrompt.js';
-import { READING_TIMEOUT_MS, READING_MAX_REQUESTS } from '../src/utils/readingPolicy.js';
+import { READING_TIMEOUT_MS, READING_MAX_REQUESTS, READING_MAX_CONCURRENT, READING_REQUESTS_PER_MINUTE } from '../src/utils/readingPolicy.js';
 
 // These bounds are per running instance. Google project quotas remain the hard
 // upstream limit; serverless instances do not share this memory.
 export function createReadingHandler({ env = process.env, read = fetchTomoDestinyReading, now = Date.now } = {}) {
   const visitors = new Map();
+  const ipBursts = new Map();
   const cache = new Map();
   const pending = new Map();
   let minute = { start: 0, count: 0 };
   let day = { start: 0, count: 0 };
   let active = 0;
+  let providerLimitUntil = 0;
   const positive = (name, fallback) => /^\d+$/.test(env[name] || '') && Number(env[name]) > 0 ? Number(env[name]) : fallback;
   const sendError = (res, status, message, code, retryAfterSeconds = 0, extra = {}) => {
     if (retryAfterSeconds) res.setHeader('Retry-After', String(retryAfterSeconds));
@@ -78,21 +80,31 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
     if (time - minute.start >= 60000) minute = { start: time, count: 0 };
     if (time - day.start >= 86400000) day = { start: time, count: 0 };
     for (const [id, until] of visitors) if (until <= time) visitors.delete(id);
+    for (const [id, burst] of ipBursts) if (burst.until <= time) ipBursts.delete(id);
     for (const [id, entry] of cache) if (entry.expiresAt <= time) cache.delete(id);
     const cacheKey = createHash('sha256').update(JSON.stringify([env.GEMINI_API_KEY.trim(), TOMO_PROMPT_VERSION, DEFAULT_TOMO_MODEL, p1Name, p1Dob, p2Name, p2Dob, relType, mood])).digest('hex');
     // Serving a cached result or joining an identical request consumes no
     // additional Gemini call, so do it before any generation rate limits.
     if (cache.has(cacheKey)) return sendResult(res, cache.get(cacheKey).result, true);
     if (pending.has(cacheKey)) return sendResult(res, await pending.get(cacheKey));
+    if (providerLimitUntil > time) return sendError(res, 429, 'Google Gemini has reached its quota or rate limit. Please wait before trying AI again.', 'GEMINI_RATE_LIMIT', Math.ceil((providerLimitUntil - time) / 1000));
     // Only trust Vercel's platform-set forwarding header there. On the Node
     // server use the socket address, never an arbitrary client-supplied header.
     const ip = env.VERCEL === '1' ? String(req.headers['x-vercel-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim() : req.socket?.remoteAddress || 'unknown';
-    const visitor = createHash('sha256').update(ip).digest('hex');
+    const ipId = createHash('sha256').update(ip).digest('hex');
+    const session = req.headers['x-tomo-session'];
+    const visitor = typeof session === 'string' && /^[a-f0-9]{32}$/.test(session)
+      ? createHash('sha256').update(JSON.stringify([ipId, session])).digest('hex') : ipId;
     if (visitors.has(visitor)) return sendError(res, 429, 'Please pause briefly before requesting another AI reading.', 'APP_COOLDOWN', Math.max(1, Math.ceil((visitors.get(visitor) - time) / 1000)));
-    if (visitors.size >= 10000 || active >= positive('TOMO_AI_MAX_CONCURRENT', 2)) return sendError(res, 503, 'Tomo is handling other readings. Please try again shortly.', 'APP_BUSY', 3);
-    if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', 5)) return sendError(res, 429, 'Tomo has reached its shared request limit for this minute.', 'APP_MINUTE_LIMIT', Math.max(1, Math.ceil((minute.start + 60000 - time) / 1000)));
+    const previousBurst = ipBursts.get(ipId);
+    if (previousBurst?.count >= READING_MAX_CONCURRENT) return sendError(res, 429, 'Please pause briefly before requesting another AI reading from this network.', 'APP_COOLDOWN', Math.max(1, Math.ceil((previousBurst.until - time) / 1000)));
+    if (visitors.size >= 10000 || active >= positive('TOMO_AI_MAX_CONCURRENT', READING_MAX_CONCURRENT)) return sendError(res, 503, 'Tomo is handling other readings. Please try again shortly.', 'APP_BUSY', 3);
+    if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', READING_REQUESTS_PER_MINUTE)) return sendError(res, 429, 'Tomo has reached its shared request limit for this minute.', 'APP_MINUTE_LIMIT', Math.max(1, Math.ceil((minute.start + 60000 - time) / 1000)));
     if (day.count >= positive('TOMO_AI_REQUESTS_PER_DAY', 100)) return sendError(res, 429, 'Tomo has reached its daily AI allowance. The built-in story is still available.', 'APP_DAILY_LIMIT', Math.max(1, Math.ceil((day.start + 86400000 - time) / 1000)));
     visitors.set(visitor, time + 3000);
+    const burst = previousBurst || { until: time + 3000, count: 0 };
+    burst.count++;
+    ipBursts.set(ipId, burst);
     minute.count++; day.count++; active++;
     const work = (async () => {
       const reference = randomUUID();
@@ -102,14 +114,18 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
         const reading = await read(p1Name, first, p2Name, second, relType, mood, score, env.GEMINI_API_KEY.trim(),
           { model: DEFAULT_TOMO_MODEL, timeoutMs: READING_TIMEOUT_MS, maxAttempts: 2, maxRequests: READING_MAX_REQUESTS, maxTransientRetries: 1, reserveRetry: () => {
             const retryTime = now();
+            if (providerLimitUntil > retryTime) return false;
             if (retryTime - minute.start >= 60000) minute = { start: retryTime, count: 0 };
             if (retryTime - day.start >= 86400000) day = { start: retryTime, count: 0 };
-            if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', 5) || day.count >= positive('TOMO_AI_REQUESTS_PER_DAY', 100)) return false;
+            if (minute.count >= positive('TOMO_AI_REQUESTS_PER_MINUTE', READING_REQUESTS_PER_MINUTE) || day.count >= positive('TOMO_AI_REQUESTS_PER_DAY', 100)) return false;
             minute.count++; day.count++;
             return true;
           } });
         return { reading };
       } catch (error) {
+        if (error.code === 'GEMINI_HTTP_429') {
+          providerLimitUntil = Math.max(providerLimitUntil, now() + (error.retryAfterSeconds || 60) * 1000);
+        }
         const code = /^GEMINI_(HTTP_\d{3}|NETWORK|RESPONSE|TIMEOUT|QUALITY|OUTPUT_LIMIT|INCOMPLETE)$/.test(error.code) ? error.code : 'UNKNOWN';
         const causeCode = error.cause?.cause?.code || error.cause?.code;
         const networkCause = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'UND_ERR_CONNECT_TIMEOUT', 'UND_ERR_SOCKET'].includes(causeCode) ? causeCode : undefined;
@@ -129,8 +145,12 @@ export function createReadingHandler({ env = process.env, read = fetchTomoDestin
         if (cache.size >= 8) cache.delete(cache.keys().next().value);
         cache.set(cacheKey, { result, expiresAt: now() + 10 * 60 * 1000 });
       } else {
-        // A failed generation must not leave the user locked out for 30s.
-        visitors.delete(visitor);
+        // Release only this request's cooldown, not a newer request's entry.
+        if (visitors.get(visitor) === time + 3000) visitors.delete(visitor);
+        if (ipBursts.get(ipId) === burst) {
+          burst.count--;
+          if (!burst.count) ipBursts.delete(ipId);
+        }
       }
       return sendResult(res, result);
     } finally { pending.delete(cacheKey); active--; }

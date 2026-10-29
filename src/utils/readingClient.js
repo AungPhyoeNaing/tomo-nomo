@@ -1,6 +1,20 @@
 import { validateReading, validateBurmeseReading } from './reading.js';
 import { READING_CLIENT_TIMEOUT_MS } from './readingPolicy.js';
 
+let browserSession;
+function getBrowserSession() {
+  if (browserSession) return browserSession;
+  try {
+    const saved = globalThis.sessionStorage?.getItem('tomo_reading_session');
+    if (/^[a-f0-9]{32}$/.test(saved || '')) browserSession = saved;
+  } catch { /* Storage can be disabled. Keep an in-memory session instead. */ }
+  // This ID separates browser cooldowns on shared Wi-Fi; it is not authentication.
+  browserSession ||= globalThis.crypto?.randomUUID?.().replace(/-/g, '') ||
+    Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+  try { globalThis.sessionStorage?.setItem('tomo_reading_session', browserSession); } catch { /* Optional storage. */ }
+  return browserSession;
+}
+
 export async function requestTomoReading(inputs, { signal } = {}) {
   const controller = new AbortController();
   const cancel = () => controller.abort();
@@ -9,7 +23,7 @@ export async function requestTomoReading(inputs, { signal } = {}) {
   const timer = setTimeout(cancel, READING_CLIENT_TIMEOUT_MS);
   try {
     const response = await fetch('/api/reading', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Tomo-Session': getBrowserSession() },
       body: JSON.stringify(inputs), signal: controller.signal
     });
     // Hosts may return text or HTML when a function crashes or times out.

@@ -189,7 +189,7 @@ test('production repairs a rejected reading once and accounts for both Google re
 
 test('concurrency limits identify busy server separately from a quota', async () => {
   const finishes = [];
-  const handler = createReadingHandler({ env, read: () => new Promise(resolve => finishes.push(resolve)) });
+  const handler = createReadingHandler({ env: { ...env, TOMO_AI_MAX_CONCURRENT: '2' }, read: () => new Promise(resolve => finishes.push(resolve)) });
   const a = handler(req(), res());
   const b = handler(req({ ...inputs, mood: 'Playful' }, { socket: { remoteAddress: '127.0.0.2' } }), res());
   const blocked = res();
@@ -199,6 +199,118 @@ test('concurrency limits identify busy server separately from a quota', async ()
   assert.equal(blocked.body.retryAfterSeconds, 3);
   for (const finish of finishes) finish({ chemistry_score: 72 });
   await Promise.all([a, b]);
+});
+
+test('five distinct sessions on shared Wi-Fi start concurrently and release all capacity', async () => {
+  let calls = 0;
+  const finishes = [];
+  const handler = createReadingHandler({ env, read: (...args) => {
+    calls++;
+    return new Promise(resolve => finishes.push(() => resolve({ chemistry_score: args[6] })));
+  } });
+  const sessionReq = i => req({ ...inputs, p1Name: `Player ${i}` }, {
+    headers: { ...req().headers, 'x-tomo-session': i.toString(16).padStart(32, '0') }
+  });
+  const results = Array.from({ length: 5 }, res);
+  const pending = results.map((result, i) => handler(sessionReq(i), result));
+  assert.equal(calls, 5, 'all five must start before any is finished');
+  const duplicateBrowser = res();
+  await handler(req({ ...inputs, p1Name: 'Another pair' }, { headers: sessionReq(0).headers }), duplicateBrowser);
+  assert.equal(duplicateBrowser.body.code, 'APP_COOLDOWN');
+  const sixth = res();
+  await handler(req({ ...inputs, p1Name: 'Sixth pair' }, { socket: { remoteAddress: '127.0.0.2' } }), sixth);
+  assert.equal(sixth.body.code, 'APP_BUSY');
+  assert.equal(calls, 5);
+  finishes.splice(0).forEach(finish => finish());
+  await Promise.all(pending);
+  results.forEach(result => assert.equal(result.statusCode, 200));
+  const next = handler(req({ ...inputs, p1Name: 'Sixth pair' }, { socket: { remoteAddress: '127.0.0.2' } }), sixth);
+  assert.equal(calls, 6);
+  finishes.splice(0).forEach(finish => finish());
+  await next;
+  assert.equal(sixth.statusCode, 200);
+});
+
+test('rotating browser IDs cannot bypass the shared network burst limit', async () => {
+  let calls = 0;
+  const handler = createReadingHandler({ env, read: async () => { calls++; return {}; } });
+  for (let i = 0; i < 6; i++) {
+    const result = res();
+    await handler(req({ ...inputs, p1Name: `Person ${i}` }, {
+      headers: { ...req().headers, 'x-tomo-session': i.toString(16).padStart(32, '0') }
+    }), result);
+    assert.equal(result.statusCode, i < 5 ? 200 : 429);
+    if (i === 5) assert.equal(result.body.code, 'APP_COOLDOWN');
+  }
+  assert.equal(calls, 5);
+});
+
+test('five simultaneous readings have budget for one repair each, but never an eleventh call', async t => {
+  const original = globalThis.fetch;
+  clearTomoReadingCache();
+  t.after(() => { globalThis.fetch = original; clearTomoReadingCache(); });
+  const attempts = new Map();
+  globalThis.fetch = async (_, options) => {
+    const prompt = JSON.parse(options.body).contents[0].parts[0].text;
+    const data = JSON.parse(prompt.split('INPUT_DATA_JSON:\n')[1].split('\nRepair instruction:')[0]);
+    const name = data.people[0].name;
+    const attempt = (attempts.get(name) || 0) + 1;
+    attempts.set(name, attempt);
+    const fixture = generateDeepProceduralReading(name, calculateSecretMetrics(name, inputs.p1Dob),
+      'Bob', calculateSecretMetrics('Bob', inputs.p2Dob), 'Friends', 'Sweet', 72);
+    return { ok: true, json: async () => ({ candidates: [{ finishReason: 'STOP', content: {
+      parts: [{ text: JSON.stringify(attempt === 1 ? { ...fixture, tomo_secret_advice: 'English' } : fixture) }]
+    } }] }) };
+  };
+  let time = 1000000;
+  const handler = createReadingHandler({ env, now: () => time });
+  const results = await Promise.all(Array.from({ length: 5 }, async (_, i) => {
+    const result = res();
+    await handler(req({ ...inputs, p1Name: `Reader ${i}` }, { socket: { remoteAddress: `127.0.0.${i + 1}` } }), result);
+    return result;
+  }));
+  for (const result of results) {
+    assert.equal(result.statusCode, 200);
+    assert.equal(result.body.readingInfo.requestAttempts, 2);
+  }
+  assert.deepEqual([...attempts.values()], [2, 2, 2, 2, 2]);
+  time += 4000;
+  const limited = res();
+  await handler(req({ ...inputs, p1Name: 'Eleventh request' }), limited);
+  assert.equal(limited.body.code, 'APP_MINUTE_LIMIT');
+  assert.equal(attempts.size, 5);
+});
+
+test('Google quota cooldown blocks new calls and repairs while keeping cached readings available', async t => {
+  const warn = console.warn;
+  console.warn = () => {};
+  t.after(() => { console.warn = warn; });
+  let time = 1000000, calls = 0;
+  let reserveRetry;
+  const handler = createReadingHandler({ env, now: () => time, read: async (...args) => {
+    calls++;
+    reserveRetry = args[8].reserveRetry;
+    if (calls === 2) throw Object.assign(new Error('Quota exceeded'), { code: 'GEMINI_HTTP_429', retryAfterSeconds: 42 });
+    return { chemistry_score: 72 };
+  } });
+  await handler(req(), res());
+  time += 4000;
+  const limited = res();
+  await handler(req({ ...inputs, mood: 'Mystic' }), limited);
+  assert.equal(limited.body.code, 'GEMINI_RATE_LIMIT');
+  assert.equal(reserveRetry(), false);
+  time += 1000;
+  const paused = res();
+  await handler(req({ ...inputs, mood: 'Playful' }), paused);
+  assert.equal(paused.body.code, 'GEMINI_RATE_LIMIT');
+  assert.equal(paused.headers['Retry-After'], '41');
+  const cached = res(); await handler(req(), cached);
+  assert.equal(cached.statusCode, 200);
+  assert.equal(calls, 2);
+  time += 41000;
+  const recovered = res(); await handler(req({ ...inputs, mood: 'Playful' }), recovered);
+  assert.equal(recovered.statusCode, 200);
+  assert.equal(calls, 3);
 });
 
 test('provider quota waits are kept separate from the app cooldown', async () => {
@@ -281,6 +393,7 @@ test('browser sends only reading inputs to same-origin endpoint and handles unav
     assert.equal(url, '/api/reading');
     assert.deepEqual(JSON.parse(options.body), inputs);
     assert.equal(options.headers['x-goog-api-key'], undefined);
+    assert.match(options.headers['X-Tomo-Session'], /^[a-f0-9]{32}$/);
     return { ok: false, status: 429, json: async () => ({ error: 'AI is busy.' }) };
   };
   await assert.rejects(requestTomoReading(inputs), { message: 'AI is busy.', code: 'TOMO_HTTP_429' });

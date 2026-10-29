@@ -67,10 +67,9 @@ body.dark .tomo-experience { --tomo-bg: #211a35; --tomo-paper: #302540; --tomo-i
 .tomo-choice, .tomo-tone { border-width: 2px; box-shadow: 0 3px 0 var(--tomo-line); transition: transform .15s, background .15s; }.tomo-choice:hover, .tomo-tone:hover { transform: translateY(-2px); }.tomo-choice.is-selected, .tomo-tone.is-selected { box-shadow: 0 3px 0 var(--tomo-accent); }.tomo-personalise { border-top-style: dashed; border-top-width: 2px; }
 .tomo-form-footer { border-top-style: dashed; border-top-width: 2px; }.tomo-form-footer p { font-weight: 600; }.tomo-form-actions { min-width: 190px; }.tomo-form-actions .tomo-primary { width: 100%; }
 .tomo-match-summary, .tomo-profile-panel, .tomo-letter { border-width: 2px; box-shadow: 0 5px 0 var(--tomo-line); }.tomo-match-summary { background: var(--tomo-paper); }.tomo-score-ring { filter: drop-shadow(0 5px 0 var(--tomo-tint)); }
-.tomo-loading-panel { border: 3px solid var(--tomo-accent); box-shadow: 0 8px 0 #51317e; }.tomo-loading-dots { display: inline-block; animation: loading-hop .8s ease-in-out infinite alternate; }
+.tomo-loading-panel { border: 3px solid var(--tomo-accent); box-shadow: 0 8px 0 #51317e; }
 body.dark .arcade-mode.mode-active { background: #593950; color: #fff0f7; }body.dark .arcade-mode.nomo-mode.mode-active { background: #294f53; color: #e4fffa; }
 @keyframes speech-pop { from { opacity: 0; scale: .8; } to { opacity: 1; scale: 1; } }
-@keyframes loading-hop { to { transform: translateY(-6px); } }
 @media(min-width: 1450px) { .tomo-experience .arcade-hero { padding-top: 55px; }.arcade-stage { height: 335px; }.duo-boop { bottom: 29px; scale: 1.1; transform-origin: left bottom; }.arcade-machine { margin-top: 32px; } }
 @media(max-width: 700px) {
   .tomo-header { min-height: 68px; }.tomo-brand strong { font-size: 23px; }.tomo-brand > span { width: 30px; height: 30px; font-size: 24px; }.tomo-nomo-link { padding: 0; }.tomo-header-actions { gap: 6px; }

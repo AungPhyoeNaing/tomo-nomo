@@ -4,6 +4,7 @@ import HeroSection from './components/HeroSection';
 import InputSection from './components/InputSection';
 import MatchResult from './components/MatchResult';
 import TomoPortrait from './components/TomoPortrait';
+import ReadingLoading from './components/ReadingLoading';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from './utils/astrology';
 import { generateDeepProceduralReading } from './utils/gemini';
 import { requestTomoReading } from './utils/readingClient';
@@ -34,8 +35,8 @@ function TomoApp() {
   const [aiRetrySeconds, setAiRetrySeconds] = useState(0);
   const requestIdRef = useRef(0);
   const demoTimerRef = useRef(null);
-  const loadingPanelRef = useRef(null);
   const readingControllerRef = useRef(null);
+  const readingTriggerRef = useRef(null);
 
   useEffect(() => {
     const update = () => setAiRetrySeconds(Math.max(0, Math.ceil((aiRetryUntil - Date.now()) / 1000)));
@@ -47,13 +48,6 @@ function TomoApp() {
     }, 1000);
     return () => clearInterval(timer);
   }, [aiRetryUntil]);
-
-  useEffect(() => {
-    if (!loading) return;
-    const previousFocus = document.activeElement;
-    loadingPanelRef.current?.focus();
-    return () => previousFocus?.focus({ preventScroll: true });
-  }, [loading]);
 
   // Person 1 State
   const [p1Name, setP1Name] = useState('သူရိန်');
@@ -154,6 +148,7 @@ function TomoApp() {
     setInputError('');
 
     const requestId = ++requestIdRef.current;
+    readingTriggerRef.current = document.activeElement;
     readingControllerRef.current = new AbortController();
     setLoading(true);
     const p1Secret = calculateSecretMetrics(firstName, p1Dob);
@@ -220,7 +215,7 @@ function TomoApp() {
       </header>
       <nav inert={loading ? '' : undefined} className={`tomo-section-nav ${result ? 'has-results' : ''}`} aria-label="Reading sections">{sections.map(([id, label]) => <button type="button" key={id} onClick={() => jumpToPage(id)} aria-current={activePage === id ? 'location' : undefined}>{label}</button>)}</nav>
       {toastMessage && <div className="tomo-toast" role="status"><span>{toastMessage}</span><button type="button" onClick={() => setToastMessage('')} aria-label="Dismiss notification">×</button></div>}
-      {loading && <div className="tomo-loading" role="dialog" aria-modal="true" aria-labelledby="loading-title"><div ref={loadingPanelRef} tabIndex={-1} className="tomo-loading-panel" role="status"><video src="/tomo-calculating.mp4" autoPlay loop muted playsInline aria-hidden="true" /><h2 id="loading-title">Building your duo’s story…</h2><p lang="my">တိုမိုက နှစ်ယောက်လုံးအတွက် ဖတ်ရှုချက်လေး ပြင်ဆင်နေပြီနော်။</p><button type="button" className="tomo-outline-button tomo-cancel-reading" onClick={cancelReading}>Cancel reading</button><span className="tomo-loading-dots" aria-hidden="true">✦ &nbsp; ✦ &nbsp; ✦</span></div></div>}
+      {loading && <ReadingLoading onCancel={cancelReading} returnFocusRef={readingTriggerRef} />}
       <main inert={loading ? '' : undefined} className="scroll-container tomo-main" onScroll={handleScroll} aria-busy={loading}>
         <HeroSection jumpToPage={jumpToPage} />
         <InputSection p1Name={p1Name} setP1Name={setP1Name} p1Dob={p1Dob} setP1Dob={setP1Dob} p2Name={p2Name} setP2Name={setP2Name} p2Dob={p2Dob} setP2Dob={setP2Dob} relType={relType} setRelType={setRelType} mood={mood} setMood={setMood} loading={loading} aiRetrySeconds={aiRetrySeconds} inputError={inputError} onCalculate={() => onCalculate(false)} onDemo={() => onCalculate(true)} />

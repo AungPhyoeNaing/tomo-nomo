@@ -1,0 +1,83 @@
+.tomo-loading-panel.tomo-letter-loading {
+  width: min(440px, 100%);
+  padding: 28px 32px 30px;
+  border-radius: 24px;
+}
+
+.tomo-letter-scene {
+  position: relative;
+  width: min(288px, 100%);
+  aspect-ratio: 1.42;
+  margin: 0 auto 20px;
+}
+
+.tomo-loading-letter {
+  position: absolute;
+  width: 46%;
+  right: 4%;
+  top: 5%;
+  transform: rotate(8deg);
+  filter: drop-shadow(0 5px 0 #17141d55);
+}
+
+.tomo-loading-mascot {
+  position: absolute;
+  width: 58%;
+  left: 0;
+  bottom: 1%;
+  animation: tomo-letter-bob 4s ease-in-out infinite;
+}
+
+.tomo-letter-scene .tomo-loading-mascot > .tomo-portrait {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tomo-letter-line {
+  stroke-dasharray: 1;
+  animation: tomo-letter-write 8s ease-in-out infinite;
+}
+.tomo-letter-line:nth-child(2) { animation-name: tomo-letter-write-two; }
+.tomo-letter-line:nth-child(3) { animation-name: tomo-letter-write-three; }
+.tomo-letter-line:nth-child(4) { animation-name: tomo-letter-write-four; }
+.tomo-letter-ink { animation: tomo-letter-ink 8s ease-in-out infinite; }
+
+.tomo-loading-panel.tomo-letter-loading h2 {
+  color: var(--tomo-ink);
+  font-size: clamp(25px, 5vw, 29px);
+  line-height: 1.25;
+}
+.tomo-loading-panel.tomo-letter-loading p { margin: 14px 0 0; }
+.tomo-letter-loading .tomo-loading-reassurance {
+  min-height: 3.2em;
+  margin: 12px 0 18px;
+  color: var(--tomo-ink);
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: .85;
+}
+.tomo-letter-loading .tomo-cancel-reading { min-height: 44px; }
+.tomo-letter-loading .tomo-cancel-reading:focus-visible { outline: 2px solid var(--tomo-ink); outline-offset: 5px; }
+
+@keyframes tomo-letter-bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-4px) rotate(1deg); } }
+@keyframes tomo-letter-write { 0%, 8% { stroke-dashoffset: 1; } 25%, 100% { stroke-dashoffset: 0; } }
+@keyframes tomo-letter-write-two { 0%, 23% { stroke-dashoffset: 1; } 40%, 100% { stroke-dashoffset: 0; } }
+@keyframes tomo-letter-write-three { 0%, 38% { stroke-dashoffset: 1; } 55%, 100% { stroke-dashoffset: 0; } }
+@keyframes tomo-letter-write-four { 0%, 53% { stroke-dashoffset: 1; } 70%, 100% { stroke-dashoffset: 0; } }
+@keyframes tomo-letter-ink { 0%, 85% { opacity: 1; } 96%, 100% { opacity: 0; } }
+
+@media (max-height: 600px) and (min-width: 701px) {
+  .tomo-letter-scene { width: 200px; margin-bottom: 12px; }
+  .tomo-loading-panel.tomo-letter-loading { max-height: calc(100dvh - 48px); overflow-y: auto; padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tomo-letter-loading :is(.tomo-loading-mascot, .tomo-letter-line, .tomo-letter-ink) { animation: none; }
+  .tomo-letter-line { stroke-dashoffset: 0; }
+  .tomo-letter-ink { opacity: 1; }
+}

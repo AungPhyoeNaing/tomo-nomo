@@ -115,10 +115,8 @@ body.dark .tomo-experience {
 .tomo-toast button { font-size: 22px; margin-left: auto; }
 .tomo-loading { position: fixed; inset: 0; z-index: 60; background: #21192388; backdrop-filter: blur(8px); display: grid; place-items: center; padding: 24px; }
 .tomo-loading-panel { background: var(--tomo-paper); padding: 40px; border-radius: 28px; max-width: 430px; text-align: center; }
-.tomo-loading-panel video { width: 112px; height: 112px; border-radius: 50%; margin: 0 auto 24px; }
 .tomo-loading-panel h2 { font: 500 28px 'Fredoka', sans-serif; }
 .tomo-loading-panel p { font-size: 15px; line-height: 2; color: var(--tomo-muted); margin-block: 18px; }
-.tomo-loading-dots { color: var(--tomo-accent); }
 .tomo-key-selector { display: grid; gap: 8px; font-size: 13px; }
 .tomo-footer { width: min(1080px, 100%); margin: 32px auto 0; padding: 25px 0 35px; border-top: 1px solid var(--tomo-line); font-size: 12px; color: var(--tomo-muted); display: flex; justify-content: space-between; gap: 20px; }
 .tomo-reading-tags { display: flex; flex-wrap: wrap; gap: 8px; }

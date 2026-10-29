@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { calculateDetailedMetricsBreakdown, getScoreResonanceTier } from '../utils/astrology';
+import { analyzePair, getScoreResonanceTier } from '../utils/astrology';
 import confetti from 'canvas-confetti';
 import PlayerAvatar from './PlayerAvatar';
 import TomoPortrait from './TomoPortrait';
+import { chartPlacementLabel } from '../utils/chartNotes';
 import { createTomoCard } from '../utils/destinyCard';
 import CardPreview from './CardPreview';
 
@@ -35,7 +36,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
     setExportedCard(null);
     setExportError('');
     const numericScore = Number(result.chemistry_score);
-    const targetScore = Math.min(100, Math.max(0, Number.isFinite(numericScore) ? Math.round(numericScore) : 85));
+    const targetScore = Math.min(100, Math.max(0, Number.isFinite(numericScore) ? Math.round(numericScore) : 50));
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       setAnimatedScore(targetScore);
       return;
@@ -64,10 +65,11 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
   const circumference = 283;
   const offset = circumference - (animatedScore / 100) * circumference;
 
-  const breakdown = result.p1Secret && result.p2Secret ? calculateDetailedMetricsBreakdown(result.p1Secret, result.p2Secret, relType) : [];
+  const analysis = useMemo(() => result.p1Secret && result.p2Secret ? analyzePair(result.p1Secret, result.p2Secret, relType) : null, [result, relType]);
+  const breakdown = analysis?.components || [];
   const p1 = result.p1Secret || {};
   const p2 = result.p2Secret || {};
-  const resonanceTier = getScoreResonanceTier(Number(result.chemistry_score) || 85);
+  const resonanceTier = getScoreResonanceTier(Number(result.chemistry_score));
 
   const handleDownloadCard = async () => {
     if (isExporting) return;
@@ -99,13 +101,13 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         <div className="tomo-reading-origin"><span>{result.readingInfo?.source === 'gemini' ? `Gemini AI · ${result.readingInfo.model}${result.readingInfo.cached ? ' · cached' : ''}` : result.readingInfo?.fallback ? 'Built-in fallback · AI did not complete' : 'Built-in story · no AI used'}</span><p>Astrology-inspired entertainment, not a measured personality or relationship probability. Birth time is not supplied; chart details are approximate.</p></div>
         {result.readingInfo?.fallback && result.readingInfo.failureMessage && <div className="tomo-reading-origin" role="status"><p>{result.readingInfo.failureMessage}{result.readingInfo.reference && <> Support reference: {result.readingInfo.reference}.</>}</p></div>}
         <div className="tomo-match-summary">
-          <div className="tomo-score-ring" role="img" aria-label={String(result.chemistry_score) + ' out of 100 symbolic game score'}>
+          <div className="tomo-score-ring" role="img" aria-label={String(result.chemistry_score) + ' out of 100 Tomo game points'}>
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-line)" strokeWidth="5" /><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-accent)" strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" /></svg>
-            <div><strong>{animatedScore}<small>%</small></strong><span>Symbolic game score</span></div>
+            <div><strong>{animatedScore}<small>/100</small></strong><span lang="my">Tomo ဂိမ်းအမှတ်</span></div>
           </div>
           <div className="tomo-match-story"><p className="tomo-section-kicker" lang="my">{resonanceTier.levelMm}</p><h3 lang="my">{result.relationship_title}</h3><p>A little insight into your shared rhythm, your differences, and the ways you can grow together.</p><button type="button" onClick={() => jumpToPage('page-readings')} className="tomo-text-button">Read your profiles <span aria-hidden="true">↓</span></button></div>
         </div>
-        <details className="tomo-metrics"><summary>What shapes your reading?<span>Explore the five influences</span></summary><div className="tomo-metric-grid">{breakdown.map((metric, index) => <div key={metricNames[index]}><p><span>{metricNames[index]}</span><strong>{metric.score}%</strong></p><div className="tomo-metric-track"><div style={{width: metric.score + '%'}} /></div></div>)}</div></details>
+        <details className="tomo-metrics"><summary>What shapes your reading?<span>Explore the five influences</span></summary><p className="tomo-score-explanation" lang="my">ကဏ္ဍတိုင်းကို 50 မှ စတွက်ပြီး အောက်ပါစည်းမျဉ်းများအရ တိုး/လျော့ပါတယ်။ နောက်ဆုံးအမှတ်မှာ ကဏ္ဍအလေးချိန်များနဲ့ ပေါင်းတွက်ပြီး အနီးဆုံးကိန်းပြည့်သို့ ဝိုင်းထားပါတယ်။ 50 သည် ဂိမ်းအလယ်အမှတ်ပါ။</p><div className="tomo-metric-grid">{breakdown.map((metric, index) => <div key={metricNames[index]}><p><span>{metricNames[index]}</span><strong>{Number(metric.score.toFixed(1))}/100</strong></p><div className="tomo-metric-track"><div style={{width: metric.score + '%'}} /></div><p className="tomo-metric-weight" lang="my">အလေးချိန် {Math.round(metric.weight * 100)}/100 · နောက်ဆုံးအမှတ်သို့ {metric.weightedDelta >= 0 ? '+' : ''}{Number(metric.weightedDelta.toFixed(3))}</p><ul className="tomo-metric-reasons" lang="my">{metric.rules.map((rule, ruleIndex) => <li key={ruleIndex}><strong>{rule.delta > 0 ? '+' : ''}{Number(rule.delta.toFixed(1))}</strong> {rule.reason}</li>)}</ul></div>)}</div>{analysis && <p className="tomo-score-explanation">50 {breakdown.map(metric => `${metric.weightedDelta >= 0 ? '+' : '−'} ${Math.abs(metric.weightedDelta).toFixed(3)}`).join(' ')} = {analysis.rawScore.toFixed(3)} → {analysis.score}/100</p>}</details>
         <div className="tomo-result-actions"><button type="button" disabled={isExporting} onClick={handleDownloadCard} className="tomo-outline-button">{isExporting ? 'Preparing your card…' : 'Save our card'} <span aria-hidden="true">↧</span></button><button type="button" onClick={() => jumpToPage('page-inputs')} className="tomo-text-button">Edit your details</button></div>
         {exportedCard && <p className="tomo-export-status" role="status">Your card is ready. <a href={exportedCard.url} download={exportedCard.filename}>Download PNG</a></p>}
         {exportError && <p className="tomo-form-error" role="alert">{exportError}</p>}
@@ -123,7 +125,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
           }}><PlayerAvatar number={index + 1} /><span>{name}<small>{index === 0 ? 'First person' : 'Second person'}</small></span><span className="tomo-profile-tab-mark" aria-hidden="true">{profileIndex === index ? '✦' : '↗'}</span></button>)}</div>
           <article id="profile-panel" role="tabpanel" aria-labelledby={'profile-tab-' + profileIndex} tabIndex={0} className="tomo-profile-panel">
             <ReadingText text={profileIndex === 0 ? result.tomo_deep_reading_p1 : result.tomo_deep_reading_p2} />
-            <details className="tomo-chart-notes"><summary>Birth chart notes</summary><div>{[['Sun', profile.western], ['Moon', profile.moonSign], ['Venus', profile.venusSign], ['Life path', profile.lifePathNumber]].filter(([, value]) => value).map(([label, value]) => <span key={label}>{label}<strong>{value}</strong></span>)}</div></details>
+            <details className="tomo-chart-notes"><summary>Birth chart notes</summary><p>Birth time and time zone were not supplied. Planet signs use noon UTC estimates; alternatives shown may apply at other birth times or time zones.</p><div>{[['Sun', chartPlacementLabel(profile, 'sun')], ['Moon', chartPlacementLabel(profile, 'moon')], ['Venus', chartPlacementLabel(profile, 'venus')], ['Mars', chartPlacementLabel(profile, 'mars')], ['Life path', profile.lifePathNumber]].filter(([, value]) => value).map(([label, value]) => <span key={label}>{label}<strong>{value}</strong></span>)}</div><p>Chinese year uses an approximate February 4 solar-year boundary. Mahabote houses use a simplified Myanmar-year calculation.</p></details>
           </article>
         </div>
       </section>

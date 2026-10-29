@@ -25,8 +25,8 @@ test('all 1,260 sampled scores are unchanged by swapping player order', () => {
 });
 
 test('same animals use the intended same-animal score and harmonic numerology is symmetric', () => {
-  assert.equal(getChineseAnimalSynergyScore({ animal: 'Rat' }, { animal: 'Rat' }), 85);
-  assert.equal(getChineseAnimalSynergyScore({ animal: 'Rat' }, { animal: 'Dragon' }), 98);
+  assert.equal(getChineseAnimalSynergyScore({ animal: 'Rat' }, { animal: 'Rat' }), 60);
+  assert.equal(getChineseAnimalSynergyScore({ animal: 'Rat' }, { animal: 'Dragon' }), 80);
   for (const [first, second] of [[1, 5], [2, 8], [3, 9]]) {
     const a = { lifePathNumber: first, destinyNumber: 1, destinyTriad: 'mind' };
     const b = { lifePathNumber: second, destinyNumber: 2, destinyTriad: 'mind' };

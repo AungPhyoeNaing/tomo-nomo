@@ -129,39 +129,39 @@ describe('Astrology & Numerology Engine Tests', () => {
       const distTrine = getAngularDistance(0, 120);
       assert.equal(distTrine, 120);
       const aspectTrine = getAspectScore(distTrine);
-      assert.equal(aspectTrine.score, 98);
+      assert.equal(aspectTrine.score, 74);
 
       const distSquare = getAngularDistance(10, 100);
       assert.equal(distSquare, 90);
       const aspectSquare = getAspectScore(distSquare);
-      assert.equal(aspectSquare.score, 58);
+      assert.equal(aspectSquare.score, 26);
     });
   });
 
   describe('6. Match Resonance % Accuracy & Resonance Tiers', () => {
     it('maps scores accurately into 4 distinct Resonance Tiers', () => {
       const tier95 = getScoreResonanceTier(95);
-      assert.equal(tier95.tier, 'COSMIC_SOULMATES');
+      assert.equal(tier95.tier, 'SYMBOLIC_ALIGNMENT');
 
-      const tier85 = getScoreResonanceTier(85);
-      assert.equal(tier85.tier, 'HARMONIOUS_SYNERGY');
+      const tier85 = getScoreResonanceTier(65);
+      assert.equal(tier85.tier, 'SOME_ALIGNMENT');
 
-      const tier75 = getScoreResonanceTier(75);
-      assert.equal(tier75.tier, 'DYNAMIC_GROWTH');
+      const tier75 = getScoreResonanceTier(50);
+      assert.equal(tier75.tier, 'MIXED_SYMBOLS');
 
-      const tier60 = getScoreResonanceTier(60);
-      assert.equal(tier60.tier, 'KARMIC_CATALYST');
+      const tier60 = getScoreResonanceTier(30);
+      assert.equal(tier60.tier, 'CONTRASTING_SYMBOLS');
     });
 
-    it('computes weighted score between 45 and 99', () => {
+    it('computes weighted score between 0 and 100', () => {
       const p1 = calculateSecretMetrics('သူရိန်', '1996-06-15');
       const p2 = calculateSecretMetrics('သီရိ', '1996-10-08');
 
       const friendsScore = calculateAlgorithmicScore(p1, p2, 'Friends');
       const coupleScore = calculateAlgorithmicScore(p1, p2, 'Couple');
 
-      assert.ok(friendsScore >= 45 && friendsScore <= 99);
-      assert.ok(coupleScore >= 45 && coupleScore <= 99);
+      assert.ok(friendsScore >= 0 && friendsScore <= 100);
+      assert.ok(coupleScore >= 0 && coupleScore <= 100);
     });
 
     it('generates 5 distinct breakdown categories', () => {
@@ -172,7 +172,7 @@ describe('Astrology & Numerology Engine Tests', () => {
       assert.equal(breakdown.length, 5);
       breakdown.forEach(m => {
         assert.ok(m.label);
-        assert.ok(m.score >= 45 && m.score <= 100);
+        assert.ok(m.score >= 0 && m.score <= 100);
       });
     });
   });
@@ -233,11 +233,11 @@ describe('Astrology & Numerology Engine Tests', () => {
       const synthesis = getCrossSystemSynthesisReport(p1, p2, 'Couple');
 
       // Verify all 5 pillar sub-scores exist and are calculated
-      assert.ok(synthesis.breakdownScores.zodiacScore >= 45 && synthesis.breakdownScores.zodiacScore <= 99);
-      assert.ok(synthesis.breakdownScores.mahaboteScore >= 45 && synthesis.breakdownScores.mahaboteScore <= 99);
-      assert.ok(synthesis.breakdownScores.animalScore >= 45 && synthesis.breakdownScores.animalScore <= 99);
-      assert.ok(synthesis.breakdownScores.elementScore >= 45 && synthesis.breakdownScores.elementScore <= 99);
-      assert.ok(synthesis.breakdownScores.numScore >= 45 && synthesis.breakdownScores.numScore <= 99);
+      assert.ok(synthesis.breakdownScores.zodiacScore >= 0 && synthesis.breakdownScores.zodiacScore <= 100);
+      assert.ok(synthesis.breakdownScores.mahaboteScore >= 0 && synthesis.breakdownScores.mahaboteScore <= 100);
+      assert.ok(synthesis.breakdownScores.animalScore >= 0 && synthesis.breakdownScores.animalScore <= 100);
+      assert.ok(synthesis.breakdownScores.elementScore >= 0 && synthesis.breakdownScores.elementScore <= 100);
+      assert.ok(synthesis.breakdownScores.numScore >= 0 && synthesis.breakdownScores.numScore <= 100);
 
       // Verify cross-system commonalities are extracted
       assert.ok(synthesis.commonalitySynthesis.western.includes('Sun-Sun'));
@@ -247,7 +247,7 @@ describe('Astrology & Numerology Engine Tests', () => {
       assert.ok(synthesis.commonalitySynthesis.numerology.includes('Life Path'));
 
       // Verify overall resonance score is calculated
-      assert.ok(synthesis.algorithmicScore >= 45 && synthesis.algorithmicScore <= 99);
+      assert.ok(synthesis.algorithmicScore >= 0 && synthesis.algorithmicScore <= 100);
       assert.ok(synthesis.scoreTier.tier);
     });
   });

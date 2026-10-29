@@ -1,3 +1,4 @@
+import { aspectGameRule, analyzeSymbolicPair, westernSection, mahaboteSection, animalSection, elementSection, numerologySection } from './pairScoring.js';
 import { Body, GeoVector, Ecliptic, SunPosition } from '#tomo-astronomy';
 
 // =========================================================
@@ -41,22 +42,36 @@ export function getZodiacFromLongitude(elon) {
 }
 
 // Astronomical Ephemeris Calculation for Sun, Moon, Venus, Mars
+const planetCache = new Map();
+const HOUR_MS = 3600000;
+export const CALCULATION_VERSION = 'chart-v3-neutral-score';
+
 export function getAstronomicalPlanets(dateString) {
+  if (planetCache.has(dateString)) return structuredClone(planetCache.get(dateString));
   try {
     const parts = (dateString || '1996-06-15').split('-').map(Number);
     const utcDate = new Date(Date.UTC(parts[0] || 1996, (parts[1] || 6) - 1, parts[2] || 15, 12, 0, 0));
 
-    const sunPos = SunPosition(utcDate);
-    const moonPos = Ecliptic(GeoVector(Body.Moon, utcDate, true));
-    const venusPos = Ecliptic(GeoVector(Body.Venus, utcDate, true));
-    const marsPos = Ecliptic(GeoVector(Body.Mars, utcDate, true));
-
-    return {
-      sun: { ...getZodiacFromLongitude(sunPos.elon), lon: sunPos.elon },
-      moon: { ...getZodiacFromLongitude(moonPos.elon), lon: moonPos.elon },
-      venus: { ...getZodiacFromLongitude(venusPos.elon), lon: venusPos.elon },
-      mars: { ...getZodiacFromLongitude(marsPos.elon), lon: marsPos.elon }
-    };
+    const positionsAt = date => Object.fromEntries([
+      ['sun', SunPosition(date).elon],
+      ...[['moon', Body.Moon], ['venus', Body.Venus], ['mars', Body.Mars]]
+        .map(([key, body]) => [key, Ecliptic(GeoVector(body, date, true)).elon])
+    ].map(([key, lon]) => [key, { ...getZodiacFromLongitude(lon), lon }]));
+    const result = positionsAt(utcDate);
+    const options = Object.fromEntries(Object.keys(result).map(key => [key, new Set([result[key].nameEn])]));
+    // A local birthdate with unknown time AND time zone spans up to 50 UTC
+    // hours (UTC+14 through UTC-12). Sample every six hours plus the end.
+    // These are possible alternatives, not a precise ingress-time search.
+    const start = utcDate.getTime() - 26 * HOUR_MS;
+    const end = utcDate.getTime() + 24 * HOUR_MS;
+    for (let instant = start; instant < end + 6 * HOUR_MS; instant += 6 * HOUR_MS) {
+      for (const [key, position] of Object.entries(positionsAt(new Date(Math.min(instant, end))))) options[key].add(position.nameEn);
+    }
+    result.possibleSigns = Object.fromEntries(Object.entries(options).map(([key, values]) => [key, [...values]]));
+    // Bounded, memory-only cache: astronomical work depends on date, not name.
+    if (planetCache.size >= 64) planetCache.delete(planetCache.keys().next().value);
+    planetCache.set(dateString, structuredClone(result));
+    return result;
   } catch (err) {
     console.warn('Astronomy engine calculation fallback:', err);
     return null;
@@ -72,50 +87,15 @@ export function getAngularDistance(lon1, lon2) {
 }
 
 // Major Western Astrological Aspects with harmonic scoring
-export function getAspectScore(angle) {
-  if (angle === null || angle === undefined) return null;
-  if (Math.abs(angle - 120) <= 8) return { aspect: 'Trine (120°)', score: 98, harmonic: true };
-  if (angle <= 8) return { aspect: 'Conjunction (0°)', score: 95, harmonic: true };
-  if (Math.abs(angle - 60) <= 6) return { aspect: 'Sextile (60°)', score: 92, harmonic: true };
-  if (Math.abs(angle - 180) <= 8) return { aspect: 'Opposition (180°)', score: 80, harmonic: false };
-  if (Math.abs(angle - 30) <= 4) return { aspect: 'Semi-Sextile (30°)', score: 74, harmonic: false };
-  if (Math.abs(angle - 150) <= 4) return { aspect: 'Inconjunct (150°)', score: 64, harmonic: false };
-  if (Math.abs(angle - 90) <= 7) return { aspect: 'Square (90°)', score: 58, harmonic: false };
-  return null;
-}
+export const getAspectScore = aspectGameRule;
 
 // Score Resonance Tier Classifier
 export function getScoreResonanceTier(score) {
-  const s = Math.round(score);
-  if (s >= 90) {
-    return {
-      tier: 'COSMIC_SOULMATES',
-      levelMm: 'စကြဝဠာ ရေစက် / ထူးခြားသော သဟဇာတ (Cosmic Soul Resonance)',
-      vibe: 'deep soul sync, intuitive understanding, effortless flow, mutual inspiration',
-      guidance: 'Highlight natural harmony, psychic-like mutual understanding, shared inspiration, and deep ease in each other’s presence.'
-    };
-  } else if (s >= 80) {
-    return {
-      tier: 'HARMONIOUS_SYNERGY',
-      levelMm: 'အံဝင်ခွင်ကျ ရင်းနှီးမှု / အပြန်အလှန် ဖြည့်ဆည်းပေးနိုင်သော ရေစက် (Harmonious Synergy)',
-      vibe: 'solid camaraderie, complementary strengths, balanced trust, minor healthy quirks',
-      guidance: 'Highlight strong camaraderie, complementary strengths where one person balances the other, and reliable loyalty.'
-    };
-  } else if (s >= 70) {
-    return {
-      tier: 'DYNAMIC_GROWTH',
-      levelMm: 'မတူကွဲပြားသော ဆွဲဆောင်မှု / အညှိအနှိုင်း လိုအပ်သော ရေစက် (Dynamic Polarity & Growth)',
-      vibe: 'sparky, contrasting personalities, communication adjustments needed, lively differences',
-      guidance: 'Highlight how they attract despite having very different styles (e.g. planner vs spontaneous, quiet vs loud), with honest growth advice on mutual compromise.'
-    };
-  } else {
-    return {
-      tier: 'KARMIC_CATALYST',
-      levelMm: 'စိန်ခေါ်မှုများသော ရေစက် / စိတ်ရှည်မှုဖြင့် တည်ဆောက်ရမည့် ဆက်ဆံရေး (Karmic Catalyst & Patience)',
-      vibe: 'high friction, distinct ego styles, trial & error, high lesson value, strong individual wills',
-      guidance: 'Highlight strong contrasting traits, constructive friction, how misunderstandings happen if words are misunderstood, and give loving, realistic patience advice.'
-    };
-  }
+  const value = Number.isFinite(score) ? score : 50;
+  if (value >= 75) return { tier: 'SYMBOLIC_ALIGNMENT', levelMm: 'ဂိမ်းစည်းမျဉ်းများအရ ကိုက်ညီသောအချက်များ များသည်' };
+  if (value >= 60) return { tier: 'SOME_ALIGNMENT', levelMm: 'ဂိမ်းစည်းမျဉ်းများအရ ကိုက်ညီသောအချက်အချို့ ရှိသည်' };
+  if (value >= 40) return { tier: 'MIXED_SYMBOLS', levelMm: 'ကိုက်ညီမှုနှင့် ကွာခြားမှု ရောနှောနေသော ဂိမ်းအမှတ်' };
+  return { tier: 'CONTRASTING_SYMBOLS', levelMm: 'ဂိမ်းစည်းမျဉ်းများအရ ကွာခြားသောအချက်များ များသည်' };
 }
 
 // Helper: Parse date ISO string into Local Midnight
@@ -323,8 +303,9 @@ export function calculateSecretMetrics(name, dateString) {
     }
   }
 
-  // Astronomical Planetry Positions (Moon, Venus, Mars)
+  // Use the same astronomical Sun for labels, elements, modalities and score.
   const astro = getAstronomicalPlanets(dateString);
+  if (astro) westernObj = { ...WESTERN_ZODIAC.find(sign => sign.key === astro.sun.key), ...astro.sun };
   const moonObj = astro?.moon || westernObj;
   const venusObj = astro?.venus || westernObj;
   const marsObj = astro?.mars || westernObj;
@@ -397,328 +378,42 @@ export function calculateSecretMetrics(name, dateString) {
     lifePathArchetype: lifePathInfo.archetype,
     lifePathTrait: lifePathInfo.trait,
 
-    dateString
-  };
-}
-
-// =========================================================
-// PRECISE 5-PILLAR ASTROLOGICAL SCORING ENGINE
-// =========================================================
-
-// 1. Multi-Dimensional Western Zodiac & Planetary Synergy (22% weight)
-export function getWesternSynergyScore(p1, p2) {
-  const e1 = p1.westernElement;
-  const e2 = p2.westernElement;
-  let score = 75;
-
-  // 1. Sun-Sun Aspect or Element Base
-  const sunAngle = getAngularDistance(p1.sunLon, p2.sunLon);
-  const sunAspect = getAspectScore(sunAngle);
-  if (sunAspect) {
-    score = sunAspect.score;
-  } else {
-    // Elemental synergies
-    if (e1 === e2) score = 88; // Same element: natural empathy
-    else if ((e1 === 'Fire' && e2 === 'Air') || (e1 === 'Air' && e2 === 'Fire')) score = 94; // Passion & inspiration
-    else if ((e1 === 'Earth' && e2 === 'Water') || (e1 === 'Water' && e2 === 'Earth')) score = 93; // Nourishing growth
-    else if ((e1 === 'Fire' && e2 === 'Water') || (e1 === 'Water' && e2 === 'Fire')) score = 62; // Steamy friction
-    else if ((e1 === 'Earth' && e2 === 'Air') || (e1 === 'Air' && e2 === 'Earth')) score = 66; // Practical vs idea clash
-    else score = 75;
-  }
-
-  // 2. Moon-Moon Emotional Alignment
-  const moonAngle = getAngularDistance(p1.moonLon, p2.moonLon);
-  const moonAspect = getAspectScore(moonAngle);
-  if (moonAspect) {
-    if (moonAspect.harmonic) score += 4;
-    else if (moonAspect.score < 70) score -= 3;
-  } else if (p1.moonElement && p2.moonElement) {
-    if (p1.moonElement === p2.moonElement) score += 2;
-    else if (matchesPair(p1.moonElement, p2.moonElement, [['Fire', 'Air'], ['Earth', 'Water']])) score += 2;
-    else if (matchesPair(p1.moonElement, p2.moonElement, [['Fire', 'Water'], ['Earth', 'Air']])) score -= 2;
-  }
-
-  // 3. Venus-Mars Chemistry Alignment
-  const chemistryAdjustments = [[p1.venusLon, p2.marsLon], [p2.venusLon, p1.marsLon]].map(([venus, mars]) => {
-    const aspect = getAspectScore(getAngularDistance(venus, mars));
-    return aspect?.harmonic ? 3 : aspect && aspect.score < 70 ? -2 : 0;
-  });
-  score += (chemistryAdjustments[0] + chemistryAdjustments[1]) / 2;
-
-  // Modality balance
-  if (p1.westernModality !== p2.westernModality) score += 2;
-  return Math.min(99, Math.max(48, score));
-}
-
-// 2. Burmese Mahabote & Planetary Synergy Sub-score (24% weight)
-export function getMahaboteSynergyScore(p1, p2) {
-  const d1 = p1.dayIndex;
-  const d2 = p2.dayIndex;
-  let score = 76;
-
-  // Traditional Myanmar Planetary Alliances (မဟာဘုတ် မိတ်ဖက်များ)
-  // တနင်္ဂနွေ (0) + အင်္ဂါ (2) -> အိုဃ်းပုဒ် မိတ်
-  // တနင်္လာ (1) + ဗုဒ္ဓဟူး (3) -> မင်္ဂလာ မိတ်
-  // သောကြာ (5) + စနေ (6) -> သုသာန် မိတ်
-  // ကြာသပတေး (4) + ရာဟု -> ဝေဒ မိတ်
-  const isBestFriendPair = 
-    (d1 === 0 && d2 === 2) || (d1 === 2 && d2 === 0) ||
-    (d1 === 1 && d2 === 3) || (d1 === 3 && d2 === 1) ||
-    (d1 === 5 && d2 === 6) || (d1 === 6 && d2 === 5);
-
-  // Traditional Myanmar Planetary Enmities (မဟာဘုတ် ရန်ဘက်များ)
-  // တနင်္ဂနွေ (0) + ကြာသပတေး (4) ရန်
-  // တနင်္လာ (1) + သောကြာ (5) ရန်
-  // အင်္ဂါ (2) + စနေ (6) ရန်
-  const isEnmityPair = 
-    (d1 === 0 && d2 === 4) || (d1 === 4 && d2 === 0) ||
-    (d1 === 1 && d2 === 5) || (d1 === 5 && d2 === 1) ||
-    (d1 === 2 && d2 === 6) || (d1 === 6 && d2 === 2);
-
-  if (isBestFriendPair) score = 96;
-  else if (isEnmityPair) score = 56;
-  else if (d1 === d2) score = 86; // Same birthday
-  else score = 78;
-
-  // House alignment
-  if (p1.mahaboteHouse === p2.mahaboteHouse) score += 3;
-  return Math.min(99, Math.max(48, score));
-}
-
-// 3. Chinese Zodiac San He / Liu He Sub-score (20% weight)
-export function getChineseAnimalSynergyScore(p1, p2) {
-  const sanHeTrines = [
-    ['Rat', 'Dragon', 'Monkey'],
-    ['Ox', 'Snake', 'Rooster'],
-    ['Tiger', 'Horse', 'Dog'],
-    ['Rabbit', 'Goat', 'Pig']
-  ];
-  const liuHePairs = [
-    ['Rat', 'Ox'], ['Tiger', 'Pig'], ['Rabbit', 'Dog'],
-    ['Dragon', 'Rooster'], ['Snake', 'Monkey'], ['Horse', 'Goat']
-  ];
-  const liuChongConflicts = [
-    ['Rat', 'Horse'], ['Ox', 'Goat'], ['Tiger', 'Monkey'],
-    ['Rabbit', 'Rooster'], ['Dragon', 'Dog'], ['Snake', 'Pig']
-  ];
-  const liuHaiHarms = [
-    ['Rat', 'Goat'], ['Ox', 'Horse'], ['Tiger', 'Snake'],
-    ['Rabbit', 'Dragon'], ['Monkey', 'Pig'], ['Rooster', 'Dog']
-  ];
-
-  const a1 = p1.animal;
-  const a2 = p2.animal;
-
-  const isTrine = sanHeTrines.some(t => t.includes(a1) && t.includes(a2));
-  const isLiuHe = liuHePairs.some(p => (p[0] === a1 && p[1] === a2) || (p[0] === a2 && p[1] === a1));
-  const isChong = liuChongConflicts.some(p => (p[0] === a1 && p[1] === a2) || (p[0] === a2 && p[1] === a1));
-  const isHarm = liuHaiHarms.some(p => (p[0] === a1 && p[1] === a2) || (p[0] === a2 && p[1] === a1));
-
-  if (a1 && a1 === a2) return 85; // Same animal is not a distinct trine pairing.
-  if (isTrine) return 98; // San He Trine
-  if (isLiuHe) return 95; // Liu He Secret Friend
-  if (isChong) return 52; // Liu Chong Direct Clash
-  if (isHarm) return 58; // Liu Hai Mutual Harm
-  return 78;
-}
-
-// 4. Chinese 5 Elements Cycle Sub-score (18% weight)
-export function getFiveElementsSynergyScore(p1, p2) {
-  const e1 = p1.elementKey || 'Wood';
-  const e2 = p2.elementKey || 'Wood';
-
-  // Generating Cycle (Sheng / အပြန်အလှန် ဖြစ်ထွန်းစေသောဓာတ်)
-  const generatingPairs = [
-    ['Wood', 'Fire'], ['Fire', 'Earth'], ['Earth', 'Metal'],
-    ['Metal', 'Water'], ['Water', 'Wood']
-  ];
-
-  // Overcoming Cycle (Ke / အပြန်အလှန် ထိန်းချုပ်/ဖျက်ဆီးသောဓာတ်)
-  const overcomingPairs = [
-    ['Wood', 'Earth'], ['Earth', 'Water'], ['Water', 'Fire'],
-    ['Fire', 'Metal'], ['Metal', 'Wood']
-  ];
-
-  const isGenerating = generatingPairs.some(p => (p[0] === e1 && p[1] === e2) || (p[0] === e2 && p[1] === e1));
-  const isOvercoming = overcomingPairs.some(p => (p[0] === e1 && p[1] === e2) || (p[0] === e2 && p[1] === e1));
-
-  if (isGenerating) return 96;
-  if (e1 === e2) return 86;
-  if (isOvercoming) return 55;
-  return 78;
-}
-
-// 5. Dual Numerology (Life Path & Destiny) Sub-score (16% weight)
-const matchesPair = (first, second, pairs) => pairs.some(([a, b]) => (first === a && second === b) || (first === b && second === a));
-const HARMONIC_LIFE_PATH_PAIRS = [[1, 5], [1, 7], [2, 4], [2, 8], [3, 6], [3, 9]];
-
-export function getNumerologySynergyScore(p1, p2) {
-  const t1 = p1.destinyTriad || 'mind';
-  const t2 = p2.destinyTriad || 'mind';
-  const d1 = p1.destinyNumber;
-  const d2 = p2.destinyNumber;
-  const lp1 = p1.lifePathNumber || 1;
-  const lp2 = p2.lifePathNumber || 1;
-
-  let score = 76;
-
-  // Life Path Harmonic Synergies
-  if (lp1 === lp2) score = 92;
-  else if (
-    matchesPair(lp1, lp2, HARMONIC_LIFE_PATH_PAIRS) ||
-    (lp1 === 11 || lp2 === 11 || lp1 === 22 || lp2 === 22 || lp1 === 33 || lp2 === 33)
-  ) {
-    score = 96;
-  } else if (
-    (lp1 === 1 && lp2 === 4) || (lp1 === 4 && lp2 === 1) ||
-    (lp1 === 5 && lp2 === 4) || (lp1 === 4 && lp2 === 5) ||
-    (lp1 === 7 && lp2 === 8) || (lp1 === 8 && lp2 === 7)
-  ) {
-    score = 58; // Incompatible life purpose styles (High freedom vs High rigidity)
-  }
-
-  // Name Destiny Triad boost
-  if (t1 === t2 && d1 !== d2) score += 3;
-  else if (d1 === d2) score += 2;
-
-  return Math.min(99, Math.max(50, score));
-}
-
-// Combined Transparent Breakdown Metrics (Distinct for Couple vs Friends mode)
-export function calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType) {
-  const isCouple = relType === 'Couple';
-  const zodiacScore = getWesternSynergyScore(p1Secret, p2Secret);
-  const mahaboteScore = getMahaboteSynergyScore(p1Secret, p2Secret);
-  const animalScore = getChineseAnimalSynergyScore(p1Secret, p2Secret);
-  const elementScore = getFiveElementsSynergyScore(p1Secret, p2Secret);
-  const numScore = getNumerologySynergyScore(p1Secret, p2Secret);
-
-  if (isCouple) {
-    return [
-      { label: '💖 Romantic Planetary Chemistry (အချစ်ရေးနှင့် Venus-Mars ဂြိုဟ်သဟဇာတ)', score: zodiacScore, color: 'from-rose-500 to-amber-500' },
-      { label: '☀️ Mahabote Soul Sanctuary (မဟာဘုတ် ၇ ဌာန ရိုမန်တစ်စွမ်းအင်)', score: mahaboteScore, color: 'from-amber-500 to-orange-500' },
-      { label: '🐉 Chinese Zodiac Trine (တရုတ် ၁၂ ရာသီ သဟဇာတ)', score: animalScore, color: 'from-red-500 to-rose-600' },
-      { label: '🪵 5 Elements Yin-Yang Balance (တရုတ် ၅ ပါး ဓာတ်သံသရာ)', score: elementScore, color: 'from-emerald-500 to-teal-500' },
-      { label: '🔢 Dual Numerology Life Purpose (ဘဝခရီးနှင့် အမည်ဂဏန်းဗေဒ)', score: numScore, color: 'from-sky-500 to-indigo-600' }
-    ];
-  }
-
-  return [
-    { label: '🌟 Platonic Intellect & Planetary Synergy (မိတ်ဆွေစစ် ရာသီခွင် သဟဇာတ)', score: zodiacScore, color: 'from-rose-500 to-amber-500' },
-    { label: '☀️ Mahabote Camaraderie Energy (မဟာဘုတ် ၇ ဌာန မိတ်ဆွေစွမ်းအင်)', score: mahaboteScore, color: 'from-amber-500 to-orange-500' },
-    { label: '🐉 Chinese Zodiac Social Alliance (တရုတ် ၁၂ ရာသီ မိတ်ဖက်အဖွဲ့)', score: animalScore, color: 'from-red-500 to-rose-600' },
-    { label: '🪵 5 Elements Energy Flow Balance (တရုတ် ၅ ပါး ဓာတ်သံသရာ)', score: elementScore, color: 'from-emerald-500 to-teal-500' },
-    { label: '🔢 Dual Numerology Life Path Collaboration (ဘဝလမ်းကြောင်း ပူးပေါင်းမှု)', score: numScore, color: 'from-sky-500 to-indigo-600' }
-  ];
-}
-
-// True Weighted Mathematical Chemistry Score Engine
-export function calculateAlgorithmicScore(p1Secret, p2Secret, relType) {
-  const isCouple = relType === 'Couple';
-  const zodiacScore = getWesternSynergyScore(p1Secret, p2Secret);
-  const mahaboteScore = getMahaboteSynergyScore(p1Secret, p2Secret);
-  const animalScore = getChineseAnimalSynergyScore(p1Secret, p2Secret);
-  const elementScore = getFiveElementsSynergyScore(p1Secret, p2Secret);
-  const numScore = getNumerologySynergyScore(p1Secret, p2Secret);
-
-  let total;
-  if (isCouple) {
-    // Couple mode: Stronger weight on Venus/Mars Planetary aspects (28%) and Mahabote Soul Sanctuary (22%)
-    total = (zodiacScore * 0.28) + (mahaboteScore * 0.22) + (animalScore * 0.18) + (elementScore * 0.18) + (numScore * 0.14);
-  } else {
-    // Friends mode: Stronger weight on Chinese Social Alliances (24%), Mahabote (22%), Western communication (20%)
-    total = (zodiacScore * 0.20) + (mahaboteScore * 0.22) + (animalScore * 0.24) + (elementScore * 0.18) + (numScore * 0.16) + 1;
-  }
-
-  return Math.min(99, Math.max(45, Math.round(total)));
-}
-
-// 5-Pillar Cross-System Commonalities & Synthesis Report
-export function getCrossSystemSynthesisReport(p1, p2, relType) {
-  const zodiacScore = getWesternSynergyScore(p1, p2);
-  const mahaboteScore = getMahaboteSynergyScore(p1, p2);
-  const animalScore = getChineseAnimalSynergyScore(p1, p2);
-  const elementScore = getFiveElementsSynergyScore(p1, p2);
-  const numScore = getNumerologySynergyScore(p1, p2);
-  const algorithmicScore = calculateAlgorithmicScore(p1, p2, relType);
-  const scoreTier = getScoreResonanceTier(algorithmicScore);
-
-  // 1. Western Astrology Ephemeris & Elements
-  const sunAngle = getAngularDistance(p1.sunLon, p2.sunLon);
-  const sunAspect = getAspectScore(sunAngle);
-  const moonAngle = getAngularDistance(p1.moonLon, p2.moonLon);
-  const moonAspect = getAspectScore(moonAngle);
-  const venusMarsAngle = getAngularDistance(p1.venusLon, p2.marsLon);
-  const venusMarsAspect = getAspectScore(venusMarsAngle);
-
-  // 2. Mahabote Planetary Alliances & Houses
-  const d1 = p1.dayIndex;
-  const d2 = p2.dayIndex;
-  const isBestFriendPair = 
-    (d1 === 0 && d2 === 2) || (d1 === 2 && d2 === 0) ||
-    (d1 === 1 && d2 === 3) || (d1 === 3 && d2 === 1) ||
-    (d1 === 5 && d2 === 6) || (d1 === 6 && d2 === 5);
-  const isEnmityPair = 
-    (d1 === 0 && d2 === 4) || (d1 === 4 && d2 === 0) ||
-    (d1 === 1 && d2 === 5) || (d1 === 5 && d2 === 1) ||
-    (d1 === 2 && d2 === 6) || (d1 === 6 && d2 === 2);
-  const mahaboteDynamic = isBestFriendPair 
-    ? 'Ancient Myanmar Planetary Alliance (မဟာဘုတ် မိတ်ဖက်ဂြိုဟ်တွဲ)' 
-    : (isEnmityPair ? 'Planetary Polarity / Growth Challenge (မဟာဘုတ် ရန်ဘက်/စိန်ခေါ်မှုဂြိုဟ်တွဲ)' : 'Harmonious Planetary Coexistence (သဘာဝကျသော မဟာဘုတ်စွမ်းအင်)');
-
-  // 3. Chinese Shengxiao San He / Liu He & 5 Elements
-  const sanHeTrines = [
-    ['Rat', 'Dragon', 'Monkey'],
-    ['Ox', 'Snake', 'Rooster'],
-    ['Tiger', 'Horse', 'Dog'],
-    ['Rabbit', 'Goat', 'Pig']
-  ];
-  const liuHePairs = [
-    ['Rat', 'Ox'], ['Tiger', 'Pig'], ['Rabbit', 'Dog'],
-    ['Dragon', 'Rooster'], ['Snake', 'Monkey'], ['Horse', 'Goat']
-  ];
-  const isTrine = p1.animal !== p2.animal && sanHeTrines.some(t => t.includes(p1.animal) && t.includes(p2.animal));
-  const isLiuHe = liuHePairs.some(p => (p[0] === p1.animal && p[1] === p2.animal) || (p[0] === p2.animal && p[1] === p1.animal));
-  const chineseDynamic = isTrine 
-    ? 'San He Triad Harmony (၃ ရာသီ သဟဇာတ မိတ်)' 
-    : (isLiuHe ? 'Liu He Secret Friend (၆ ပါး လျှို့ဝှက် မိတ်ဆွေ)' : 'Zodiac Dynamic Match');
-
-  // 4. 5 Elements Cycle
-  const generatingPairs = [
-    ['Wood', 'Fire'], ['Fire', 'Earth'], ['Earth', 'Metal'],
-    ['Metal', 'Water'], ['Water', 'Wood']
-  ];
-  const isGenerating = generatingPairs.some(p => (p[0] === p1.elementKey && p[1] === p2.elementKey) || (p[0] === p2.elementKey && p[1] === p1.elementKey));
-  const elementDynamic = isGenerating 
-    ? 'Mutual Generative Cycle (Sheng / အပြန်အလှန် ဖြစ်ထွန်းစေသော ဓာတ်စွမ်းအင်)' 
-    : (p1.elementKey === p2.elementKey ? 'Same Element Natural Resonance (တူညီသော ဓာတ်စွမ်းအင်)' : 'Complementary Balancing Energy');
-
-  // 5. Dual Numerology Life Path & Destiny
-  const lp1 = p1.lifePathNumber || 1;
-  const lp2 = p2.lifePathNumber || 1;
-  const isHarmonicLp = lp1 === lp2 || matchesPair(lp1, lp2, HARMONIC_LIFE_PATH_PAIRS) || (lp1 >= 11 || lp2 >= 11);
-  const numerologyDynamic = isHarmonicLp 
-    ? 'Harmonic Life Purpose Triad (ဘဝခရီး ရည်မှန်းချက်ချင်း တစ်ထပ်တည်းကျခြင်း)' 
-    : 'Diverse Life Lessons & Individual Growth (မတူညီသော ဘဝသင်ခန်းစာများကို အပြန်အလှန် သင်ယူခြင်း)';
-
-  return {
-    algorithmicScore,
-    scoreTier,
-    breakdownScores: {
-      zodiacScore,
-      mahaboteScore,
-      animalScore,
-      elementScore,
-      numScore
-    },
-    commonalitySynthesis: {
-      western: `Sun-Sun: ${p1.western} & ${p2.western} (${sunAspect?.aspect || `${p1.westernElement}-${p2.westernElement}`}), Moon-Moon: ${p1.moonSign || p1.western} & ${p2.moonSign || p2.western} (${moonAspect?.aspect || 'Emotional sync'}), Venus-Mars: ${venusMarsAspect?.aspect || 'Attraction dynamic'} [Sub-score: ${zodiacScore}%]`,
-      mahabote: `${p1.mahaboteDayMm} (${p1.mahabotePlanet}, ${p1.mahaboteHouse}) & ${p2.mahaboteDayMm} (${p2.mahabotePlanet}, ${p2.mahaboteHouse}) -> ${mahaboteDynamic} [Sub-score: ${mahaboteScore}%]`,
-      chineseZodiac: `${p1.animalMm} & ${p2.animalMm} -> ${chineseDynamic} [Sub-score: ${animalScore}%]`,
-      fiveElements: `${p1.elementMm} & ${p2.elementMm} -> ${elementDynamic} [Sub-score: ${elementScore}%]`,
-      numerology: `Life Path #${lp1} (${p1.lifePathArchetype || ''}) & #${lp2} (${p2.lifePathArchetype || ''}), Destiny #${p1.destinyNumber} & #${p2.destinyNumber} -> ${numerologyDynamic} [Sub-score: ${numScore}%]`
+    dateString,
+    chartInfo: {
+      version: CALCULATION_VERSION,
+      source: astro ? 'ephemeris' : 'calendar-fallback',
+      assumedTime: '12:00 UTC',
+      birthTimeKnown: false,
+      timeZoneKnown: false,
+      possibleSigns: astro?.possibleSigns || {},
+      chineseYearConvention: 'Approximate solar year: February 4 cutoff',
+      mahaboteYearConvention: 'Simplified Gregorian year minus 638'
     }
   };
 }
 
+// One scoring analysis powers the total, explanations, and five-part breakdown.
+export const analyzePair = analyzeSymbolicPair;
+export const getWesternSynergyScore = (a, b, mode = 'Couple') => westernSection(a, b, mode).score;
+export const getMahaboteSynergyScore = (a, b) => mahaboteSection(a, b).score;
+export const getChineseAnimalSynergyScore = (a, b) => animalSection(a, b).score;
+export const getFiveElementsSynergyScore = (a, b) => elementSection(a, b).score;
+export const getNumerologySynergyScore = (a, b) => numerologySection(a, b).score;
+export const calculateDetailedMetricsBreakdown = (a, b, mode) => analyzePair(a, b, mode).components;
+export const calculateAlgorithmicScore = (a, b, mode) => analyzePair(a, b, mode).score;
 
+export function getCrossSystemSynthesisReport(a, b, mode) {
+  const analysis = analyzePair(a, b, mode);
+  const [western, mahabote, animal, element, numerology] = analysis.components;
+  const describe = part => part.rules.map(rule => rule.reason).join(' ') + ' [' + part.score + '/100]';
+  return {
+    algorithmicScore: analysis.score,
+    scoreTier: getScoreResonanceTier(analysis.score),
+    breakdownScores: { zodiacScore: western.score, mahaboteScore: mahabote.score, animalScore: animal.score, elementScore: element.score, numScore: numerology.score },
+    commonalitySynthesis: {
+      western: 'Sun-Sun / Moon-Moon: ' + describe(western),
+      mahabote: 'မဟာဘုတ်: ' + describe(mahabote),
+      chineseZodiac: describe(animal), fiveElements: describe(element), numerology: 'Life Path: ' + describe(numerology)
+    }
+  };
+}

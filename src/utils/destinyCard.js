@@ -73,8 +73,10 @@ export async function createTomoCard({ result, p1Name, p2Name, relType, mood, br
   context.lineWidth = 12; context.lineCap = 'round';
   context.beginPath(); context.arc(540, layout.scoreY, 100, 0, Math.PI * 2); context.strokeStyle = '#4c3030'; context.stroke();
   if (score > 0) { context.beginPath(); context.arc(540, layout.scoreY, 100, -Math.PI / 2, -Math.PI / 2 + score / 100 * Math.PI * 2); context.strokeStyle = c.ember; context.stroke(); }
-  text(`${score}%`, 540, layout.scoreY + 20, 76, c.ink, 700, 'center');
-  text('Symbolic game score', 540, layout.scoreY + 143, 26, c.peach, 400, 'center');
+  text(String(score), 540, layout.scoreY + 8, 76, c.ink, 700, 'center');
+  text('/100', 540, layout.scoreY + 50, 30, c.peach, 400, 'center');
+  text('Tomo ဂိမ်းအမှတ်', 540, layout.scoreY + 143, 26, c.peach, 400, 'center');
+  text('50/100 = ဂိမ်းအလယ်အမှတ်', 540, layout.scoreY + 172, 20, c.muted, 400, 'center');
   lines(layout.title.lines, layout.titleY + 38, 44, 62, c.peach, 540, 'center', 700);
 
   if (breakdown.length) {
@@ -85,7 +87,7 @@ export async function createTomoCard({ result, p1Name, p2Name, relType, mood, br
     breakdown.forEach((metric, index) => {
       const y = layout.metricsY + 101 + index * 56;
       text(labels[index] || 'Story influence', 120, y, 28);
-      text(`${Math.round(metric.score)}%`, 956, y, 28, c.peach, 700, 'right');
+      text(`${Math.round(metric.score)}/100`, 956, y, 28, c.peach, 700, 'right');
       context.fillStyle = '#4c3030'; context.fillRect(480, y - 16, 360, 8);
       context.fillStyle = c.ember; context.fillRect(480, y - 16, Math.max(0, Math.min(100, metric.score)) / 100 * 360, 8);
     });

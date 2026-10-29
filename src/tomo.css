@@ -135,6 +135,10 @@ body.dark .tomo-experience {
 .tomo-metrics summary { cursor: pointer; font-weight: 700; font-size: 14px; }
 .tomo-metrics summary > span { color: var(--tomo-muted); font-size: 11px; font-weight: 500; margin-left: 15px; }
 .tomo-metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; padding: 26px 0 8px; }
+.tomo-score-explanation { margin-top: 18px; font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; }
+.tomo-metric-grid .tomo-metric-weight { display: block; margin-top: 12px; font-size: 12px; line-height: 1.8; }
+.tomo-metric-reasons { margin-top: 10px; padding-left: 18px; font-size: 13px; line-height: 1.9; }
+.tomo-metric-reasons li + li { margin-top: 8px; }
 .tomo-metric-grid p { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; margin-bottom: 9px; }
 .tomo-metric-grid p strong { color: var(--tomo-accent); }
 .tomo-metric-track { height: 5px; background: var(--tomo-line); border-radius: 8px; overflow: hidden; }
@@ -161,6 +165,8 @@ body.dark .tomo-experience {
 .tomo-chart-notes summary { cursor: pointer; }
 .tomo-chart-notes > div { display: flex; flex-wrap: wrap; gap: 22px; padding-top: 18px; }
 .tomo-chart-notes strong { display: block; font-size: 14px; color: var(--tomo-ink); margin-top: 6px; }
+.tomo-chart-notes > p { margin-top: 14px; line-height: 1.7; }
+.tomo-chart-notes > div > span { flex: 1 1 160px; overflow-wrap: anywhere; }
 .tomo-dynamic { padding: 0 0 35px; }
 .tomo-growth-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 45px; padding: 28px 0 45px; }
 .tomo-growth-grid h3 { display: flex; gap: 12px; align-items: center; font: 500 25px 'Fredoka', sans-serif; padding-bottom: 20px; border-bottom: 1px solid var(--tomo-line); }

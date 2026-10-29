@@ -47,9 +47,9 @@ test('different charts change shared advice and lists even with the same names, 
 });
 
 test('score bands change the shared story without rerolling individual profiles or lists', () => {
-  const low = reading(undefined, undefined, 'Friends', 'Sweet', 64);
-  const middle = reading(undefined, undefined, 'Friends', 'Sweet', 65);
-  const high = reading(undefined, undefined, 'Friends', 'Sweet', 85);
+  const low = reading(undefined, undefined, 'Friends', 'Sweet', 39);
+  const middle = reading(undefined, undefined, 'Friends', 'Sweet', 50);
+  const high = reading(undefined, undefined, 'Friends', 'Sweet', 75);
   assert.notEqual(low.tomo_dynamic_insight, middle.tomo_dynamic_insight);
   assert.notEqual(middle.tomo_secret_advice, high.tomo_secret_advice);
   assert.match(low.tomo_dynamic_insight, /အမှတ်က ဆက်ဆံရေးရဲ့ အဖြေမဟုတ်/);
@@ -58,7 +58,7 @@ test('score bands change the shared story without rerolling individual profiles 
     assert.deepEqual(result.tomo_strengths, middle.tomo_strengths);
     assert.deepEqual(result.tomo_challenges, middle.tomo_challenges);
   }
-  assert.equal(reading(undefined, undefined, 'Friends', 'Sweet', 84).tomo_dynamic_insight, middle.tomo_dynamic_insight);
+  assert.equal(reading(undefined, undefined, 'Friends', 'Sweet', 74).tomo_dynamic_insight, middle.tomo_dynamic_insight);
 });
 
 test('Moon, numerology, Mahabote and Chinese elements influence the relevant prose', () => {

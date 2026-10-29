@@ -3,6 +3,7 @@ import { validateReading, validateBurmeseReading, normalizePersonName } from './
 import { DEFAULT_TOMO_MODEL, TOMO_MODELS, TOMO_PROMPT_VERSION, BURMESE_READING_SYSTEM, buildTomoPrompt, TOMO_RESPONSE_SCHEMA } from './tomoPrompt.js';
 import { generateDeepProceduralReading } from './proceduralReading.js';
 import { READING_TIMEOUT_MS, READING_MAX_REQUESTS } from './readingPolicy.js';
+import { SCORING_VERSION } from './pairScoring.js';
 export { generateDeepProceduralReading };
 
 export const DEMO_RESULT = generateDeepProceduralReading(
@@ -41,7 +42,7 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
   const names = [normalizePersonName(p1Name), normalizePersonName(p2Name)];
   if (names.some(name => !name || name.length > 80)) throw new Error('Enter two names of up to 80 characters.');
   const promptText = buildTomoPrompt({ p1Name: names[0], p1Secret, p2Name: names[1], p2Secret, relType, mood, algorithmicScore,
-    breakdown: calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType).map(({ label, score }) => ({ label, score })) });
+    breakdown: calculateDetailedMetricsBreakdown(p1Secret, p2Secret, relType).map(({ label, score, baseline, weight, rules }) => ({ label, score, baseline, weight, rules })) });
   // Cache only in memory, for this key/model/input/prompt version. Never put keys in URLs or persist readings.
   const canCache = Boolean(globalThis.crypto?.subtle);
   const keyBytes = canCache ? await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey.trim())) : null;
@@ -154,7 +155,7 @@ export async function fetchTomoDestinyReading(p1Name, p1Secret, p2Name, p2Secret
       try {
         const validated = validateReading(JSON.parse(jsonText), algorithmicScore);
         const reading = validateBurmeseReading(validated, { relType, names, expanded: true });
-        const result = { ...reading, readingInfo: { source: 'gemini', model, mood, relType, cached: false, attempts: attempt + 1, requestAttempts, transientRetries, totalTokens, durationMs: Date.now() - now, promptVersion: TOMO_PROMPT_VERSION } };
+        const result = { ...reading, readingInfo: { source: 'gemini', model, mood, relType, cached: false, attempts: attempt + 1, requestAttempts, transientRetries, totalTokens, durationMs: Date.now() - now, promptVersion: TOMO_PROMPT_VERSION, scoringVersion: SCORING_VERSION } };
         if (canCache) {
           if (readingCache.size >= 8) readingCache.delete(readingCache.keys().next().value);
           readingCache.set(cacheKey, { reading: structuredClone(result), expiresAt: Date.now() + CACHE_TTL_MS });

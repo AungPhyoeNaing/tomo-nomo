@@ -113,7 +113,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         {exportError && <p className="tomo-form-error" role="alert">{exportError}</p>}
       </section>
       <section id="page-readings" className="page-section" aria-labelledby="profiles-heading">
-        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Behind the connection</p><h2 id="profiles-heading">A little more about you.</h2></div><p lang="my">နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားကို တစ်ယောက်ချင်း ဖတ်ကြည့်ရအောင်။</p></div>
+        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Behind the connection</p><h2 id="profiles-heading">Uncovering your duo dynamics</h2></div><p lang="my">နှစ်ယောက်လုံးရဲ့ စိတ်နေစိတ်ထားကို တစ်ယောက်ချင်း ဖတ်ကြည့်ရအောင်။</p></div>
         <div className="tomo-profiles">
           <div className="tomo-profile-tabs" role="tablist" aria-label="Choose a person's profile">{names.map((name, index) => <button type="button" key={index} ref={element => { profileTabs.current[index] = element; }} id={'profile-tab-' + index} role="tab" aria-selected={profileIndex === index} aria-controls="profile-panel" tabIndex={profileIndex === index ? 0 : -1} onClick={() => setProfileIndex(index)} onKeyDown={event => {
             let next;
@@ -130,7 +130,7 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         </div>
       </section>
       <section id="page-synergy" className="page-section" aria-labelledby="together-heading">
-        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">The space between you</p><h2 id="together-heading">Better, together.</h2></div><p>What feels easy. What takes a little care.</p></div>
+        <div className="tomo-section-heading"><div><p className="tomo-section-kicker">Where distance disappears</p><h2 id="together-heading">Better, together.</h2></div><p>What feels easy. What takes a little care.</p></div>
         <article className="tomo-dynamic"><ReadingText text={result.tomo_dynamic_insight} /></article>
         <div className="tomo-growth-grid"><section><h3><span aria-hidden="true">✳</span> Where you shine</h3><ul lang="my">{result.tomo_strengths.map((text, index) => <li key={index}>{text}</li>)}</ul></section><section><h3><span aria-hidden="true">✧</span> Room to grow</h3><ul lang="my">{result.tomo_challenges.map((text, index) => <li key={index}>{text}</li>)}</ul></section></div>
         <article className="tomo-letter"><div className="tomo-letter-heading"><TomoPortrait pose="note" /><div><p>A note from Tomo</p><small>A little something to take with you.</small></div><span aria-hidden="true">♡</span></div><ReadingText text={result.tomo_secret_advice} /><p className="tomo-letter-signature">with love, Tomo ✳</p></article>

@@ -101,9 +101,9 @@ function MatchResult({ result, p1Name, p2Name, relType, mood, jumpToPage }) {
         <div className="tomo-reading-origin"><span>{result.readingInfo?.source === 'gemini' ? `Gemini AI · ${result.readingInfo.model}${result.readingInfo.cached ? ' · cached' : ''}` : result.readingInfo?.fallback ? 'Built-in fallback · AI did not complete' : 'Built-in story · no AI used'}</span><p>Astrology-inspired entertainment, not a measured personality or relationship probability. Birth time is not supplied; chart details are approximate.</p></div>
         {result.readingInfo?.fallback && result.readingInfo.failureMessage && <div className="tomo-reading-origin" role="status"><p>{result.readingInfo.failureMessage}{result.readingInfo.reference && <> Support reference: {result.readingInfo.reference}.</>}</p></div>}
         <div className="tomo-match-summary">
-          <div className="tomo-score-ring" role="img" aria-label={String(result.chemistry_score) + ' out of 100 Tomo game points'}>
+          <div className="tomo-score-ring" role="img" aria-label={String(result.chemistry_score) + ' out of 100 compatibility points'}>
             <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-line)" strokeWidth="5" /><circle cx="50" cy="50" r="45" fill="none" stroke="var(--tomo-accent)" strokeWidth="5" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" /></svg>
-            <div><strong>{animatedScore}<small>/100</small></strong><span lang="my">Tomo ဂိမ်းအမှတ်</span></div>
+            <div><strong>{animatedScore}<small>/100</small></strong><span lang="my">လိုက်ဖက်မှု ရမှတ်</span></div>
           </div>
           <div className="tomo-match-story"><p className="tomo-section-kicker" lang="my">{resonanceTier.levelMm}</p><h3 lang="my">{result.relationship_title}</h3><p>A little insight into your shared rhythm, your differences, and the ways you can grow together.</p><button type="button" onClick={() => jumpToPage('page-readings')} className="tomo-text-button">Read your profiles <span aria-hidden="true">↓</span></button></div>
         </div>

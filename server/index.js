@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const { attachGame } = require('./game');
 
-function createGameServer() {
+function createGameServer({ nomoEnabled = false } = {}) {
   const app = express();
   const clientBuildPath = path.join(__dirname, '../dist');
   const readingHandler = import('./reading-handler.mjs').then(module => module.createReadingHandler());
@@ -14,6 +14,9 @@ function createGameServer() {
   app.use(express.static(clientBuildPath));
   const server = http.createServer(app);
   const io = new Server(server, {
+    // Temporarily closed for launch. Tests opt in explicitly; public clients
+    // cannot enable multiplayer through a URL or request parameter.
+    allowRequest: (_req, callback) => callback(nomoEnabled ? null : 'Nomo is coming soon.', nomoEnabled),
     cors: {
       origin: process.env.CLIENT_ORIGIN?.split(',').map(origin => origin.trim()) || '*',
       methods: ['GET', 'POST']

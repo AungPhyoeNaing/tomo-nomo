@@ -5,6 +5,7 @@ import InputSection from './components/InputSection';
 import MatchResult from './components/MatchResult';
 import TomoPortrait from './components/TomoPortrait';
 import ReadingLoading from './components/ReadingLoading';
+import NomoComingSoon from './components/NomoComingSoon';
 import { calculateSecretMetrics, calculateAlgorithmicScore } from './utils/astrology';
 import { generateDeepProceduralReading } from './utils/gemini';
 import { requestTomoReading } from './utils/readingClient';
@@ -19,7 +20,6 @@ import './arcade-controls.css';
 import './tomo-aura.css';
 import './experience-controls.css';
 
-const NomoApp = React.lazy(() => import('./nomo/App'));
 
 function TomoApp() {
   const [theme, setTheme] = useState('light');
@@ -208,7 +208,7 @@ function TomoApp() {
       <header className="tomo-header" inert={loading ? '' : undefined}>
         <button type="button" className="tomo-brand" onClick={() => jumpToPage('page-hero')} aria-label="Tomo home"><TomoPortrait pose="wave" /><strong>tomo + nomo</strong><small>A place to play & connect</small></button>
         <div className="tomo-header-actions">
-          <Link to="/nomo" className="tomo-nomo-link">2P challenge <span aria-hidden="true">↗</span></Link>
+          <Link to="/nomo" className="tomo-nomo-link">Nomo · Coming soon <span aria-hidden="true">↗</span></Link>
           <AudioController track="tomo" />
           <button type="button" className="tomo-icon-button" onClick={toggleTheme} aria-label={theme === 'dark' ? 'Use light theme' : 'Use dark theme'} title={theme === 'dark' ? 'Use light theme' : 'Use dark theme'}>{theme === 'dark' ? '☀' : '☾'}</button>
         </div>
@@ -232,18 +232,10 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TomoApp />} />
+        {/* Temporary launch gate covers the lobby and every saved room URL. */}
         <Route 
           path="/nomo/*" 
-          element={
-            <React.Suspense fallback={
-              <div className="min-h-screen flex flex-col items-center justify-center bg-sky-50 dark:bg-slate-900 text-sky-600 gap-3 font-['Fredoka']">
-                <div className="w-10 h-10 border-4 border-sky-400 border-t-transparent rounded-full animate-spin"></div>
-                <p className="text-base font-bold">Loading Nomo Quiz...</p>
-              </div>
-            }>
-              <NomoApp />
-            </React.Suspense>
-          } 
+          element={<NomoComingSoon />}
         />
       </Routes>
     </BrowserRouter>

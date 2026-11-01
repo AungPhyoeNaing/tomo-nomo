@@ -1,0 +1,52 @@
+.nomo-soon { --soon-bg: #edf6f5; --soon-paper: #fffef9; --soon-ink: #263f49; --soon-muted: #526973; --soon-line: #9bb7b9; --soon-art: #c9e6df; height: 100dvh; overflow: auto; background: var(--soon-bg); color: var(--soon-ink); font-family: 'Quicksand', 'Padauk', sans-serif; }
+body.dark .nomo-soon { --soon-bg: #172a32; --soon-paper: #203740; --soon-ink: #edf7f4; --soon-muted: #b6ccce; --soon-line: #557980; --soon-art: #2b5558; color-scheme: dark; }
+.nomo-soon *, .nomo-soon *::before, .nomo-soon *::after { box-sizing: border-box; }
+.nomo-soon a:focus-visible { outline: 3px solid #a75bc1; outline-offset: 6px; }
+.nomo-soon-header { width: min(1180px, 100%); margin: auto; padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.nomo-soon-brand { display: inline-flex; align-items: center; gap: 12px; color: var(--soon-ink); font: 500 27px 'Fredoka', sans-serif; text-decoration: none; white-space: nowrap; }
+.nomo-soon-brand span { color: #7d5ca5; font-size: 21px; }
+.nomo-soon-header-note { color: var(--soon-muted); font-size: 12px; font-weight: 600; }
+.nomo-soon-main { width: min(1100px, 100%); min-height: calc(100dvh - 91px); margin: auto; padding: 38px 40px 24px; display: flex; flex-direction: column; justify-content: center; }
+.nomo-soon-ticket { display: grid; grid-template-columns: .95fr 1.05fr; background: var(--soon-paper); border: 2px solid var(--soon-line); border-radius: 28px; box-shadow: 0 8px 0 var(--soon-line); overflow: hidden; }
+.nomo-soon-art { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; padding: 38px 30px 45px; background-color: var(--soon-art); background-image: radial-gradient(#ffffff65 1px, transparent 1px); background-size: 20px 20px; border-right: 2px dashed var(--soon-line); }
+.nomo-soon-ticket-label { font-size: 13px; font-weight: 700; }
+.nomo-soon-machine { width: min(280px, 100%); background: #fff8df; border: 3px solid #385f68; border-radius: 38px 38px 15px 15px; box-shadow: 0 10px 0 #385f6833; color: #294b56; transform: rotate(-3deg); }
+.nomo-soon-marquee { display: flex; align-items: center; justify-content: space-between; padding: 14px 23px; font: 500 34px 'Fredoka', sans-serif; border-bottom: 3px solid #385f68; }
+.nomo-soon-marquee span { font-size: 20px; color: #9a6789; }
+.nomo-soon-screen { position: relative; padding: 32px 20px 24px; margin: 15px; background: #d5edf1; border: 2px solid #60868d; border-radius: 20px 20px 10px 10px; }
+.nomo-soon-screen video { display: block; width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid #60868d; object-fit: cover; background: #fff; }
+.nomo-soon-spark { position: absolute; font-size: 26px; z-index: 1; }
+.nomo-soon-spark-one { left: 6px; top: 15px; }.nomo-soon-spark-two { right: 7px; bottom: 12px; color: #8b5984; }
+.nomo-soon-speech { position: absolute; top: -6px; right: -24px; background: #fffef9; border: 2px solid #385f68; padding: 9px 12px; border-radius: 13px 13px 13px 2px; font: 400 15px 'Fredoka', sans-serif; transform: rotate(8deg); }
+.nomo-soon-controls { display: flex; align-items: center; justify-content: flex-end; gap: 10px; height: 52px; padding: 0 23px 12px; }
+.nomo-soon-controls > span:not(:first-child) { width: 23px; height: 13px; border: 2px solid #385f68; background: #b5cee4; border-radius: 50%; box-shadow: 0 3px 0 #385f68; }
+.nomo-soon-controls > span:last-child { background: #e5acc8; }
+.nomo-soon-joystick { width: 35px; height: 10px; border-radius: 50%; background: #385f68; margin-right: auto; position: relative; }
+.nomo-soon-joystick::before { content: ''; position: absolute; width: 5px; height: 20px; background: #385f68; bottom: 3px; left: 15px; }
+.nomo-soon-joystick::after { content: ''; position: absolute; width: 19px; height: 19px; border-radius: 50%; border: 2px solid #385f68; background: #e5acc8; bottom: 17px; left: 8px; }
+.nomo-soon-hanging-sign { display: inline-flex; align-items: center; gap: 9px; padding: 10px 20px; background: #fff8df; border: 2px solid #385f68; box-shadow: 0 3px 0 #385f6826; border-radius: 8px; color: #294b56; font-weight: 700; font-size: 13px; transform: rotate(3deg); }
+.nomo-soon-copy { padding: clamp(28px, 4vw, 52px); align-self: center; }
+.nomo-soon-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; color: var(--soon-muted); }
+.nomo-soon-status > span { width: 7px; height: 7px; background: #a76c92; border-radius: 50%; flex-shrink: 0; }
+.nomo-soon-copy h1 { margin: 20px 0; font: 500 clamp(42px, 5vw, 65px)/1.03 'Fredoka', sans-serif; letter-spacing: -1.6px; }
+.nomo-soon-copy p { max-width: 39ch; margin: 17px 0 0; font-size: 14px; line-height: 1.85; color: var(--soon-muted); }
+.nomo-soon-copy .nomo-soon-lead { color: var(--soon-ink); font-size: 17px; line-height: 1.55; font-weight: 700; }
+.nomo-soon-copy .nomo-soon-burmese { font-family: 'Padauk', 'Myanmar Text', sans-serif; font-size: 17px; line-height: 1.9; }
+.nomo-soon-cta { display: flex; width: fit-content; align-items: center; gap: 13px; min-height: 50px; padding: 12px 21px; margin-top: 27px; background: #7350a4; border: 2px solid #503771; box-shadow: 0 4px 0 #503771; border-radius: 12px; color: #fff; text-decoration: none; font: 500 18px 'Fredoka', sans-serif; transition: transform .15s, box-shadow .15s; }
+.nomo-soon-cta:hover { transform: translateY(-2px); }.nomo-soon-cta:active { transform: translateY(3px); box-shadow: 0 1px 0 #503771; }
+.nomo-soon-cta > span { font-size: 23px; }
+.nomo-soon-available { display: block; font-size: 11px; line-height: 1.7; color: var(--soon-muted); margin-top: 15px; }
+.nomo-soon-footer { display: flex; justify-content: space-between; align-items: center; gap: 15px; padding: 27px 3px 8px; font-size: 11px; line-height: 1.8; color: var(--soon-muted); }
+.nomo-soon-footer > span:last-child { font-size: 18px; white-space: nowrap; }
+@media (max-width: 700px) {
+  .nomo-soon-header { padding: 21px 22px; }.nomo-soon-header-note { display: none; }
+  .nomo-soon-main { padding: 12px 20px 24px; min-height: calc(100dvh - 75px); }
+  .nomo-soon-ticket { grid-template-columns: 1fr; border-radius: 23px; }
+  .nomo-soon-art { padding: 22px 25px 26px; gap: 17px; border-right: 0; border-bottom: 2px dashed var(--soon-line); }
+  .nomo-soon-machine { width: 190px; border-radius: 27px 27px 12px 12px; }
+  .nomo-soon-marquee { font-size: 25px; padding: 8px 18px; }.nomo-soon-screen { margin: 10px; padding: 20px 15px 10px; }
+  .nomo-soon-speech { font-size: 12px; padding: 7px 10px; }.nomo-soon-controls { height: 38px; padding: 0 17px 10px; }
+  .nomo-soon-copy { padding: 30px 26px 34px; }.nomo-soon-copy h1 { font-size: clamp(42px, 10vw, 60px); }
+  .nomo-soon-cta { width: 100%; justify-content: center; }.nomo-soon-footer { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) { .nomo-soon-cta { transition: none; }.nomo-soon-cta:hover, .nomo-soon-cta:active { transform: none; } }

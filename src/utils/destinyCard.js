@@ -75,7 +75,7 @@ export async function createTomoCard({ result, p1Name, p2Name, relType, mood, br
   if (score > 0) { context.beginPath(); context.arc(540, layout.scoreY, 100, -Math.PI / 2, -Math.PI / 2 + score / 100 * Math.PI * 2); context.strokeStyle = c.ember; context.stroke(); }
   text(String(score), 540, layout.scoreY + 8, 76, c.ink, 700, 'center');
   text('/100', 540, layout.scoreY + 50, 30, c.peach, 400, 'center');
-  text('Tomo ဂိမ်းအမှတ်', 540, layout.scoreY + 143, 26, c.peach, 400, 'center');
+  text('လိုက်ဖက်မှု ရမှတ်', 540, layout.scoreY + 143, 26, c.peach, 400, 'center');
   text('50/100 = ဂိမ်းအလယ်အမှတ်', 540, layout.scoreY + 172, 20, c.muted, 400, 'center');
   lines(layout.title.lines, layout.titleY + 38, 44, 62, c.peach, 540, 'center', 700);
 

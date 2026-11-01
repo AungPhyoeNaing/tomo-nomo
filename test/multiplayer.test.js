@@ -3,6 +3,22 @@ import assert from 'node:assert/strict';
 import { io as connect } from 'socket.io-client';
 import serverModule from '../server/index.js';
 
+test('public multiplayer connections are temporarily closed by default', async t => {
+  const { server, io } = serverModule.createGameServer();
+  t.after(() => new Promise(resolve => io.close(resolve)));
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const response = await fetch(`${origin}/socket.io/?EIO=4&transport=polling`);
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).message, 'Nomo is coming soon.');
+  const socket = connect(origin, { autoConnect: false, reconnection: false, transports: ['websocket'] });
+  t.after(() => socket.disconnect());
+  const rejected = next(socket, 'connect_error');
+  socket.connect();
+  await rejected;
+  assert.equal(socket.connected, false);
+});
+
 function next(socket, event) {
   return new Promise((resolve, reject) => {
     const handler = value => { clearTimeout(timer); resolve(value); };
@@ -15,7 +31,7 @@ function next(socket, event) {
 }
 
 async function fixture(t) {
-  const { server, io } = serverModule.createGameServer();
+  const { server, io } = serverModule.createGameServer({ nomoEnabled: true });
   const clients = [];
   t.after(async () => {
     clients.forEach(client => client.disconnect());

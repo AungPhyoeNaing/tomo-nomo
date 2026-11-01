@@ -4,6 +4,7 @@ import { calculateSecretMetrics, calculateAlgorithmicScore, getChineseAnimalSyne
 import { generateDeepProceduralReading, fetchTomoDestinyReading, clearTomoReadingCache } from '../src/utils/gemini.js';
 import { validateBurmeseReading, normalizePersonName, createReadingResult } from '../src/utils/reading.js';
 import { buildTomoPrompt, BURMESE_READING_SYSTEM, TOMO_PROMPT_VERSION } from '../src/utils/tomoPrompt.js';
+import { requestTomoReading } from '../src/utils/readingClient.js';
 
 const metrics = calculateSecretMetrics('Alice', '1996-06-15');
 const secondMetrics = calculateSecretMetrics('Bob', '1996-10-08');
@@ -43,6 +44,66 @@ test('Burmese quality checks reject English, duplicate lists, missing sections a
   assert.throws(() => validateBurmeseReading({ ...fixture(), tomo_strengths: Array(3).fill(fixture().tomo_strengths[0]) }), /distinct/);
   assert.throws(() => validateBurmeseReading({ ...fixture(), tomo_deep_reading_p1: 'ပျော်ပျော်ပါးပါး နားလည်မှုနဲ့ နေကြည့်ပါ။' }), /four/);
   assert.throws(() => validateBurmeseReading({ ...fixture(), relationship_title: 'ချစ်သူနှစ်ဦးရဲ့ ရေစက်ပုံပြင်' }, { relType: 'Friends' }), /platonic/);
+});
+
+test('even one foreign letter or script-specific mark is rejected in every reading field', () => {
+  const original = fixture();
+  const fragments = ['عربي', 'हिन्दी', 'বাংলা', 'ગુજરાતી', 'ਪੰਜਾਬੀ', 'தமிழ்', 'తెలుగు', 'ಕನ್ನಡ', 'മലയാളം', 'ଓଡ଼ିଆ', 'සිංහල', 'ไทย', '中文', '\u064e', '\u093f', '\u0951', '\uFFFD', '\uD800', '\uDC00'];
+  for (const fragment of fragments) for (const [key, value] of Object.entries(original)) {
+    if (typeof value !== 'string' && !Array.isArray(value)) continue;
+    const corrupted = Array.isArray(value)
+      ? value.map((item, index) => index === 1 ? item + fragment : item)
+      : value + fragment;
+    assert.throws(() => validateBurmeseReading({ ...original, [key]: corrupted }, { names: ['Alice', 'Bob'] }),
+      /stray non-Burmese script or corrupted Unicode/, `${key}: ${JSON.stringify(fragment)}`);
+  }
+});
+
+test('script checks preserve exact supplied names, Burmese marks, accented Latin and emoji', () => {
+  const original = fixture();
+  const arabicName = 'مُحَمَّد';
+  const indianName = 'प्रिया';
+  const reading = { ...original, tomo_dynamic_insight: `${original.tomo_dynamic_insight}\n${arabicName} ${indianName} José Zoe\u0308 🌟` };
+  const validated = validateBurmeseReading(reading, { names: [`  ${arabicName}  `, indianName], expanded: true });
+  assert.equal(validated.tomo_dynamic_insight, reading.tomo_dynamic_insight);
+  assert.throws(() => validateBurmeseReading({ ...reading, tomo_dynamic_insight: reading.tomo_dynamic_insight + 'ع' },
+    { names: [arabicName, indianName] }), /stray non-Burmese script/);
+});
+
+test('mixed-script Gemini output is repaired once before display or caching', async t => {
+  let calls = 0;
+  mockFetch(t, async (_, options) => {
+    calls++;
+    if (calls === 1) return response({ ...fixture(), tomo_secret_advice: fixture().tomo_secret_advice + 'हिन्दी' });
+    assert.match(JSON.parse(options.body).contents[0].parts[0].text, /Repair instruction:.*stray non-Burmese script/);
+    return response(fixture());
+  });
+  const result = await request();
+  assert.equal(result.tomo_secret_advice, fixture().tomo_secret_advice);
+  assert.equal(result.readingInfo.attempts, 2);
+  assert.equal((await request()).readingInfo.cached, true);
+  assert.equal(calls, 2);
+});
+
+test('persistent mixed-script output fails after the bounded repair', async t => {
+  let calls = 0;
+  mockFetch(t, async () => {
+    calls++;
+    return response({ ...fixture(), tomo_challenges: fixture().tomo_challenges.map(item => item + 'عربي') });
+  });
+  await assert.rejects(request(), { code: 'GEMINI_QUALITY', requestAttempts: 2 });
+  assert.equal(calls, 2);
+});
+
+test('browser also rejects mixed-script reading responses while preserving supplied names', async t => {
+  const original = fixture();
+  const name = 'प्रिया';
+  let reading = { ...original, tomo_dynamic_insight: original.tomo_dynamic_insight + name };
+  mockFetch(t, async () => ({ ok: true, json: async () => reading }));
+  const inputs = { p1Name: name, p2Name: 'Bob', relType: 'Friends' };
+  assert.equal((await requestTomoReading(inputs)).tomo_dynamic_insight, reading.tomo_dynamic_insight);
+  reading = { ...reading, tomo_strengths: original.tomo_strengths.map(item => item + 'ع') };
+  await assert.rejects(requestTomoReading(inputs), /stray non-Burmese script/);
 });
 
 test('Mystic offline voice is distinct and names normalize without stripping Burmese', () => {

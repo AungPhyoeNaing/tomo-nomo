@@ -50,7 +50,19 @@ export function validateBurmeseReading(data, { relType, names = [], expanded = f
     normalized.relationship_title, normalized.tomo_dynamic_insight, normalized.tomo_secret_advice,
     ...normalized.tomo_strengths, ...normalized.tomo_challenges];
   for (let field of fields) {
-    for (const name of names) if (name) field = field.split(name).join('');
+    for (const name of names.map(normalizePersonName).sort((a, b) => b.length - a.length)) {
+      if (name) field = field.split(name).join('');
+    }
+    // A Burmese-majority ratio alone lets isolated foreign words and vowel
+    // marks through. Exempt supplied names, but reject mixed-script prose
+    // rather than deleting characters and leaving damaged Burmese sentences.
+    const lettersAndMarks = field.match(/[\p{L}\p{M}]/gu) || [];
+    // Allow ordinary Latin accents and emoji marks explicitly: some Indic
+    // vowel marks also have Latin script extensions and must not slip through.
+    if (lettersAndMarks.some(character => !/[\p{Script_Extensions=Myanmar}\p{Script=Latin}\p{Script=Common}\u0300-\u036f\uFE0E\uFE0F\u20E3]/u.test(character)) ||
+        /[\uFFFD\p{Surrogate}]/u.test(field)) {
+      throw new Error('Reading quality check: rewrite stray non-Burmese script or corrupted Unicode in natural Burmese; preserve the supplied names exactly.');
+    }
     const letters = field.match(/\p{L}/gu) || [];
     const myanmarLetters = field.match(/[\u1000-\u102a\u103f\u1050-\u1055]/gu) || [];
     if (myanmarLetters.length < 5 || myanmarLetters.length / Math.max(1, letters.length) < .7) {

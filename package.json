@@ -17,6 +17,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "astronomy-engine": "^2.1.19",
     "canvas-confetti": "^1.9.4",
     "framer-motion": "^13.1.0",

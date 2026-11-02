@@ -146,6 +146,8 @@ Tomo calls the same-origin `/api/reading` endpoint. One `GEMINI_API_KEY` is kept
 
 #### Vercel setup (one key)
 
+Visitor tracking uses `@vercel/analytics/react` in production builds. Enable **Web Analytics** under the Vercel project's **Analytics** tab, then deploy this integration. Visitors and page views appear there after people visit the deployed site. Local development does not load analytics. This integration does not add custom tracking for names, birthdays, generated readings, or reading completion.
+
 1. In your Vercel project, open **Settings → Environment Variables**.
 2. Add `GEMINI_API_KEY` with your real Google AI Studio key for Production (and Preview if wanted). Mark it sensitive. Never add a `VITE_` prefix.
 3. Redeploy. The `api/reading.js` Vercel Function handles requests alongside the static frontend. No separate multiplayer backend is needed for Tomo readings.
